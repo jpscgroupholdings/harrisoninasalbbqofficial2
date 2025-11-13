@@ -50,7 +50,7 @@ $(document).ready(function(){
     function showMenu(menuClass) {
         let navigationMenu = $('.div-block-128');
         // Hide all menus
-        $('.mealstogo, .combomeals, .sisig, .chicken, .pork, .desserts, .breakfast, .stuffed, .rice, .sodas, .alcodrinks' ).css({
+        $('.mealstogo, .combomeals, .sisig, .chicken, .pork, .desserts, .breakfast, .stuffed, .rice, .sodas, .alcodrinks, .vegie' ).css({
             display: 'none',
             opacity: '0'
         });
