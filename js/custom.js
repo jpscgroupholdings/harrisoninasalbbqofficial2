@@ -68,6 +68,44 @@ $(document).ready(function(){
         }
     } 
 
+
+    
+    $('.sectors__link-5').on('click', function(event) {
+        event.preventDefault();
+
+        const mainMenuClass = $(this).data('menu'); // Get the menu name directly
+
+        if (mainMenuClass) {
+            showMainMenu(mainMenuClass);
+        } else {
+            console.warn('Missing data-menu attribute for this link.');
+        }
+    });
+
+
+    // Function to show the correct menu
+    function showMainMenu(mainMenuClass) {
+        let navigationMenu = $('.div-block-128');
+        // Hide all menus
+        $('.sisig, .chicken, .pork, .vegie' ).css({
+            display: 'none',
+            opacity: '0'
+        });
+        navigationMenu.css('display','none');
+
+        // Show the selected menu
+        const selectedMainMenu = $('.' + mainMenuClass);
+        if (selectedMainMenu.length) {
+            selectedMainMenu.css({
+                display: 'block',
+                opacity: '1'
+            });
+        } else {
+            console.warn('No element found for menu:', mainMenuClass);
+        }
+    } 
+
+
 }); 
 
 
