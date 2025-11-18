@@ -7146,3 +7146,53 @@ a {
     color: #e13e00 !important;
 }
 
+
+@media (max-width: 470px) { 
+    .text-size-medium-2 {
+      width: 100% !important;
+    }
+
+    .footer{
+      padding-top:0px !important;
+      padding-bottom:0px !important;
+    }
+
+    .div-block-84{
+      display:block !important;
+    }
+
+    .div-block-68.asdasdasd.wedqweqwe{
+      display:block !important;
+    }
+
+    .div-block-84{
+      margin-top:17vw;
+    }
+
+    .div-block-68.asdasdasd.wedqweqwe {
+      display: block !important;
+    }
+
+    .section.skills{
+      height:200vw;
+    }
+    
+    .section.skills.asdad{
+      height:170vw;
+    }
+ }
+
+ @media (max-width: 370px) { 
+    .footer{
+      padding-top:0px !important;
+      padding-bottom:0px !important;
+    }
+
+    .section-2.is-footer{
+      padding-top:2rem;
+      padding-bottom:4rem;
+    }
+ }
+
+
+
