@@ -189,16 +189,16 @@
 
                       <div class="form-field-wrapper"><label for="last_name" class="field-label">Last Name</label><input class="form-input w-input" maxlength="256" name="last_name" data-name="last_name" placeholder="Last Name" type="text" id="last_name" required=""></div>
 
-                      <div id="w-node-b6ad21a2-82a3-8c4d-9598-7afad908a7ef-3b53344d" class="form-field-wrapper"><label for="email-4" class="field-label">Email</label><input class="form-input w-input" maxlength="256" name="email" data-name="email" placeholder="email@example.com" type="email" id="email-4" required=""></div>
+                      <div id="w-node-b6ad21a2-82a3-8c4d-9598-7afad908a7ef-3b53344d" class="form-field-wrapper"><label for="email-4" class="field-label">Email</label><input class="form-input w-input" maxlength="256" name="email" data-name="email" placeholder="email@example.com" type="email" id="email_address" required=""></div>
 
                       <div id="w-node-b6ad21a2-82a3-8c4d-9598-7afad908a7f3-3b53344d" class="form-field-wrapper"><label for="phone" class="field-label">Phone</label><input class="form-input w-input" maxlength="256" name="phone" data-name="phone" placeholder="Phone Number" type="tel" id="phone" required=""></div>
 
                       <div id="w-node-b6ad21a2-82a3-8c4d-9598-7afad908a7f7-3b53344d" class="form-field-wrapper">
                         <label for="Branch" class="field-label">Branch / Location</label>
-                        <select class="form-input location w-input" maxlength="256" name="Branch" data-name="Branch" id="Branch" required="">
-                          <option selected disabled value="">Select branch location</option>
-                          <option value="">Century Mall | Makati</option>
-                          <option value="">Kingscourt | Makati</option>
+                        <select id="location" class="form-input location w-input" maxlength="256" name="Branch" data-name="Branch" required="">
+                          <option selected disabled>Select branch location</option>
+                          <option value="Century Mall">Century Mall | Makati</option>
+                          <option value="Kingscourt">Kingscourt | Makati</option>
                         </select>
                       </div>
 
@@ -213,9 +213,9 @@
                       <div>Thank you! Your submission has been received!</div>
                     </div>
 
-                    <div class="w-form-fail">
+                    <!-- <div class="w-form-fail">
                       <div>Oops! Something went wrong while submitting the form.</div>
-                    </div>
+                    </div> -->
 
 
                   </div>
@@ -320,14 +320,13 @@
               first_name: $("#first_name").val(),
               last_name: $("#last_name").val(),
               message: $('#message_area').val(),
-              email: $("#email-4").val()
+              email: $("#email_address").val(),
+              location: $('#location').val()
+              
           })
           .then(function () {
                 $(".w-form-done").fadeIn();
                 $("#email-form")[0].reset();
-          })
-          .catch(function (error) {
-                $(".w-form-fail").fadeIn();
           });
 
       });
