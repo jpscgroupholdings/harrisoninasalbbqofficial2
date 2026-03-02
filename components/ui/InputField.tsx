@@ -7,18 +7,20 @@ interface InputFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
   leftIcon?: React.ReactNode;
+  rightElement?: React.ReactNode; // 🔥 NEW
 }
 
 export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
-  ({ label, error, leftIcon, className, ...props }, ref) => {
+  ({ label, error, leftIcon, rightElement, className, ...props }, ref) => {
     return (
       <div className="w-full space-y-2">
         {label && (
           <label
             htmlFor={props.id}
-            className="block text-sm font-semibold text-gray-700 mb-2"
+            className="block text-sm font-semibold text-gray-700"
           >
-            {label} {props.required ? <span className="text-red-500">*</span> : ""}
+            {label}
+            {props.required && <span className="text-red-500 ml-1">*</span>}
           </label>
         )}
 
@@ -33,17 +35,22 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
             ref={ref}
             {...props}
             className={clsx(
-              "w-full pr-4 py-3 border border-gray-300 rounded-lg outline-none transition focus:ring-2 focus:ring-[#ef4501] focus:border-[#ef4501]/20",
+              "w-full py-3 border border-gray-300 rounded-lg outline-none transition focus:ring-1 focus:ring-brand-color-500 focus:border-brand-color-500/80",
               leftIcon ? "pl-10" : "pl-4",
+              rightElement ? "pr-12" : "pr-4", // 🔥 dynamic padding
               error && "border-red-500 focus:ring-red-500",
               className
             )}
           />
+
+          {rightElement && (
+            <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+              {rightElement}
+            </div>
+          )}
         </div>
 
-        {error && (
-          <p className="text-sm text-red-500">{error}</p>
-        )}
+        {error && <p className="text-sm text-red-500">{error}</p>}
       </div>
     );
   }
