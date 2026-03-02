@@ -1,4 +1,3 @@
-import CategoryCarousel from "@/components/main/CategoryCarousel";
 import HeroVideo from "@/components/main/HeroBanner";
 import MainLocationSection from "@/components/main/MainLocationSection";
 import MissionVision from "@/components/main/MissionVision";
@@ -8,7 +7,6 @@ const MainPage = () => {
   return (
     <>
       <HeroVideo />
-      <CategoryCarousel />
       <ProductMain />
       <MissionVision />
       <MainLocationSection /> {/** Includes order now CTA */}

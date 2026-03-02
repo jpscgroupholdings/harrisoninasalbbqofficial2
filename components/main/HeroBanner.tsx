@@ -36,7 +36,7 @@ export default function CarouselBanner() {
 
   return (
     <div className="w-full flex items-center justify-center">
-      <div className="relative w-full h-[30vh] md:[50vh] lg:h-[60vh] overflow-hidden" style={{ aspectRatio: "16/9" }}>
+      <div className="relative w-full h-[30vh] md:h-[50vh] lg:h-[60vh] overflow-hidden" style={{ aspectRatio: "16/9" }}>
 
         {/* Images */}
         {images.map((src, i) => (
@@ -44,7 +44,7 @@ export default function CarouselBanner() {
             key={i}
             src={src}
             alt={`Slide ${i + 1}`}
-            className="absolute inset-0 w-full h-[30vh] md:[50vh] lg:h-[60vh] object-content lg:object-cover transition-opacity duration-700"
+            className="absolute inset-0 w-full h-[30vh] md:h-[50vh] lg:h-[60vh] object-content transition-opacity duration-700"
             style={{ opacity: i === current ? 1 : 0 }}
           />
         ))}
