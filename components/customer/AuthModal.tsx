@@ -16,7 +16,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
   const [mode, setMode] = useState<"login" | "signup">(initialMode);
   const [showPassword, setShowPassword] = useState({
     password: false,
-    confirmPassword: false
+    confirmPassword: false,
   });
   const [formData, setFormData] = useState({
     name: "",
@@ -96,6 +96,25 @@ const AuthModal: React.FC<AuthModalProps> = ({
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
+
+  const PasswordToggle = ({isVisible, onToggle} : {isVisible: boolean, onToggle: () => void}) => {
+    return (
+      <button
+        type="button"
+        onClick={onToggle}
+        className="text-gray-400 hover:text-gray-600 cursor-pointer"
+      >
+        {!isVisible? <EyeOff size={18} /> : <Eye size={18} />}
+      </button>
+    );
+  };
+
+  const togglePassword = (field: keyof typeof showPassword) => {
+    setShowPassword((prev) => ({
+        ...prev,
+        [field]: !prev[field]
+    }))
+  }
 
   return (
     <>
@@ -183,44 +202,24 @@ const AuthModal: React.FC<AuthModalProps> = ({
               error={errors.password}
               leftIcon={<Lock size={18} />}
               rightElement={
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((prev) => ({
-                    ...prev,
-                    password: !showPassword.password
-                  }))}
-                  className="text-gray-400 hover:text-gray-600 cursor-pointer"
-                >
-                  {!showPassword.password ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
+                <PasswordToggle isVisible={showPassword.password} onToggle={() => togglePassword("password")}/>
               }
             />
 
             {mode === "signup" && (
-             
-              <InputField 
-               id="confirm_password"
-              label="Confirm Password"
-              name="confirmPassword"
-              type={showPassword.confirmPassword ? "text" : "password"}
-              value={formData.confirmPassword}
-              onChange={handleInputChange}
-              placeholder="••••••••"
-              error={errors.confirmPassword}
-              leftIcon={<Lock size={18} />}
-              rightElement={
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((prev) => ({
-                    ...prev,
-                    confirmPassword: !showPassword.confirmPassword
-                  }))}
-                  className="text-gray-400 hover:text-gray-600 cursor-pointer"
-                >
-                  {!showPassword.confirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              }
-              
+              <InputField
+                id="confirm_password"
+                label="Confirm Password"
+                name="confirmPassword"
+                type={showPassword.confirmPassword ? "text" : "password"}
+                value={formData.confirmPassword}
+                onChange={handleInputChange}
+                placeholder="••••••••"
+                error={errors.confirmPassword}
+                leftIcon={<Lock size={18} />}
+                rightElement={
+                  <PasswordToggle isVisible={showPassword.confirmPassword} onToggle={() => togglePassword("confirmPassword")}/>
+                }
               />
             )}
 
