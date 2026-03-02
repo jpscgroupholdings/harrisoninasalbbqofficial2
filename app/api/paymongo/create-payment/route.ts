@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Cart is empty." }, { status: 400 });
     }
 
-    // 🔒 NEVER trust frontend price or subtotal
+    // NEVER trust frontend price or subtotal
     let recalculatedSubTotal = 0;
     const validatedItems = [];
 
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
       throw new Error("PayMongo secret key not configured");
     }
 
-    // 🧾 Create PayMongo Link
+    // Create PayMongo Link
     const description = `Order - ${validatedItems
       .map((i) => i.name)
       .join(", ")}`;
@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
 
     const { id, attributes } = paymongoData.data;
 
-    // 🗂 Create Order
+    // Create Order
     const order = await Order.create(
       [
         {
