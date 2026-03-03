@@ -10,7 +10,7 @@ import {
 } from "../ui/table";
 import { PencilLine, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { useDeleteProduct } from "@/hooks/useProducts";
+import { useDeleteProduct } from "@/hooks/api/useProducts";
 import Image from "next/image";
 
 interface ProductTableProps {

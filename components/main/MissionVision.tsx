@@ -4,7 +4,7 @@ import About from "./About";
 import {
   useIntersectionAnimation,
   useIntersectionAnimationList,
-} from "@/hooks/useIntersectionAnimation";
+} from "@/hooks/utils/useIntersectionAnimation";
 import { animationStyle } from "@/helper/animationStyle";
 import Image from "next/image";
 

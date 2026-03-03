@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useScrollToSection } from "@/hooks/useScrollToSection";
+import { useScrollToSection } from "@/hooks/utils/useScrollToSection";
 import Link from "next/link";
 import { useSubdomainPath } from "@/hooks/useSubdomainUrl";
 import BrandLogo from "../BrandLogo";

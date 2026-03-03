@@ -1,5 +1,5 @@
-import { useOrders } from "@/hooks/useOrders";
-import { useProducts } from "@/hooks/useProducts";
+import { useOrders } from "@/hooks/api/useOrders";
+import { useProducts } from "@/hooks/api/useProducts";
 import { getLucideIcon } from "@/lib/iconUtils";
 import { LogOut, X } from "lucide-react";
 import Link from "next/link";

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Flame, Heart, Users, Award } from "lucide-react";
-import { useScrollToSection } from "@/hooks/useScrollToSection";
+import { useScrollToSection } from "@/hooks/utils/useScrollToSection";
 
 const StorySection: React.FC = () => {
   useScrollToSection();

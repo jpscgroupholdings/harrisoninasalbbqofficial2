@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import React, { useMemo, useState } from "react";
-import { useOrders, useUpdateOrder } from "@/hooks/useOrders";
+import { useOrders, useUpdateOrder } from "@/hooks/api/useOrders";
 import { toast } from "sonner";
 
 const TABS = [

@@ -11,7 +11,7 @@ import { OrderType } from "@/types/OrderTypes";
 import { OrderActionButton } from "./OrderActionButton";
 import { useState } from "react";
 import Modal from "../ui/Modal";
-import { useOrder } from "@/hooks/useOrders";
+import { useOrder } from "@/hooks/api/useOrders";
 import { MailIcon, PhoneIcon, UserIcon } from "lucide-react";
 
 interface OrdersTableProps {

@@ -1,12 +1,12 @@
 "use client";
 
 import { animationStyle } from "@/helper/animationStyle";
-import { useBreakpoint } from "@/hooks/useBreakPoint";
+import { useBreakpoint } from "@/hooks/utils/useBreakPoint";
 import {
   useIntersectionAnimation,
   useIntersectionAnimationList,
-} from "@/hooks/useIntersectionAnimation";
-import { useProducts } from "@/hooks/useProducts";
+} from "@/hooks/utils/useIntersectionAnimation";
+import { useProducts } from "@/hooks/api/useProducts";
 import { useSubdomainPath } from "@/hooks/useSubdomainUrl";
 import Link from "next/link";
 import { useState } from "react";

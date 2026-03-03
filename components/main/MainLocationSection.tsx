@@ -2,7 +2,7 @@
 
 import { LINKS } from "@/constant/links";
 import { animationStyle } from "@/helper/animationStyle";
-import { useIntersectionAnimation, useIntersectionAnimationList } from "@/hooks/useIntersectionAnimation";
+import { useIntersectionAnimation, useIntersectionAnimationList } from "@/hooks/utils/useIntersectionAnimation";
 import { useSubdomainPath } from "@/hooks/useSubdomainUrl";
 import { MapPin } from "lucide-react";
 import Link from "next/link";

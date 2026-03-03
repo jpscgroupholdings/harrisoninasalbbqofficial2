@@ -1,10 +1,10 @@
 "use client";
 
-import { useScrollToSection } from "@/hooks/useScrollToSection";
+import { useScrollToSection } from "@/hooks/utils/useScrollToSection";
 import {
   useIntersectionAnimation,
   useIntersectionAnimationList,
-} from "@/hooks/useIntersectionAnimation";
+} from "@/hooks/utils/useIntersectionAnimation";
 import { Calendar, ChevronDown } from "lucide-react";
 import React, { useState } from "react";
 

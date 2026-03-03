@@ -50,21 +50,13 @@ const branchSchema = new mongoose.Schema(
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      required: false,
     },
   },
   {
     timestamps: true,
   }
 );
-
-// Auto-generate branch code if not provided (e.g., "BR-001")
-branchSchema.pre("save", async function () {
-  if (!this.code) {
-    const count = await mongoose.model("Branch").countDocuments();
-    this.code = `BR-${String(count + 1).padStart(3, "0")}`;
-  }
-});
 
 const Branch = mongoose.model("Branch", branchSchema);
 

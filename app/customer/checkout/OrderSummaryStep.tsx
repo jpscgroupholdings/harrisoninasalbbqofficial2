@@ -12,7 +12,7 @@ import Link from "next/link";
 import Modal from "@/components/ui/Modal";
 import OrderNowButton from "@/components/ui/OrderNowButton";
 import { useCart } from "@/contexts/CartContext";
-import { useCreateOrder } from "@/hooks/useOrders";
+import { useCreateOrder } from "@/hooks/api/useOrders";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 

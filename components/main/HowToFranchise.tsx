@@ -1,7 +1,7 @@
 'use client'
 
 import { animationStyle } from '@/helper/animationStyle';
-import { useIntersectionAnimation, useIntersectionAnimationList } from '@/hooks/useIntersectionAnimation';
+import { useIntersectionAnimation, useIntersectionAnimationList } from '@/hooks/utils/useIntersectionAnimation';
 import { getLucideIcon } from '@/lib/iconUtils';
 import React from 'react'
 

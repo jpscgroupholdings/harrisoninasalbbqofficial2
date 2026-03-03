@@ -4,8 +4,8 @@ import { animationStyle } from "@/helper/animationStyle";
 import {
   useIntersectionAnimation,
   useIntersectionAnimationList,
-} from "@/hooks/useIntersectionAnimation";
-import { useScrollToSection } from "@/hooks/useScrollToSection";
+} from "@/hooks/utils/useIntersectionAnimation";
+import { useScrollToSection } from "@/hooks/utils/useScrollToSection";
 import { getLucideIcon } from "@/lib/iconUtils";
 
 const About = () => {

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useCart } from "@/contexts/CartContext";
 import { ShoppingBag, Menu, X, User, LogIn, Package } from "lucide-react";
 import Link from "next/link";
-import { useOrders } from "@/hooks/useOrders";
+import { useOrders } from "@/hooks/api/useOrders";
 import BrandLogo from "@/components/BrandLogo";
 import AuthModal from "../AuthModal";
 

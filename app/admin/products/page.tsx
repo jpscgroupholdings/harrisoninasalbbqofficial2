@@ -4,7 +4,7 @@ import ProductTable from "@/components/admin/ProductTable";
 import { useState } from "react";
 import ProductsModal from "./ProductsModal";
 import { Product } from "@/types/adminType";
-import { useProducts } from "@/hooks/useProducts";
+import { useProducts } from "@/hooks/api/useProducts";
 import SectionHeader from "@/components/admin/SectionHeader";
 
 const ProductsPage = () => {

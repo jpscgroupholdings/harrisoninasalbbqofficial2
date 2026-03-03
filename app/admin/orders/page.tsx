@@ -3,7 +3,7 @@
 import { InputField } from "@/components/ui/InputField";
 import OrdersTable from "@/components/admin/OrdersTable";
 import React, { useState } from "react";
-import { useOrders } from "@/hooks/useOrders";
+import { useOrders } from "@/hooks/api/useOrders";
 
 const OrdersPage = () => {
   const [searchQuery, setSearchQuery] = useState("");

@@ -2,7 +2,7 @@ import React, { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { InputField } from "@/components/ui/InputField";
 import Modal from "@/components/ui/Modal";
 import { Beef, DollarSign, Layers, Link } from "lucide-react";
-import { useCreateProduct, useUpdateProduct } from "@/hooks/useProducts";
+import { useCreateProduct, useUpdateProduct } from "@/hooks/api/useProducts";
 import { Category, Product } from "@/types/adminType";
 import { toast } from "sonner";
 

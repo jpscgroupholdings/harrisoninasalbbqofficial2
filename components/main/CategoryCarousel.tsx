@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
-import { useBreakpoint } from "@/hooks/useBreakPoint";
+import { useBreakpoint } from "@/hooks/utils/useBreakPoint";
 
 const VISIBLE_COUNT = 6;
 

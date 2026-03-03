@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { StatusBadge } from "./StatusBadge";
-import { useOrders } from "@/hooks/useOrders";
+import { useOrders } from "@/hooks/api/useOrders";
 
 interface OrderDetailsProps {
   orderId: string;

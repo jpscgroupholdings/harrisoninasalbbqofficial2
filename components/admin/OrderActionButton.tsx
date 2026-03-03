@@ -1,7 +1,7 @@
 // components/OrderActionButton.tsx
 "use client";
 import { ORDER_TRANSITIONS, OrderStatus } from "@/utils/orderActions";
-import { useUpdateOrder } from "@/hooks/useOrders";
+import { useUpdateOrder } from "@/hooks/api/useOrders";
 
 interface Props {
   orderId: string;

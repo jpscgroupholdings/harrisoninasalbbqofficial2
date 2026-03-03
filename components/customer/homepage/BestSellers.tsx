@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { menuData } from '@/data/menuData';
 import { useCart } from '@/contexts/CartContext';
 import { TrendingUp, ShoppingBag, Check, Star } from 'lucide-react';
-import { useIntersectionAnimation, useIntersectionAnimationList } from '@/hooks/useIntersectionAnimation';
+import { useIntersectionAnimation, useIntersectionAnimationList } from '@/hooks/utils/useIntersectionAnimation';
 import { animationStyle } from '@/helper/animationStyle';
 
 const BestSellers: React.FC = () => {

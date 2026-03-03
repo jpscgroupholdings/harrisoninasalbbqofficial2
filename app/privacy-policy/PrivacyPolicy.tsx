@@ -1,6 +1,6 @@
 "use client";
 
-import { useIntersectionAnimation } from "@/hooks/useIntersectionAnimation";
+import { useIntersectionAnimation } from "@/hooks/utils/useIntersectionAnimation";
 import {
   Shield,
   Lock,
