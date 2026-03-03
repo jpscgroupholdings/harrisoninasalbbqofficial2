@@ -1,24 +1,25 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { categories, menuData } from "@/data/menuData";
-import { MenuItem } from "@/types/MenuTypes";
-import { Search, SlidersHorizontal, X } from "lucide-react";
+import { ArrowRight, Search, SlidersHorizontal, X } from "lucide-react";
 import ProductCard from "../../ui/ProductCard";
 import PromoBanner from "./PromoBanner";
 import { LINKS } from "@/constant/links";
 import { useScrollToSection } from "@/hooks/useScrollToSection";
 import { useProducts } from "@/hooks/useProducts";
-import { Product } from "@/types/adminType";
+import { Category, Product } from "@/types/adminType";
+import { InputField } from "@/components/ui/InputField";
+import { useMenuCategories } from "@/components/main/CategoryCarousel";
 
 const MenuSection = ({
   variant = "full",
 }: {
   variant?: "landing" | "full";
 }) => {
-
-  const {data: products = []} = useProducts();
+  const { data: products = [], refetch } = useProducts();
   useScrollToSection();
+
+  const { data: categories } = useMenuCategories();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<
@@ -36,7 +37,9 @@ const MenuSection = ({
 
     // Landing page logic
     if (variant === "landing") {
-      items = items.filter((item) => item.price > 300 && item.description).slice(0, 7);
+      items = items
+        .filter((item) => item.price > 300 && item.description)
+        .slice(0, 7);
     }
 
     // Full menu logic
@@ -129,11 +132,11 @@ const MenuSection = ({
           ref={headerRef}
           className="text-center mb-12 opacity-0 transition-all duration-700"
         >
-          <p className="text-[#ef4501] font-semibold text-xl uppercase tracking-widest">
+          <p className="text-brand-color-500 font-semibold text-xl uppercase tracking-widest">
             Our Menu
           </p>
           <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mt-2 mb-4">
-           Favourite Dishes
+            Favourite Dishes
           </h2>
           <p className="text-gray-500 max-w-2xl mx-auto">
             From our signature Chicken Inasal to mouthwatering BBQ, every dish
@@ -189,44 +192,41 @@ const MenuSection = ({
             >
               {/** Category Pills */}
               <div className="flex flex-wrap gap-2 justify-center lg:justify-start">
-                {categories.map((category) => (
+                {categories?.map((category: Category) => (
                   <button
-                    key={category.id}
-                    onClick={() => handleChangeCategory(category.title)}
+                    key={category._id}
+                    onClick={() => handleChangeCategory(category.name)}
                     className={`px-4 py-2 cursor-pointer rounded-full text-sm font-medium transition-all duration-300 ${
-                      activeCategory === category.title
-                        ? "bg-[#ef4501] text-white shadow-lg shadow-[#ef4501]/30"
+                      activeCategory === category.name
+                        ? "bg-brand-color-500 text-white shadow-lg shadow-brand-color-500/30"
                         : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
                     }`}
                   >
-                    {category.title}
+                    {category.name}
                   </button>
                 ))}
               </div>
               {/** Search and sort */}
               <div className="flex gap-3 lg:ml-auto">
                 {/** Search */}
-                <div className="relative flex-1 lg:w-64">
-                  <Search
-                    size={18}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Search Menu..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="text-gray-600 w-full pl-10 pr-10 py-2.5 rounded-xl border border-gray-200 focus:border=[#ef4501] focus:ring-2 focus:ring-[#ef4501]/20 outline-none transition-all"
-                  />
-                  {searchQuery && (
-                    <button
-                      onClick={() => setSearchQuery("")}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-red-600 hover:text-red-700 cursor-pointer"
-                    >
-                      <X size={18} />
-                    </button>
-                  )}
-                </div>
+                <InputField
+                  type="text"
+                  placeholder="Search Menu..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  leftIcon={<Search size={18} />}
+                  className="rounded-xl text-sm min-w-2xs"
+                  rightElement={
+                    searchQuery && (
+                      <button
+                        onClick={() => setSearchQuery("")}
+                        className="text-red-600 hover:text-red-700 cursor-pointer"
+                      >
+                        <X size={18} />
+                      </button>
+                    )
+                  }
+                />
                 {/** Sort dropdown */}
                 <div className="relative text-gray-600">
                   <select
@@ -234,7 +234,7 @@ const MenuSection = ({
                     id=""
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as any)}
-                    className="appearance-none bg-white pl-4 pr-10 py-2.5 rounded-xl border border-gray-200 focus:border-[#ef4501] focus:ring-2 focus:ring-[#ef4501]/20 outline-none transition-all cursor-pointer"
+                    className="appearance-none bg-white pl-4 pr-10 py-2.5 rounded-xl border border-gray-200 focus:border-brand-color-500 focus:ring-2 focus:ring-brand-color-500/20 outline-none transition-all cursor-pointer"
                   >
                     <option value="default">Sort By: </option>
                     <option value="price-low">Price: Low to High</option>
@@ -259,7 +259,7 @@ const MenuSection = ({
         )}
 
         {/** Promo banners like specials, buy 1 take 1 */}
-        <PromoBanner type="multi"/>
+        <PromoBanner type="multi" />
 
         {/** Product Grid */}
         {computedItems.length > 0 ? (
@@ -270,7 +270,7 @@ const MenuSection = ({
                 <h2 className="text-[1.75rem] font-bold text-[#1a1a1a] tracking-tight">
                   Customer Favourites 🔥
                 </h2>
-                <div className="w-10 h-0.75 bg-[#ef4501] mt-4 rounded-full" />
+                <div className="w-10 h-0.75 bg-brand-color-500 mt-4 rounded-full" />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -309,26 +309,17 @@ const MenuSection = ({
                   <a
                     aria-label="View full menu"
                     href="/menu"
-                    className="group relative inline-flex items-center gap-3 px-8 py-4 bg-[#ef4501] text-white font-semibold rounded-full shadow-lg hover:shadow-xl hover:shadow-[#ef4501]/30 transition-all duration-300 hover:scale-105 overflow-hidden"
+                    className="group relative inline-flex items-center gap-3 px-8 py-4 bg-brand-color-500 text-white font-semibold rounded-full shadow-lg hover:shadow-xl hover:shadow-brand-color-500/30 transition-all duration-300 hover:scale-105 overflow-hidden"
                   >
                     {/* Animated background gradient */}
-                    <span className="absolute inset-0 bg-linear-to-r from-[#ff4500] to-[#ef4501] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <span className="absolute inset-0 bg-linear-to-r from-[#ff4500] to-brand-color-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
                     {/* Content */}
                     <span className="relative z-10">View Full Menu</span>
-                    <svg
-                      className="relative z-10 w-6 h-6 transition-transform duration-300 group-hover:translate-x-1"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M13 7l5 5m0 0l-5 5m5-5H6"
-                      />
-                    </svg>
+                    <ArrowRight
+                      size={22}
+                      className="relative transition-transform duration-300 group-hover:translate-x-1"
+                    />
 
                     {/* Shine effect */}
                     <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-linear-to-r from-transparent via-white/20 to-transparent" />
@@ -355,7 +346,7 @@ const MenuSection = ({
                   <h2 className="text-[1.75rem] font-bold text-[#1a1a1a] tracking-tight">
                     {category}
                   </h2>
-                  <div className="w-10 h-0.75 bg-[#ef4501] mt-4 rounded-full" />
+                  <div className="w-10 h-0.75 bg-brand-color-500 mt-4 rounded-full" />
                 </div>
 
                 {/* Items Grid */}
@@ -387,8 +378,14 @@ const MenuSection = ({
               No product found
             </h3>
             <p className="text-gray-400">
-              Try adjusting your search or filter criteria
+              We couldn't find the product. Try to reload again
             </p>
+            <button
+              onClick={() => refetch()}
+              className="underline mt-1 text-brand-color-500 hover:text-brand-color-600 cursor-pointer"
+            >
+              Reload
+            </button>
           </div>
         )}
       </div>
