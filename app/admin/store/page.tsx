@@ -19,9 +19,9 @@ import { toast } from "sonner";
 const initialBranches = [
   {
     _id: "1",
-    name: "Main Branch",
+    name: "Century Branch",
     code: "BR-001",
-    address: { street: "123 Ayala Ave", city: "Makati", zipCode: "1226" },
+    address: { street: "123 Poblacion Ave", city: "Makati", zipCode: "1226" },
     contactNumber: "09171234567",
     operatingHours: {
       open: "08:00",
@@ -32,9 +32,9 @@ const initialBranches = [
   },
   {
     _id: "2",
-    name: "North Branch",
+    name: "King's Court Branch",
     code: "BR-002",
-    address: { street: "45 Quezon Blvd", city: "Quezon City", zipCode: "1100" },
+    address: { street: "45 Quezon Blvd", city: "Makati City", zipCode: "1100" },
     contactNumber: "09281234567",
     operatingHours: {
       open: "09:00",
@@ -45,7 +45,7 @@ const initialBranches = [
   },
   {
     _id: "3",
-    name: "South Branch",
+    name: "Manila Branch",
     code: "BR-003",
     address: { street: "78 Alabang Rd", city: "Muntinlupa", zipCode: "1780" },
     contactNumber: "09391234567",
@@ -179,7 +179,7 @@ export default function BranchManagement() {
       />
 
       {/* Stats row */}
-      <div className="grid grid-cols-3 gap-4 my-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 my-6">
         {[
           { label: "Total Branches", value: branches.length, icon: "Store" },
           {
@@ -270,7 +270,7 @@ export default function BranchManagement() {
                       style={{
                         fontFamily: "'DM Mono', monospace",
                       }}
-                      className="text-xs bg-gray-500 py-1 px-2.5 rounded-md text-white"
+                      className="text-xs bg-gray-500 py-1 px-2.5 rounded-md text-white text-nowrap"
                     >
                       {branch.code}
                     </span>
@@ -295,16 +295,8 @@ export default function BranchManagement() {
                           key={d}
                           style={{
                             fontFamily: "'DM Mono', monospace",
-                            background: branch.operatingHours.daysOpen.includes(
-                              d,
-                            )
-                              ? "#1a1a1a"
-                              : "#f0ede8",
-                            color: branch.operatingHours.daysOpen.includes(d)
-                              ? "#fff"
-                              : "#bbb",
                           }}
-                          className="text-xs py-0.5 px-1.5"
+                          className={`text-xs py-0.5 px-1.5 rounded-lg ${branch.operatingHours.daysOpen.includes(d) ? "bg-brand-color-500 text-white" : "bg-gray-100 text-gray-900"}`}
                         >
                           {d}
                         </span>
@@ -313,7 +305,7 @@ export default function BranchManagement() {
                   </TableCell>
                   <TableCell>
                     <span
-                      className={`text-sm font-semibold py-1.5 px-3 text-white ${branch.isActive ? "bg-green-500 " : "bg-red-500"}`}
+                      className={`text-xs font-semibold py-1.5 px-3 rounded-lg text-white ${branch.isActive ? "bg-dark-green-500 " : "bg-red-600"}`}
                     >
                       {branch.isActive ? "Active" : "Inactive"}
                     </span>
@@ -321,7 +313,8 @@ export default function BranchManagement() {
                   <TableCell>
                     <button
                       onClick={() => toggleStatus(branch._id)}
-                      className="text-sm font-medium py-1.5 px-2.5 rounded-lg border border-gray-500 bg-white text-gray-900 transition-color duration-0.5 hover:bg-brand-color-500 hover:text-white hover:border-brand-color-600"
+                      className="text-xs font-medium py-1.5 px-2.5 rounded-lg border border-gray-500 bg-white text-gray-900 transition-color duration-0.5 hover:bg-brand-color-500 hover:text-white hover:border-brand-color-600"
+                      aria-label={`${branch.isActive ? "Deactivate" : "Activate"} button `}
                     >
                       {branch.isActive ? "Deactivate" : "Activate"}
                     </button>
