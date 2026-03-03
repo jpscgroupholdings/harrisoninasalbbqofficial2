@@ -5,16 +5,21 @@ import { useState } from "react";
 import ProductsModal from "./ProductsModal";
 import { Product } from "@/types/adminType";
 import { useProducts } from "@/hooks/useProducts";
+import SectionHeader from "@/components/admin/SectionHeader";
 
 const ProductsPage = () => {
-  
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
-  const {data: products = [], isLoading, isError, error, refetch} = useProducts();
-  
-  const sortedProducts = products.sort((a, b) => a.stock - b.stock)
+  const {
+    data: products = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useProducts();
 
+  const sortedProducts = products.sort((a, b) => a.stock - b.stock);
 
   if (isLoading) {
     return (
@@ -38,23 +43,15 @@ const ProductsPage = () => {
   return (
     <section className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-stone-800 mb-2">
-            Products Management
-          </h1>
-          <p className="text-stone-500">Manage your menu items and inventory</p>
-        </div>
-        <button
-          onClick={() => {
-            setSelectedProduct(null);
-            setIsModalOpen(true);
-          }}
-          className="px-6 py-3 bg-[#ef4501] text-white rounded-xl font-semibold hover:shadow-lg hover:scale-105 transition-all duration-200"
-        >
-          + Add New Product
-        </button>
-      </div>
+      <SectionHeader
+        title={"Products Management"}
+        subTitle="Manage your menu items and inventory"
+        onClick={() => {
+          setSelectedProduct(null);
+          setIsModalOpen(true);
+        }}
+        btnTxt="+ Add New Product"
+      />
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
