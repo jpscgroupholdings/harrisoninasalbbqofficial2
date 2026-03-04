@@ -1,5 +1,5 @@
 import { connectDB } from "@/lib/mongodb";
-import Branch from "@/models/Branch";
+import {Branch} from "@/models/Branch";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(){
