@@ -26,7 +26,7 @@ return (
   <button
     onClick={handleClick}
     disabled={isPending}
-    className={`text-sm rounded-full font-bold text-white py-2 px-4 cursor-pointer ${transition.variant}`}
+    className={`text-xs rounded-full font-bold text-white py-2 px-4 cursor-pointer ${transition.variant}`}
   >
     {isPending ? "Updating..." : transition.label}
 
