@@ -45,6 +45,43 @@ export const useCreateBranch = () => {
   });
 };
 
+const updateBranch = async ({
+  id,
+  branchData,
+}: {
+  id: string;
+  branchData: BranchFormData;
+}): Promise<Branch> => {
+  const response = await fetch(`/api/branch/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "applicaiton/json",
+    },
+    body: JSON.stringify(branchData),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) throw data;
+  return data;
+};
+
+export const useUpdateBranch = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<Branch, {error: string}, {id: string, branchData: BranchFormData}>({
+    mutationFn: updateBranch,
+    onSuccess: () => {
+      queryClient.invalidateQueries({queryKey: ["branches"]});
+      toast.success("Branch Updated successfully!")
+    },
+    onError: (error) => {
+      toast.error(error.error || "Failed to update branch")
+    }
+    
+  })
+}
+
 // ---- toggle branch status ----
 const toggleBranchStatus = async (id: string): Promise<Branch> => {
   const res = await fetch(`/api/branch/${id}`, { method: "PATCH" });

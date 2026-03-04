@@ -13,13 +13,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { getLucideIcon } from "@/lib/iconUtils";
-import { BranchFormData, BranchFormErrors } from "@/types/branch";
+import { Branch, BranchFormData, BranchFormErrors } from "@/types/branch";
 import { Ban, Loader2, Search } from "lucide-react";
 import { ChangeEvent, useState } from "react";
 import {
   useBranches,
   useCreateBranch,
   useToggleBranchStatus,
+  useUpdateBranch,
 } from "@/hooks/api/useBranch";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -40,9 +41,11 @@ export default function BranchManagement() {
   const [form, setForm] = useState<BranchFormData>(emptyForm);
   const [errors, setErrors] = useState<BranchFormErrors>({});
   const [search, setSearch] = useState("");
+  const [branchToEdit, setBranchToEdit] = useState<Branch | null>(null);
 
   const { data: branches = [], isLoading } = useBranches();
   const createBranch = useCreateBranch();
+  const updateBranch = useUpdateBranch();
   const toggleStatus = useToggleBranchStatus();
 
   const filtered = branches.filter(
@@ -61,17 +64,45 @@ export default function BranchManagement() {
     return e;
   };
 
+  const handleEditClick = (branch: Branch) => {
+    setBranchToEdit(branch);
+    setForm({
+      name: branch.name,
+      street: branch.address.street,
+      city: branch.address.city,
+      zipCode: branch.address.zipCode,
+      contactNumber: branch.contactNumber,
+      open: branch.operatingHours.open,
+      close: branch.operatingHours.close,
+      daysOpen: branch.operatingHours.daysOpen,
+    });
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setBranchToEdit(null);
+  };
+
   const handleSubmit = async () => {
-    const e = validate();
-    if (Object.keys(e).length > 0) {
-      setErrors(e);
+    const errors = validate();
+    if (Object.keys(errors).length > 0) {
+      setErrors(errors);
       return;
     }
+    if (branchToEdit) {
+      await updateBranch.mutateAsync({
+        id: branchToEdit._id,
+        branchData: form,
+      });
+    } else {
+      await createBranch.mutateAsync(form); // awaited so modal only closes on success
+    }
 
-    await createBranch.mutateAsync(form); // awaited so modal only closes on success
     setShowModal(false);
     setForm(emptyForm);
     setErrors({});
+    setBranchToEdit(null);
   };
 
   const handleChangeForm = (e: ChangeEvent<HTMLInputElement>) => {
@@ -199,7 +230,7 @@ export default function BranchManagement() {
                   key={branch._id}
                   className="bg-transparent hover:bg-gray-100 border-gray-100"
                 >
-                  <TableCell>{branch.name}</TableCell>
+                  <TableCell className="capitalize">{branch.name}</TableCell>
                   <TableCell>
                     <span
                       style={{ fontFamily: "'DM Mono', monospace" }}
@@ -242,13 +273,21 @@ export default function BranchManagement() {
                     </span>
                   </TableCell>
                   <TableCell>
-                    <button
-                      onClick={() => toggleStatus.mutate(branch._id)}
-                      disabled={toggleStatus.isPending}
-                      className="text-xs font-medium py-1.5 px-2.5 rounded-lg border border-gray-500 bg-white text-gray-900 hover:bg-brand-color-500 hover:text-white hover:border-brand-color-600 disabled:opacity-50"
-                    >
-                      {branch.isActive ? "Deactivate" : "Activate"}
-                    </button>
+                    <div className="flex items-center justify-center gap-2">
+                      <button
+                        onClick={() => handleEditClick(branch)}
+                        className="text-xs font-medium py-1.5 px-2.5 rounded-lg border border-dark-green-600 bg-dark-green-500 text-white hover:bg-dark-green-600 hover:border-dark-green-600 disabled:opacity-50 cursor-pointer"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => toggleStatus.mutate(branch._id)}
+                        disabled={toggleStatus.isPending}
+                        className="text-xs font-medium py-1.5 px-2.5 rounded-lg border border-gray-500 bg-white text-gray-900 hover:bg-brand-color-500 hover:text-white hover:border-brand-color-600 disabled:opacity-50 cursor-pointer"
+                      >
+                        {branch.isActive ? "Deactivate" : "Activate"}
+                      </button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
@@ -259,7 +298,7 @@ export default function BranchManagement() {
 
       {/* Modal */}
       {showModal && (
-        <Modal title="Add New Branch" onClose={() => setShowModal(false)}>
+        <Modal title="Add New Branch" onClose={handleCloseModal}>
           <div>
             <p className="text-sm font-bold text-gray-900 tracking-widest uppercase mb-3">
               Basic Info
@@ -273,6 +312,7 @@ export default function BranchManagement() {
                 placeholder="e.g., Century Mall"
                 error={errors.name}
                 required
+                className="capitalize"
               />
             </div>
 
@@ -287,6 +327,7 @@ export default function BranchManagement() {
                 name="street"
                 placeholder="e.g., 123 Rizal Ave"
                 error={errors.street}
+                className="capitalize"
                 required
               />
               <div className="grid grid-cols-2 gap-3">
@@ -297,6 +338,7 @@ export default function BranchManagement() {
                   name="city"
                   placeholder="e.g., Makati"
                   error={errors.city}
+                  className="capitalize"
                   required
                 />
                 <InputField
@@ -369,7 +411,11 @@ export default function BranchManagement() {
                 {createBranch.isPending && (
                   <Loader2 size={14} className="animate-spin" />
                 )}
-                {createBranch.isPending ? "Saving..." : "Add Branch"}
+                {createBranch.isPending
+                  ? "Saving..."
+                  : branchToEdit
+                    ? "Edit Branch"
+                    : "Add Branch"}
               </button>
             </div>
           </div>
