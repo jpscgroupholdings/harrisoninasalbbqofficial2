@@ -69,11 +69,6 @@ export async function proxy(request: NextRequest) {
     return NextResponse.rewrite(url);
   }
 
-  if(subdomain === 'admin-testing'){
-    url.pathname = `/admin-testing${pathname}`;
-    return NextResponse.rewrite(url);
-  }
-
   // ── Main domain ──────────────────────────────────────────────
   url.pathname = `/main${pathname}`;
   return NextResponse.rewrite(url);
@@ -81,6 +76,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico|images|videos|promos|privacy-policy).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|images|videos|promos|privacy-policy|admin-testing).*)',
   ],
 }
