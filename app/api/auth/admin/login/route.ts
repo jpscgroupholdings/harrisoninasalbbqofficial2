@@ -23,10 +23,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // check if user exists
     const staff = await Staff.findOne({ email, isActive: true });
+    if (!staff) {
+      return NextResponse.json(
+        { error: "Invalid credentials" },
+        { status: 401 },
+      );
+    }
+
+    // check if password is correct
     const isValid = await bcrypt.compare(password, staff.password);
 
-    if (!staff || !isValid) {
+    if (!isValid) {
       return NextResponse.json(
         { error: "Invalid credentials" },
         { status: 401 },
