@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 
-const BrandLogo = () => {
+const BrandLogo = ({color = 'normal'} : {color?: "white" | "normal"}) => {
   return (
     <Link
       href={"/"}
@@ -10,7 +10,7 @@ const BrandLogo = () => {
     >
       <div className="flex items-center">
         <Image
-          src="/images/harrison_logo_landscape.png"
+          src={color === 'normal' ? "/images/harrison_logo_landscape.png" : "/images/harrison_logo_landscape_white.png"}
           alt="Harrison"
           width={240}
           height={60}

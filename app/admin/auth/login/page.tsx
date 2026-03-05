@@ -1,6 +1,8 @@
 "use client";
 
+import BrandLogo from "@/components/BrandLogo";
 import { InputField } from "@/components/ui/InputField";
+import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { ChangeEvent, useState } from "react";
 import { toast } from "sonner";
@@ -41,82 +43,32 @@ const LoginPage = () => {
         rel="stylesheet"
       />
       <main
-        className="grid grid-cols-1 md:grid-cols-3 min-h-screen w-full"
+        className="grid grid-cols-1 lg:grid-cols-3 min-h-screen w-full"
         style={{ fontFamily: "'DM Sans', sans-serif" }}
       >
         {/* Left panel */}
         <div
-          className="hidden md:flex col-span-2 flex-col justify-between p-12 relative overflow-hidden"
-          style={{ background: "#0f0f0f" }}
+          className="hidden lg:flex col-span-2 flex-col justify-between p-12 relative overflow-hidden bg-brand-color-500/90"
         >
-          {/* Grid texture */}
-          <div
-            className="absolute inset-0 opacity-[0.04]"
-            style={{
-              backgroundImage:
-                "linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)",
-              backgroundSize: "48px 48px",
-            }}
-          />
-
-          {/* Glow */}
-          <div
-            className="absolute top-[-80px] left-[-80px] w-[420px] h-[420px] rounded-full opacity-20 blur-[120px]"
-            style={{ background: "var(--brand-color, #f97316)" }}
-          />
-          <div
-            className="absolute bottom-[-60px] right-[-60px] w-[300px] h-[300px] rounded-full opacity-10 blur-[100px]"
-            style={{ background: "var(--brand-color, #f97316)" }}
-          />
 
           {/* Logo */}
-          <div className="relative z-10">
-            <div className="flex items-center gap-2.5">
-              <div
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold"
-                style={{ background: "var(--brand-color, #f97316)" }}
-              >
-                ◈
-              </div>
-              <span
-                className="text-white text-lg font-semibold tracking-tight"
-                style={{ fontFamily: "'Syne', sans-serif" }}
-              >
-                OrderHub
-              </span>
-            </div>
-          </div>
+         <BrandLogo color="white"/>
 
           {/* Center content */}
           <div className="relative z-10">
-            <div
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-8 text-xs font-medium tracking-widest uppercase"
-              style={{
-                background: "rgba(255,255,255,0.06)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                color: "rgba(255,255,255,0.5)",
-              }}
-            >
-              <span
-                className="w-1.5 h-1.5 rounded-full animate-pulse"
-                style={{ background: "var(--brand-color, #f97316)" }}
-              />
-              Admin Portal
-            </div>
-
             <h1
               className="text-5xl font-extrabold text-white leading-[1.1] mb-6"
               style={{ fontFamily: "'Syne', sans-serif" }}
             >
               Manage your
               <br />
-              <span style={{ color: "var(--brand-color, #f97316)" }}>
+              <span className="text-dark-green-600">
                 operations
               </span>
               <br />
               with ease.
             </h1>
-            <p className="text-base max-w-sm" style={{ color: "rgba(255,255,255,0.4)" }}>
+            <p className="text-base max-w-sm text-gray-200">
               Branches, staff, inventory, and orders — all in one place.
             </p>
           </div>
@@ -130,15 +82,14 @@ const LoginPage = () => {
             ].map((s) => (
               <div key={s.value}>
                 <p
-                  className="text-sm font-bold mb-0.5"
+                  className="text-sm font-bold mb-0.5 text-white"
                   style={{
-                    fontFamily: "'Syne', sans-serif",
-                    color: "var(--brand-color, #f97316)",
+                    fontFamily: "'Syne', sans-serif"
                   }}
                 >
                   {s.value}
                 </p>
-                <p className="text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>
+                <p className="text-xs text-gray-300">
                   {s.label}
                 </p>
               </div>
@@ -149,20 +100,9 @@ const LoginPage = () => {
         {/* Right panel — form */}
         <div className="flex flex-col items-center justify-center w-full px-8 py-12 bg-white">
           {/* Mobile logo */}
-          <div className="flex md:hidden items-center gap-2 mb-10">
-            <div
-              className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold"
-              style={{ background: "var(--brand-color, #f97316)" }}
-            >
-              ◈
-            </div>
-            <span
-              className="text-gray-900 text-base font-semibold"
-              style={{ fontFamily: "'Syne', sans-serif" }}
-            >
-              OrderHub
-            </span>
-          </div>
+         <div className="lg:hidden mb-10">
+            <BrandLogo />
+         </div>
 
           <div className="w-full max-w-sm">
             <div className="mb-8">
@@ -198,28 +138,11 @@ const LoginPage = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-2.5 rounded-xl text-sm font-semibold text-white mt-2 transition-all duration-150 disabled:opacity-60 flex items-center justify-center gap-2"
-                style={{ background: "var(--brand-color, #f97316)" }}
+                className="w-full py-2.5 rounded-xl text-sm font-semibold bg-brand-color-500 hover:bg-brand-color-600 text-white mt-2 transition-all duration-150 disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer"
               >
                 {loading ? (
                   <>
-                    <svg
-                      className="animate-spin w-4 h-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12" cy="12" r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8v8z"
-                      />
-                    </svg>
+                    <Loader2 size={14} className="animate-spin"/>
                     Signing in...
                   </>
                 ) : (
@@ -228,8 +151,8 @@ const LoginPage = () => {
               </button>
             </form>
 
-            <p className="text-xs text-center text-gray-300 mt-8">
-              © {new Date().getFullYear()} OrderHub. All rights reserved.
+            <p className="text-xs text-center text-gray-400 mt-8">
+              © {new Date().getFullYear()} House of Inasal & BBQ. All rights reserved.
             </p>
           </div>
         </div>
