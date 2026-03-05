@@ -1,11 +1,13 @@
 import { useOrders } from "@/hooks/api/useOrders";
 import { useProducts } from "@/hooks/api/useProducts";
 import { getLucideIcon } from "@/lib/iconUtils";
-import { LogOut, X } from "lucide-react";
+import { Loader2, LogOut, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import React from "react";
 import BrandLogo from "../BrandLogo";
+import { useState } from "react";
+import Modal from "../ui/Modal";
+import { useLogout } from "@/hooks/api/useLogout";
 
 interface SidebarProps {
   isMobileOpen: boolean;
@@ -26,12 +28,16 @@ const navItems = [
 
 const Sidebar = ({ isMobileOpen, onClose }: SidebarProps) => {
   const pathname = usePathname();
-  const {data: placedOrders = []} = useOrders();
-  const {data: products = []} = useProducts();
+  const { data: placedOrders = [] } = useOrders();
+  const { data: products = [] } = useProducts();
+  const logout = useLogout();
 
-  const pendingCount = placedOrders.filter(order => order.status === 'pending').length;
-  const lowProductStock = products.filter(order => order.stock <= 10).length;
+  const pendingCount = placedOrders.filter(
+    (order) => order.status === "pending",
+  ).length;
+  const lowProductStock = products.filter((order) => order.stock <= 10).length;
 
+  const [logoutModal, setLogoutModal] = useState(false);
 
   return (
     <>
@@ -76,17 +82,16 @@ const Sidebar = ({ isMobileOpen, onClose }: SidebarProps) => {
                       <span className="ml-auto w-2 h-2 rounded-full bg-white" />
                     )}
                     {item.name === "Orders" && pendingCount > 0 && (
-                       <div className="absolute -top-1 right-0 flex items-center justify-center w-5 h-5 text-xs bg-red-600 text-white rounded-full">
-                      {pendingCount}
-                    </div>
+                      <div className="absolute -top-1 right-0 flex items-center justify-center w-5 h-5 text-xs bg-red-600 text-white rounded-full">
+                        {pendingCount}
+                      </div>
                     )}
 
                     {item.name === "Products" && lowProductStock > 0 && (
-                       <div className="absolute -top-1 right-0 flex items-center justify-center w-5 h-5 text-xs bg-red-600 text-white rounded-full">
-                      {lowProductStock}
-                    </div>
+                      <div className="absolute -top-1 right-0 flex items-center justify-center w-5 h-5 text-xs bg-red-600 text-white rounded-full">
+                        {lowProductStock}
+                      </div>
                     )}
-                   
                   </Link>
                 </li>
               );
@@ -95,13 +100,44 @@ const Sidebar = ({ isMobileOpen, onClose }: SidebarProps) => {
 
           {/** Logout */}
           <div className="mt-6 pt-6 border-t border-stone-200">
-            <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 transition-all duration-200 font-semibold text-sm cursor-pointer">
+            <button
+              onClick={() => setLogoutModal(true)}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 transition-all duration-200 font-semibold text-sm cursor-pointer"
+            >
               <LogOut size={16} />
               <span>Logout</span>
             </button>
           </div>
         </nav>
       </aside>
+
+      {logoutModal && (
+        <Modal title="Logout?" onClose={() => setLogoutModal(false)}>
+          <div className="flex flex-col gap-4">
+            <p className="text-xl text-gray-500">
+              Are you sure you want to logout?
+            </p>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setLogoutModal(false)}
+                className="py-1.5 px-4 rounded-lg border border-gray-300 text-gray-600 text-lg font-medium hover:bg-gray-50 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => logout.mutate()}
+                disabled={logout.isPending}
+                className="py-1.5 px-4 rounded-lg bg-red-500 hover:bg-red-600 text-white text-lg font-medium disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+              >
+                {logout.isPending && (
+                  <Loader2 size={14} className="animate-spin" />
+                )}
+                {logout.isPending ? "Logging out... " : "Logout"}
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </>
   );
 };
