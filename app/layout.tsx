@@ -3,7 +3,7 @@ import "./globals.css";
 import { Toaster } from "sonner";
 import { QueryProvider } from "@/provider/QueryProvider";
 import { dmSans, syne } from "./font";
-
+import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 
 export const metadata: Metadata = {
   title: "Home | Harrison House of Inasal & BBQ",
@@ -52,10 +52,21 @@ export const metadata: Metadata = {
   icons: {
     icon: "images/harrison_logo.png",
   },
+
+  // for pwa
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Harrison House of Inasal & BBQ",
+  },
 };
 
 export const viewport: Viewport = {
   themeColor: "#ef4501",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({
@@ -67,13 +78,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${syne.className} antialiased`}
-      >
+      <body className={`${syne.className} antialiased`}>
         <QueryProvider>
           <Toaster richColors position="top-right" closeButton />
           {children}
           {modal}
+           <PWAInstallPrompt /> 
         </QueryProvider>
       </body>
     </html>
