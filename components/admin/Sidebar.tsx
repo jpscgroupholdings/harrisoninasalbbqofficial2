@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import BrandLogo from "../BrandLogo";
 import { useState } from "react";
 import Modal from "../ui/Modal";
-import { useLogout } from "@/hooks/api/useLogout";
+import { useLogoutAdmin } from "@/hooks/api/useLogout";
 
 interface SidebarProps {
   isMobileOpen: boolean;
@@ -30,7 +30,7 @@ const Sidebar = ({ isMobileOpen, onClose }: SidebarProps) => {
   const pathname = usePathname();
   const { data: placedOrders = [] } = useOrders();
   const { data: products = [] } = useProducts();
-  const logout = useLogout();
+  const logout = useLogoutAdmin();
 
   const pendingCount = placedOrders.filter(
     (order) => order.status === "pending",
