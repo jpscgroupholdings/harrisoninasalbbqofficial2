@@ -41,7 +41,7 @@ const MainLocationSection = () => {
               OUR LOCATIONS
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Find a Harrison House of Inasal BBQ branch near you.
+              Find a Harrison House of Inasal & BBQ branch near you.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
