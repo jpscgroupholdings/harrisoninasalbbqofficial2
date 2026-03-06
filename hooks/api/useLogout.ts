@@ -1,5 +1,4 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 export const useLogoutAdmin = () => {
@@ -23,7 +22,6 @@ export const useLogoutAdmin = () => {
 };
 
 export const useLogoutCustomer = () => {
-  const router = useRouter();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -35,7 +33,7 @@ export const useLogoutCustomer = () => {
     },
     onSuccess: () => {
       queryClient.clear(); // ← clears customer-me and other cached data
-      router.push("/");
+      window.location.href = "/";
     },
     onError: () => {
       toast.error("Failed to logout. Try again.");
