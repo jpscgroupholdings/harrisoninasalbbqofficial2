@@ -13,7 +13,7 @@ const HowToFranchise = () => {
       icon: "Send",
       title: "Inquiry",
       description:
-        "Submit your franchise application and express your interest in joining the Harrison Mang Inasal family.",
+        "Submit your franchise application and express your interest in joining the Harrison House of Inasal & BBQ family.",
     },
     {
       icon: "NotebookPen",
@@ -47,7 +47,7 @@ const HowToFranchise = () => {
               HOW TO FRANCHISE
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Join the Harrison Mang Inasal BBQ family and bring authentic
+              Join the Harrison House of Inasal & BBQ family and bring authentic
               Filipino BBQ to your community.
             </p>
           </div>

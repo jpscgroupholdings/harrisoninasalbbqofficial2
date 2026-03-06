@@ -35,7 +35,7 @@ export default function Footer() {
         </div>
         
         <div className="border-t border-gray-100 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500">
-          <p>&copy; {new Date().getFullYear()} Harrison Mang Inasal. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Harrison House of Inasal & BBQ. All rights reserved.</p>
           <div className="flex gap-6">
             <a href="#" className="hover:text-[#111111]">Privacy Policy</a>
             <a href="#" className="hover:text-[#111111]">Terms of Service</a>
