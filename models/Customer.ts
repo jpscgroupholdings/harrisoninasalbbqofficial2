@@ -2,7 +2,7 @@ import mongoose, { Schema } from "mongoose";
 
 const CustomerSchema = new Schema(
   {
-    fullName: {
+    fullname: {
       type: String,
       required: [true, "Fullname is required!"],
       trim: true,

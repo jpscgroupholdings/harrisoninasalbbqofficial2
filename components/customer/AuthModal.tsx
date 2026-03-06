@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { X, Mail, Lock, User, Eye, EyeOff, Phone } from "lucide-react";
 import { InputField } from "../ui/InputField";
 import BrandLogo from "../BrandLogo";
+import { useCustomerSignup } from "@/hooks/api/useCustomerAuth";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -14,13 +15,16 @@ const AuthModal: React.FC<AuthModalProps> = ({
   onClose,
   initialMode,
 }) => {
+
+  const createAccount = useCustomerSignup();
+
   const [mode, setMode] = useState<"login" | "signup">(initialMode);
   const [showPassword, setShowPassword] = useState({
     password: false,
     confirmPassword: false,
   });
   const [formData, setFormData] = useState({
-    name: "",
+    fullname: "",
     email: "",
     phone: "",
     password: "",
@@ -38,8 +42,8 @@ const AuthModal: React.FC<AuthModalProps> = ({
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (mode === "signup" && !formData.name.trim()) {
-      newErrors.name = "Name is required";
+    if (mode === "signup" && !formData.fullname.trim()) {
+      newErrors.fullname = "Fullname is required";
     }
 
     if (!formData.email.trim()) {
@@ -71,6 +75,11 @@ const AuthModal: React.FC<AuthModalProps> = ({
 
     if (!validateForm()) return;
 
+    if(mode === 'signup'){
+      createAccount.mutateAsync(formData)
+      return
+    }
+
     setIsSubmitting(true);
 
     // Simulate API call
@@ -82,7 +91,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
     );
     onClose();
     setFormData({
-      name: "",
+      fullname: "",
       email: "",
       phone: "",
       password: "",
@@ -163,10 +172,10 @@ const AuthModal: React.FC<AuthModalProps> = ({
                 leftIcon={<User size={18} />}
                 placeholder="Juan Dela Cruz"
                 type="text"
-                name="name"
-                value={formData.name}
+                name="fullname"
+                value={formData.fullname}
                 onChange={handleInputChange}
-                error={errors.name}
+                error={errors.fullname}
               />
             )}
 
