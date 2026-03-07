@@ -1,3 +1,4 @@
+import { useAdminMe } from "@/hooks/api/useAuthMe";
 import { Bell, CircleUser, Menu } from "lucide-react";
 import React from "react";
 
@@ -8,6 +9,8 @@ const AdminHeader = ({ onMenuClick }: { onMenuClick: () => void }) => {
     month: "long",
     day: "numeric",
   });
+
+  const {data: currentAdmin, isPending} = useAdminMe();
 
   return (
     <header className="h-20 bg-white border-b border-gray-200 flex item-center justify-between px-4 lg:px-8 sticky top-0 z-30">
@@ -23,7 +26,7 @@ const AdminHeader = ({ onMenuClick }: { onMenuClick: () => void }) => {
 
         <div>
           <h2 className="text-lg lg:text-xl font-bold text-gray-800">
-            Welcome back, Admin
+            Welcome back, {currentAdmin?.firstName || "Admin"}
           </h2>
           <p className="text-xs lg:text-sm text-gray-500 mt-1">{currentData}</p>
         </div>
@@ -39,8 +42,8 @@ const AdminHeader = ({ onMenuClick }: { onMenuClick: () => void }) => {
         {/** Profile */}
         <div className="flex items-center gap-2 lg:gap-3 pl-2 lg:pl-4 border-l border-gray-200">
           <div className="text-right hidden sm:block">
-            <p className="text-sm font-semibold text-gray-800">Admin User</p>
-            <p className="text-xs text-gray-500">Restaurant Manager</p>
+            <p className="text-sm font-semibold text-gray-800">{`${currentAdmin?.firstName ?? "Admin"} ${currentAdmin?.lastName ?? ""}`} </p>
+            <p className="text-xs text-gray-500">{currentAdmin?.role ?? "Admin role"}</p>
           </div>
 
           <CircleUser size={24}/>

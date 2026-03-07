@@ -112,7 +112,7 @@ const LoginPage = () => {
             <div className="mb-8 text-center lg:text-start">
               <p className="mb-4 text-dark-green-500">
                 Test Account: <br />
-                Email : maria@gmail.com
+                Email : harrisonmain@gmail.com
                 <br />
                 Password: 12345678
               </p>
