@@ -6,10 +6,10 @@ import React from "react";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import { Metadata } from "next";
 
-export const metadata : Metadata = {
+export const metadata: Metadata = {
   title: "Customer | House of Inasal & BBQ",
   manifest: "/manifest.json",
-}
+};
 
 export default function layout({ children }: { children: React.ReactNode }) {
   return (
@@ -18,8 +18,8 @@ export default function layout({ children }: { children: React.ReactNode }) {
         <Header />
         <CartDrawer />
         {children}
+        <PWAInstallPrompt />
         <Footer />
-        <PWAInstallPrompt/> 
       </CartProvider>
     </>
   );

@@ -67,7 +67,7 @@ export default function PWAInstallPrompt() {
   if (!showPrompt) return null;
 
   return (
-    <div className="fixed top-4 right-4 z-50 rounded-2xl bg-[#1e1b2e] shadow-2xl p-4 flex items-center gap-4 border border-white/10">
+    <div className="absolute top-4 right-4 z-50 rounded-2xl bg-[#1e1b2e] shadow-2xl p-4 flex items-center gap-4 border border-white/10">
       <img
         src="/images/harrison_logo.png"
         alt="Harrison logo"
