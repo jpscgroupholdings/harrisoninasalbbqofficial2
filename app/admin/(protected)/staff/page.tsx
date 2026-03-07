@@ -26,13 +26,13 @@ import {
   Staff,
   ROLE_LABELS,
   ROLE_COLORS,
-} from "@/hooks/api/useStaff"
+} from "@/hooks/api/useStaff";
 import { Ban, Loader2, Search } from "lucide-react";
 import { ChangeEvent, useState } from "react";
 
 const ROLES: { value: StaffRole; label: string }[] = [
-  { value: "branch_manager", label: "Branch Manager" },
-  { value: "stock_manager", label: "Stock Manager" },
+  { value: "superadmin", label: "Super Admin" },
+  { value: "admin", label: "Admin" },
   { value: "cashier", label: "Cashier" },
 ];
 
@@ -62,21 +62,33 @@ export default function StaffManagement() {
 
   const filtered = staffList.filter(
     (s) =>
-      `${s.firstName} ${s.lastName}`.toLowerCase().includes(search.toLowerCase()) ||
+      `${s.firstName} ${s.lastName}`
+        .toLowerCase()
+        .includes(search.toLowerCase()) ||
       s.email.toLowerCase().includes(search.toLowerCase()) ||
       s.branch?.name?.toLowerCase().includes(search.toLowerCase()) ||
-      ROLE_LABELS[s.role].toLowerCase().includes(search.toLowerCase()),
+      ROLE_LABELS[s.role]?.toLowerCase().includes(search.toLowerCase()),
   );
 
   const validate = (): StaffFormErrors => {
     const e: StaffFormErrors = {};
     if (!form.firstName.trim()) e.firstName = "First name is required.";
     if (!form.lastName.trim()) e.lastName = "Last name is required.";
+
     if (!form.email.trim()) e.email = "Email is required.";
-    else if (!/^\S+@\S+\.\S+$/.test(form.email)) e.email = "Invalid email.";
-    if (!staffToEdit && !form.password.trim()) e.password = "Password is required.";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
+      e.email = "Invalid email.";
+
+    // ✅ Add phone validation to match backend
+    if (form.phone?.trim() && !/^(\+63|0)[0-9]{10}$/.test(form.phone.trim())) {
+      e.phone = "Invalid phone number. Use 09XXXXXXXXX or +639XXXXXXXXX.";
+    }
+
+    if (!staffToEdit && !form.password.trim())
+      e.password = "Password is required.";
     else if (!staffToEdit && form.password.length < 8)
       e.password = "Password must be at least 8 characters.";
+
     if (!form.role) e.role = "Role is required.";
     if (!form.branch) e.branch = "Branch is required.";
     return e;
@@ -84,7 +96,10 @@ export default function StaffManagement() {
 
   const handleSubmit = async () => {
     const e = validate();
-    if (Object.keys(e).length > 0) { setErrors(e); return; }
+    if (Object.keys(e).length > 0) {
+      setErrors(e);
+      return;
+    }
 
     if (staffToEdit) {
       const { password, ...rest } = form;
@@ -128,12 +143,7 @@ export default function StaffManagement() {
   const isPending = createStaff.isPending || updateStaff.isPending;
 
   return (
-    <div style={{ fontFamily: "'DM Sans', sans-serif" }}>
-      <link
-        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap"
-        rel="stylesheet"
-      />
-
+    <div>
       {/* Header */}
       <SectionHeader
         title="Staff Management"
@@ -151,8 +161,16 @@ export default function StaffManagement() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 my-6">
         {[
           { label: "Total Staff", value: staffList.length, icon: "Users" },
-          { label: "Active", value: staffList.filter((s) => s.isActive).length, icon: "ShieldCheck" },
-          { label: "Inactive", value: staffList.filter((s) => !s.isActive).length, icon: "ShieldOff" },
+          {
+            label: "Active",
+            value: staffList.filter((s) => s.isActive).length,
+            icon: "ShieldCheck",
+          },
+          {
+            label: "Inactive",
+            value: staffList.filter((s) => !s.isActive).length,
+            icon: "ShieldOff",
+          },
           { label: "Branches", value: branches.length, icon: "Store" },
         ].map((s) => {
           const Icon = getLucideIcon(s.icon);
@@ -161,7 +179,10 @@ export default function StaffManagement() {
               key={s.label}
               className="relative bg-white rounded-xl py-5 px-6 border border-gray-200 overflow-hidden"
             >
-              <Icon size={80} className="absolute right-4 bottom-2 text-gray-100" />
+              <Icon
+                size={80}
+                className="absolute right-4 bottom-2 text-gray-100"
+              />
               <p className="text-sm text-gray-500 uppercase tracking-widest mb-4 relative z-10">
                 {s.label}
               </p>
@@ -189,8 +210,18 @@ export default function StaffManagement() {
         <Table>
           <TableHeader>
             <TableRow>
-              {["Staff", "Email", "Phone", "Role", "Branch", "Status", "Action"].map((h) => (
-                <TableHead key={h} className="text-center">{h}</TableHead>
+              {[
+                "Staff",
+                "Email",
+                "Phone",
+                "Role",
+                "Branch",
+                "Status",
+                "Action",
+              ].map((h) => (
+                <TableHead key={h} className="text-center">
+                  {h}
+                </TableHead>
               ))}
             </TableRow>
           </TableHeader>
@@ -199,7 +230,8 @@ export default function StaffManagement() {
               <TableRow>
                 <TableCell colSpan={7}>
                   <div className="flex justify-center items-center gap-2 p-8 text-gray-400">
-                    <Loader2 size={20} className="animate-spin" /> Loading staff...
+                    <Loader2 size={20} className="animate-spin" /> Loading
+                    staff...
                   </div>
                 </TableCell>
               </TableRow>
@@ -221,7 +253,8 @@ export default function StaffManagement() {
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-sm font-bold text-gray-600 shrink-0">
-                        {staff.firstName[0]}{staff.lastName[0]}
+                        {staff.firstName[0]}
+                        {staff.lastName[0]}
                       </div>
                       <div>
                         <p className="font-semibold text-gray-800 text-sm">
@@ -231,7 +264,9 @@ export default function StaffManagement() {
                     </div>
                   </TableCell>
 
-                  <TableCell className="text-sm text-gray-600">{staff.email}</TableCell>
+                  <TableCell className="text-sm text-gray-600">
+                    {staff.email}
+                  </TableCell>
 
                   <TableCell
                     className="text-sm text-gray-500"
@@ -258,7 +293,9 @@ export default function StaffManagement() {
                       >
                         {staff.branch?.code}
                       </span>
-                      <span className="text-sm text-gray-600">{staff.branch?.name}</span>
+                      <span className="text-sm text-gray-600">
+                        {staff.branch?.name}
+                      </span>
                     </div>
                   </TableCell>
 
@@ -318,6 +355,7 @@ export default function StaffManagement() {
                 onChange={handleChangeForm}
                 placeholder="e.g., Juan"
                 error={errors.firstName}
+                className="capitalize"
                 required
               />
               <InputField
@@ -327,6 +365,7 @@ export default function StaffManagement() {
                 onChange={handleChangeForm}
                 placeholder="e.g., Dela Cruz"
                 error={errors.lastName}
+                className="capitalize"
                 required
               />
             </div>
@@ -340,6 +379,7 @@ export default function StaffManagement() {
                 onChange={handleChangeForm}
                 placeholder="e.g., juan@example.com"
                 error={errors.email}
+                className="lowercase"
                 required
               />
               <InputField
@@ -348,12 +388,17 @@ export default function StaffManagement() {
                 value={form.phone}
                 onChange={handleChangeForm}
                 placeholder="e.g., 09171234567 (optional)"
+                error={errors.phone}
               />
 
               {/* Password */}
               <div className="relative">
                 <InputField
-                  label={staffToEdit ? "New Password (leave blank to keep current)" : "Password"}
+                  label={
+                    staffToEdit
+                      ? "New Password (leave blank to keep current)"
+                      : "Password"
+                  }
                   name="password"
                   type={showPassword ? "text" : "password"}
                   value={form.password}
@@ -390,9 +435,13 @@ export default function StaffManagement() {
                     errors.role ? "border-red-400 bg-red-50" : "border-gray-300"
                   }`}
                 >
-                  <option value="" disabled>Select a role</option>
+                  <option value="" disabled>
+                    Select a role
+                  </option>
                   {ROLES.map((r) => (
-                    <option key={r.value} value={r.value}>{r.label}</option>
+                    <option key={r.value} value={r.value}>
+                      {r.label}
+                    </option>
                   ))}
                 </select>
                 {errors.role && (
@@ -410,10 +459,14 @@ export default function StaffManagement() {
                   value={form.branch}
                   onChange={handleChangeForm}
                   className={`w-full px-3 py-2 rounded-lg border text-sm text-gray-800 bg-white outline-none focus:ring-2 focus:ring-brand-color-400 transition ${
-                    errors.branch ? "border-red-400 bg-red-50" : "border-gray-300"
+                    errors.branch
+                      ? "border-red-400 bg-red-50"
+                      : "border-gray-300"
                   }`}
                 >
-                  <option value="" disabled>Select a branch</option>
+                  <option value="" disabled>
+                    Select a branch
+                  </option>
                   {branches
                     .filter((b) => b.isActive)
                     .map((b) => (
@@ -431,7 +484,10 @@ export default function StaffManagement() {
             {/* Actions */}
             <div className="flex gap-2 justify-end">
               <button
-                onClick={() => { setShowModal(false); setStaffToEdit(null); }}
+                onClick={() => {
+                  setShowModal(false);
+                  setStaffToEdit(null);
+                }}
                 className="py-1.5 px-4 rounded-lg border border-gray-300 text-gray-600 text-sm font-medium hover:bg-gray-50"
               >
                 Cancel
@@ -443,8 +499,12 @@ export default function StaffManagement() {
               >
                 {isPending && <Loader2 size={14} className="animate-spin" />}
                 {isPending
-                  ? staffToEdit ? "Saving..." : "Creating..."
-                  : staffToEdit ? "Save Changes" : "Add Staff"}
+                  ? staffToEdit
+                    ? "Saving..."
+                    : "Creating..."
+                  : staffToEdit
+                    ? "Save Changes"
+                    : "Add Staff"}
               </button>
             </div>
           </div>
