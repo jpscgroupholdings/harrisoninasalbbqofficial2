@@ -43,10 +43,11 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({error: "Invalid credentials!"}, {status: 401})
     }
 
-    // sign JWT
+    // sign JWT - this becomes payload
     const token = await new SignJWT({
         id: userFound._id.toString(),
         email: userFound.email,
+        fullname: userFound.fullname || "Name not found!"
     }).setProtectedHeader({alg: "HS256"}).setExpirationTime('8h').sign(JWT_SECRET)
 
     
