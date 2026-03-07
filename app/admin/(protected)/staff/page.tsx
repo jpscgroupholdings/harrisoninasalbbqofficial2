@@ -199,6 +199,8 @@ export default function StaffManagement() {
         <InputField
           placeholder="Search by name, email, role, or branch..."
           leftIcon={<Search size={18} />}
+          name="search"
+          autoComplete="new-search"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-lg"
