@@ -2,6 +2,20 @@ import { connectDB } from "@/lib/mongodb";
 import Staff from "@/models/Staff";
 import bcrypt from "bcryptjs";
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+
+export const createStaffSchema = z.object({
+  firstName: z.string().min(1),
+  lastName: z.string().min(1),
+  email: z
+    .string()
+    .email()
+    .transform((val) => val.toLowerCase().trim()),
+  password: z.string().min(8),
+  phone: z.string().optional().refine((val) => !val || /^(\+63|0)[0-9]{10}$/.test(val.trim()), {message: "Invalid phone number."}),
+  role: z.enum(["superadmin", "admin", "cashier"]),
+  branch: z.string().min(1),
+});
 
 export async function GET() {
   try {
@@ -22,22 +36,21 @@ export async function POST(request: NextRequest) {
     await connectDB();
 
     const body = await request.json();
-    const { firstName, lastName, email, password, phone, role, branch } = body;
+    const parsed = createStaffSchema.safeParse(body);
 
-    // basic validation
-    if (!firstName || !lastName || !email || !password || !role || !branch) {
-      return NextResponse.json(
-        { error: "All required fields must be filled." },
-        { status: 400 },
-      );
+    if (!parsed.success) {
+      const firstError = parsed.error.issues[0]?.message ?? "Invalid input.";
+      return NextResponse.json({ error: firstError }, { status: 400 });
     }
 
-    const existing = await Staff.findOne({email});
-    if(existing){
-        return NextResponse.json({error: "Email is already exist!"}, {status: 409})
+    const { firstName, lastName, email, password, phone, role, branch } = parsed.data;
+
+    const existing = await Staff.findOne({ email });
+    if (existing) {
+      return NextResponse.json({ error: "Email already exists." }, { status: 409 });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 12);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const data = await Staff.create({
       firstName,
@@ -49,13 +62,11 @@ export async function POST(request: NextRequest) {
       branch,
     });
 
-    // strip password from response
-    const {password: _, ...staff} = data.toObject();
-
+    const staff = await Staff.findById(data._id).select("-password").lean();
     return NextResponse.json(staff, { status: 201 });
   } catch (error) {
     return NextResponse.json(
-      { error: "Failed to create staff's account!" },
+      { error: error instanceof Error ? error.message : "Failed to create staff account." },
       { status: 500 },
     );
   }
