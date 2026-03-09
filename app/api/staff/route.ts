@@ -1,4 +1,3 @@
-import { StaffRole } from "@/hooks/api/useStaff";
 import { getAuthAdmin } from "@/lib/getAuth";
 import { connectDB } from "@/lib/mongodb";
 import { canAccess } from "@/lib/rbac";

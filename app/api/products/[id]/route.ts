@@ -15,8 +15,16 @@ export async function PUT(
     const { id } = await context.params;
     const body = await request.json();
 
-    const { name, price, description, image, imageFile, category, stock, isSignature } =
-      body;
+    const {
+      name,
+      price,
+      description,
+      image,
+      imageFile,
+      category,
+      stock,
+      isSignature,
+    } = body;
 
     if (!id) {
       return NextResponse.json(
@@ -74,7 +82,7 @@ export async function PUT(
         image: finalImage,
         category,
         stock: parseInt(stock),
-        isSignature
+        isSignature,
       },
       { new: true },
     );
@@ -126,7 +134,10 @@ export async function DELETE(
     // Then delete product from DB
     await Product.findByIdAndDelete(id);
 
-    return new NextResponse(null, { status: 204 });
+    return NextResponse.json(
+      { message: "Product deleted successfully!" },
+      { status: 200 },
+    );
   } catch (error) {
     return NextResponse.json(
       { error: "Failed to delete an item" },

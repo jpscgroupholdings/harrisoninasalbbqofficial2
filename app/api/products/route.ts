@@ -50,10 +50,7 @@ export async function GET() {
       { $sort: { "category.position": 1, createdAt: -1 } },
     ]);
 
-    return NextResponse.json(
-      { success: true, data: products },
-      { status: 200 },
-    );
+    return NextResponse.json(products, { status: 200 });
   } catch (error: any) {
     console.error("FULL ERROR:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -72,8 +69,15 @@ export async function POST(request: NextRequest) {
     // runtime validation using ZOD
     const validateData = productCreateSchema.parse(body);
 
-    const { name, description, price, category, stock, imageFile, isSignature } =
-      validateData;
+    const {
+      name,
+      description,
+      price,
+      category,
+      stock,
+      imageFile,
+      isSignature,
+    } = validateData;
 
     const normalizedCategory = category
       .toLowerCase()
@@ -109,14 +113,14 @@ export async function POST(request: NextRequest) {
       image: finalImage,
       category: normalizedCategory,
       stock,
-      isSignature
+      isSignature,
     });
 
     if (!product) {
       await cloudinary.uploader.destroy(finalImage.public_id);
     }
 
-    return NextResponse.json({ success: true, data: product }, { status: 201 });
+    return NextResponse.json(product, { status: 201 });
   } catch (error: any) {
     console.error("Error creating product:", error);
 
@@ -131,15 +135,15 @@ export async function POST(request: NextRequest) {
           error: "Validation failed",
           details: error?.issues,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-      // Duplicate name handling
+    // Duplicate name handling
     if (error?.code === 11000) {
       return NextResponse.json(
         { success: false, error: "Product already exists" },
-        { status: 409 }
+        { status: 409 },
       );
     }
 

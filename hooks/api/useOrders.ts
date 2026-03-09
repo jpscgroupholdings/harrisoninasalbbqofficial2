@@ -1,3 +1,4 @@
+import { apiClient } from "@/lib/apiClient";
 import {
   CreateOrderPayload,
   CreateOrderResponse,
@@ -23,16 +24,7 @@ export const useOrders = () => {
   return useQuery<OrderType[]>({
     // unique query
     queryKey: ["orders"],
-
-    queryFn: async () => {
-      const response = await fetch("/api/orders");
-      if (!response.ok) {
-        throw new Error("Failed to fetch products");
-      }
-
-      return response.json();
-    },
-
+    queryFn: () => apiClient.get("/orders"),
     staleTime: 30000,
     select: (data) => 
       [...data].sort((a, b) => {
@@ -49,14 +41,7 @@ export const useOrders = () => {
 export const useOrder = (id: string) => {
   return useQuery<OrderType>({
     queryKey: ["orders", id],
-    queryFn: async () => {
-      const response = await fetch(`/api/orders/${id}`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch order details");
-      }
-
-      return response.json();
-    },
+    queryFn: () => apiClient.get(`/orders/${id}`),
     staleTime: 30000,
   });
 };

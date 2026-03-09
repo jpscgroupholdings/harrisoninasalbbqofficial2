@@ -6,6 +6,7 @@ import { Product } from "@/types/adminType";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ProductPayload } from "@/types/adminType";
 import { toast } from "sonner";
+import { apiClient } from "@/lib/apiClient";
 
 /**
  * Fetch all product
@@ -23,17 +24,7 @@ export const useProducts = () => {
     queryKey: ["products"],
 
     // Function that fetches the data
-    queryFn: async () => {
-      const response = await fetch("/api/products");
-
-      const responseData = await response.json();
-
-      if (!response.ok) {
-        throw new Error(responseData.details || "Failed to fetch products");
-      }
-
-      return responseData.data;
-    },
+    queryFn: () => apiClient.get<Product[]>("/products"),
 
     // Optional: Custom settings for this specific query
     staleTime: 30000, // Consider data fresh for 30 seconds
@@ -49,13 +40,7 @@ export const useProducts = () => {
 export const useProduct = (id: string) => {
   return useQuery({
     queryKey: ["products", id], // ['products', '123'] is different from ['products', '456']
-    queryFn: async () => {
-      const response = await fetch(`/api/products/${id}`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch product");
-      }
-      return response.json();
-    },
+    queryFn: () => apiClient.get(`/products/${id}`),
     enabled: !!id, // Only run query if ID exists
   });
 };
@@ -75,34 +60,21 @@ export const useCreateProduct = () => {
 
   return useMutation({
     // The actual API call
-    mutationFn: async (productData: Partial<ProductPayload>) => {
-      const response = await fetch("/api/products", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(productData),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw data
-      }
-
-      return data;
-    },
+    mutationFn: (productData: Partial<ProductPayload>) =>
+      apiClient.post("/products", productData),
 
     // what happens after successful creation
     onSuccess: () => {
       // Invalidate products cache - forces a refetch
       // This ensures the list shows the new product
       queryClient.invalidateQueries({ queryKey: ["products"] });
-       toast.success("Product created successfully");
+      toast.success("Product created successfully");
     },
 
     // What happens if creation fails
     onError: (error: any) => {
       console.error("Create failed:", error);
-       if (error?.details?.length) {
+      if (error?.details?.length) {
         const message = error.details
           .map((issue: any) => issue.message)
           .join("\n");
@@ -124,64 +96,50 @@ export const useCreateProduct = () => {
 export const useUpdateProduct = () => {
   const queryClient = useQueryClient();
 
+  type mutationProps = {
+    id: string;
+    data: Partial<ProductPayload>;
+  };
+
   return useMutation({
-    mutationFn: async ({
-      id,
-      data,
-    }: {
-      id: string;
-      data: Partial<ProductPayload>;
-    }) => {
-      const response = await fetch(`/api/products/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
+    mutationFn: ({ id, data }: mutationProps) =>
+      apiClient.put(`/products/${id}`, data),
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to update product");
-      }
-
-      return response.json();
-    },
-
-      
     // OPTIMISTIC UPDATE (Advanced)
     // Updates UI immediately, before API responds
-    onMutate: async ({id, data}) => {
-         // Cancel ongoing queries to prevent race conditions
-      await queryClient.cancelQueries({ queryKey: ['products'] });
+    onMutate: async ({ id, data }) => {
+      // Cancel ongoing queries to prevent race conditions
+      await queryClient.cancelQueries({ queryKey: ["products"] });
 
       // Snapshot current data (for rollback if update fails)
-      const previousProducts = queryClient.getQueryData(['products']);
+      const previousProducts = queryClient.getQueryData(["products"]);
 
       // Optimistically update cache
-      queryClient.setQueryData(['products'], (old: Product[] = []) => {
-        return old.map(p => {
-          if(p._id !== id) return p;
+      queryClient.setQueryData(["products"], (old: Product[] = []) => {
+        return old.map((p) => {
+          if (p._id !== id) return p;
           return {
             ...p,
             ...data,
-            category: p.category
-          }
+            category: p.category,
+          };
         });
       });
 
-       // Return context with previous data
+      // Return context with previous data
       return { previousProducts };
     },
 
-     // If mutation fails, rollback
+    // If mutation fails, rollback
     onError: (err, variables, context) => {
       if (context?.previousProducts) {
-        queryClient.setQueryData(['products'], context.previousProducts);
+        queryClient.setQueryData(["products"], context.previousProducts);
       }
     },
-    
+
     // Always refetch after mutation settles (success or error)
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
     },
   });
 };
@@ -191,22 +149,15 @@ export const useUpdateProduct = () => {
  */
 export const useDeleteProduct = () => {
   const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const response = await fetch(`/api/products/${id}`, {
-        method: 'DELETE',
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to delete product');
-      }
-      
-      return;
-    },
-    
+
+  return useMutation<void, Error, string>({
+    mutationFn:  (id) => apiClient.delete(`/products/${id}`),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      toast.success("Product deleted successfully");
     },
+    onError: () => [
+      toast.error("Failed to delete product!")
+    ]
   });
 };
