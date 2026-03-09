@@ -1,4 +1,7 @@
+import { StaffRole } from "@/hooks/api/useStaff";
+import { getAuthAdmin } from "@/lib/getAuth";
 import { connectDB } from "@/lib/mongodb";
+import { canAccess } from "@/lib/rbac";
 import Staff from "@/models/Staff";
 import bcrypt from "bcryptjs";
 import { NextRequest, NextResponse } from "next/server";
@@ -33,6 +36,16 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+
+    const currentUser = await getAuthAdmin();
+    if(!currentUser){
+      return NextResponse.json({error: "Unauthorized"}, {status: 401})
+    }
+
+    if(!canAccess(currentUser.role, "staff.create")){
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     await connectDB();
 
     const body = await request.json();
