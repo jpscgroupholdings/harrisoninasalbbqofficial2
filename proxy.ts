@@ -1,9 +1,11 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server';
-import { jwtVerify } from 'jose';
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { jwtVerify } from "jose";
+import { canAccess } from "./lib/rbac";
+import { StaffRole } from "./hooks/api/useStaff";
 
 if (!process.env.JWT_SECRET) {
-  throw new Error("JWT_SECRET is not defined in env variables!")
+  throw new Error("JWT_SECRET is not defined in env variables!");
 }
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
@@ -19,42 +21,63 @@ async function verifyToken(token: string) {
 
 export async function proxy(request: NextRequest) {
   const url = request.nextUrl.clone();
-  const hostname = request.headers.get('host') || '';
+  const hostname = request.headers.get("host") || "";
   const { pathname } = url;
-  const subdomain = hostname.split('.')[0];
+  const subdomain = hostname.split(".")[0];
 
-  console.log('Hostname:', hostname, 'Subdomain:', subdomain, 'Path:', pathname);
+  console.log(
+    "Hostname:",
+    hostname,
+    "Subdomain:",
+    subdomain,
+    "Path:",
+    pathname,
+  );
 
   // ── Admin subdomain ──────────────────────────────────────────
-  if (subdomain === 'admin') {
-    const token = request.cookies.get('admin_token')?.value;
-    const isPublic = ['/auth/login', '/auth/signup'].some((p) => pathname.startsWith(p));
-    const isRoot = pathname === '/';
+  if (subdomain === "admin") {
+    const token = request.cookies.get("admin_token")?.value;
+    const isPublic = ["/auth/login", "/auth/signup"].some((p) =>
+      pathname.startsWith(p),
+    );
+    const isRoot = pathname === "/";
 
     // redirect root to dashboard if logged in, else to login
     if (isRoot) {
       return NextResponse.redirect(
-        new URL(token ? '/dashboard' : '/auth/login', request.url)
+        new URL(token ? "/dashboard" : "/auth/login", request.url),
       );
     }
 
     // redirect logged-in users away from auth pages
     if (isPublic && token) {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
+      return NextResponse.redirect(new URL("/dashboard", request.url));
     }
 
     // redirect unauthenticated users away from protected pages
     if (!isPublic && !token) {
-      return NextResponse.redirect(new URL('/auth/login', request.url));
+      return NextResponse.redirect(new URL("/auth/login", request.url));
     }
 
     // verify token validity on protected pages
     if (!isPublic && token) {
       const payload = await verifyToken(token);
       if (!payload) {
-        const response = NextResponse.redirect(new URL('/auth/login', request.url));
-        response.cookies.delete('admin_token');
+        const response = NextResponse.redirect(
+          new URL("/auth/login", request.url),
+        );
+        response.cookies.delete("admin_token");
         return response;
+      }
+
+      const role = payload.role as StaffRole;
+      
+      // Example: "/orders/123".split("/") → ["", "orders", "123"]
+      // We take index [1] to get the resource segment ("orders")
+      const segment = pathname.split("/")[1];
+
+      if (!canAccess(role, `${segment}.read`)) {
+        return NextResponse.redirect(new URL("/dashboard", request.url));
       }
     }
 
@@ -64,7 +87,12 @@ export async function proxy(request: NextRequest) {
   }
 
   // ── Customer subdomains ──────────────────────────────────────
-  if (subdomain === 'food' || subdomain === 'order' || subdomain === "orders" || subdomain === "foods") {
+  if (
+    subdomain === "food" ||
+    subdomain === "order" ||
+    subdomain === "orders" ||
+    subdomain === "foods"
+  ) {
     url.pathname = `/customer${pathname}`;
     return NextResponse.rewrite(url);
   }
@@ -76,6 +104,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico|images|videos|promos|privacy-policy|admin-testing|manifest\\.json|sw\\.js|workbox-.*|icons).*)',
+    "/((?!api|_next/static|_next/image|favicon.ico|images|videos|promos|privacy-policy|admin-testing|manifest\\.json|sw\\.js|workbox-.*|icons).*)",
   ],
-}
+};
