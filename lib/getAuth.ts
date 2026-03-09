@@ -1,13 +1,7 @@
 import { StaffRole } from "@/hooks/api/useStaff";
 import { jwtVerify } from "jose";
 import { cookies } from "next/headers";
-import { email } from "zod";
-
-if (!process.env.JWT_SECRET) {
-  throw new Error("JWT_SECRET is not defined in env variable!");
-}
-
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
+import { verifyToken } from "./verifyToken";
 
 export async function getAuthAdmin() {
   const token = (await cookies()).get("admin_token")?.value;
@@ -15,11 +9,13 @@ export async function getAuthAdmin() {
   if (!token) return null;
 
   try {
-    const { payload } = await jwtVerify(token, JWT_SECRET);
+    const payload = await verifyToken(token);
+
+    if (!payload) return null;
 
     return {
       id: payload.id as string,
-      email: payload.emaild as string,
+      email: payload.email as string,
       role: payload.role as StaffRole,
     };
   } catch (error) {

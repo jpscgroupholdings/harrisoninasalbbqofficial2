@@ -1,23 +1,8 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { jwtVerify } from "jose";
 import { canAccess } from "./lib/rbac";
 import { StaffRole } from "./hooks/api/useStaff";
-
-if (!process.env.JWT_SECRET) {
-  throw new Error("JWT_SECRET is not defined in env variables!");
-}
-
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
-
-async function verifyToken(token: string) {
-  try {
-    const { payload } = await jwtVerify(token, JWT_SECRET);
-    return payload;
-  } catch {
-    return null;
-  }
-}
+import { verifyToken } from "./lib/verifyToken";
 
 export async function proxy(request: NextRequest) {
   const url = request.nextUrl.clone();
