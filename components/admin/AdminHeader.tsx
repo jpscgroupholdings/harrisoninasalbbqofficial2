@@ -26,7 +26,7 @@ const AdminHeader = ({ onMenuClick }: { onMenuClick: () => void }) => {
 
         <div>
           <h2 className="text-lg lg:text-xl font-bold text-gray-800">
-            Welcome back, {currentAdmin?.firstName || "Admin"}
+            Welcome back, {currentAdmin?.firstName || "Administrator!"}
           </h2>
           <p className="text-xs lg:text-sm text-gray-500 mt-1">{currentData}</p>
         </div>
