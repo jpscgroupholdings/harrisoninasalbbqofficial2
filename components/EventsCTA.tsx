@@ -74,7 +74,7 @@ export default function EventsCTA() {
           </Link>
 
           <a
-            href="viber://chat?number=6399603349533"
+            href="viber://chat?number=%2B639603349533"
             className="inline-flex items-center gap-2 bg-transparent border border-white/30 hover:border-white/60 hover:bg-white/5 text-white font-semibold px-8 py-4 rounded-full transition-all"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
