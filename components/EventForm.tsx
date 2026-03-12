@@ -168,8 +168,8 @@ export default function EventForm() {
       </div>
 
       {/* Viber Button */}
-      <a
-        href="viber://chat?number=+6399603349533"
+       <a
+        href="viber://chat?number=%2B639603349533"
         className="flex items-center justify-center gap-2 w-full bg-[#7360F2] hover:bg-[#5d4be0] text-white font-semibold py-3 rounded-xl transition-all shadow hover:shadow-md"
       >
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
