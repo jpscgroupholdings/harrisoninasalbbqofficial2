@@ -66,10 +66,10 @@ const Header = () => {
             <Link href={"/menu"} className="hover:text-brand-color-500">
               Menu
             </Link>
-            <Link href={"/"} className="hover:text-brand-color-500">
+            <Link href={"/events"} className="hover:text-brand-color-500">
               Events
             </Link>
-            <Link href={"/"} className="hover:text-brand-color-500">
+            <Link href={"/contact"} className="hover:text-brand-color-500">
               Contact Us
             </Link>
           </div>
@@ -186,10 +186,10 @@ const Header = () => {
             <Link href={"/menu"} className="text-white hover:text-brand-color-500">
               Menu
             </Link>
-            <Link href={"/"} className="text-white hover:text-brand-color-500">
+            <Link href={"/events"} className="text-white hover:text-brand-color-500">
               Events
             </Link>
-            <Link href={"/"} className="text-white hover:text-brand-color-500">
+            <Link href={"/contact"} className="text-white hover:text-brand-color-500">
               Contact Us
             </Link>
           </div>
