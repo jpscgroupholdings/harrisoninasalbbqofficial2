@@ -1,7 +1,9 @@
 import React from "react";
+import { InputField } from "../ui/InputField";
+import { SelectField } from "../ui/SelectField";
+import { TextareaField } from "../ui/TextAreaField";
 
 const ContactUs = () => {
-  // Subject options for contact form
   const subjectOptions = [
     { value: "", label: "Select a subject" },
     { value: "General Inquiry", label: "General Inquiry" },
@@ -9,6 +11,7 @@ const ContactUs = () => {
     { value: "Catering Request", label: "Catering Request" },
     { value: "Partnership", label: "Partnership" },
   ];
+
   return (
     <section id="contact-section" className="py-20 px-4 bg-white">
       <div className="max-w-3xl mx-auto">
@@ -23,104 +26,55 @@ const ContactUs = () => {
         </div>
 
         <form className="space-y-6">
-          {/* Name Field */}
-          <div>
-            <label
-              htmlFor="name"
-              className="block text-sm font-bold text-gray-900 mb-2"
-            >
-              Name <span className="text-[#ef4501]">*</span>
-            </label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              className={`w-full px-4 py-3 border bg-white text-gray-900 focus:outline-none focus:border-[#ef4501] ${"border-gray-300"}`}
-              placeholder="Your full name"
-            />
-          </div>
+          <InputField
+            label="Name"
+            required
+            type="text"
+            name="name"
+            id="name"
+            placeholder="Your fullname"
+          />
 
-          {/* Email Field */}
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-bold text-gray-900 mb-2"
-            >
-              Email <span className="text-[#ef4501]">*</span>
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              className={`w-full px-4 py-3 border bg-white text-gray-900 focus:outline-none focus:border-[#ef4501] ${"border-gray-300"}`}
-              placeholder="your.email@example.com"
-            />
-          </div>
+          <InputField
+            label="Email"
+            required
+            type="email"
+            name="email"
+            id="email"
+            placeholder="your.email@example.com"
+          />
 
-          {/* Phone Field */}
-          <div>
-            <label
-              htmlFor="phone"
-              className="block text-sm font-bold text-gray-900 mb-2"
-            >
-              Phone Number
-            </label>
-            <input
-              type="tel"
-              id="phone"
-              name="phone"
-              className={`w-full px-4 py-3 border bg-white text-gray-900 focus:outline-none focus:border-[#ef4501] ${"border-gray-300"}`}
-              placeholder="+63 912 345 6789"
-            />
-          </div>
+          <InputField
+            label="Phone Number"
+            type="tel"
+            name="phone"
+            id="phone"
+            placeholder="+63 912 345 6789"
+          />
 
-          {/* Subject Field */}
-          <div>
-            <label
-              htmlFor="subject"
-              className="block text-sm font-bold text-gray-900 mb-2"
-            >
-              Subject <span className="text-[#ef4501]">*</span>
-            </label>
-            <select
-              id="subject"
-              name="subject"
-              className={`w-full px-4 py-3 border bg-white text-gray-900 focus:outline-none focus:border-[#ef4501] ${"border-gray-300"}`}
-            >
-              {subjectOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          <SelectField
+            label="Subject"
+            required
+            name="subject"
+            id="subject"
+            options={subjectOptions}
+          />
 
-          {/* Message Field */}
-          <div>
-            <label
-              htmlFor="message"
-              className="block text-sm font-bold text-gray-900 mb-2"
-            >
-              Message <span className="text-[#ef4501]">*</span>
-            </label>
-            <textarea
-              id="message"
-              name="message"
-              rows={5}
-              className={`w-full px-4 py-3 border bg-white text-gray-900 focus:outline-none focus:border-[#ef4501] resize-none ${"border-gray-300"}`}
-              placeholder="How can we help you?"
-            />
-          </div>
+          <TextareaField
+            label="Message"
+            required
+            name="message"
+            id="message"
+            rows={5}
+            placeholder="How can we help you?"
+          />
 
-          {/* Submit Button */}
-          <div>
-            <button
-              type="submit"
-              className="w-full bg-[#ef4501] text-white py-4 font-bold text-lg hover:bg-[#b83200] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              Send Message
-            </button>
-          </div>
+          <button
+            type="submit"
+            className="w-full bg-brand-color-500 text-white py-4 font-bold text-lg hover:bg-[#b83200] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            Send Message
+          </button>
         </form>
       </div>
     </section>
