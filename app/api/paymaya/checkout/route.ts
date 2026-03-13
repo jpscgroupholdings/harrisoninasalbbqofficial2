@@ -1,11 +1,9 @@
 import { getAuthHeader } from "@/lib/getAuthHeader";
 import { connectDB } from "@/lib/mongodb";
 import { CheckoutSession } from "@/models/CheckoutSession";
-import { Order } from "@/models/Orders";
 import { Product } from "@/models/Product";
 import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
-import { success } from "zod";
 
 export async function POST(request: NextRequest) {
   const session = await mongoose.startSession();
@@ -135,7 +133,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         checkoutId: data.checkoutId,
-        redirectUrl: data.redirectUrl
+        checkoutUrl: data.redirectUrl
       },
       { status: 201 },
     );
