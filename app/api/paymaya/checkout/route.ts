@@ -133,7 +133,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         checkoutId: data.checkoutId,
-        redirectUrl: data.redirectUrl
+        checkoutUrl: data.redirectUrl
       },
       { status: 201 },
     );
