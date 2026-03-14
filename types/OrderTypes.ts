@@ -58,7 +58,7 @@ export interface CreateOrderPayload {
 
 export interface CreateOrderResponse {
   orderId: string;
-  checkoutUrl: string;
+  redirectUrl: string;
   referenceNumber: string;
   status: OrderType["status"];
 }
