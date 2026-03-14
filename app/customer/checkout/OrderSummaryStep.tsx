@@ -84,7 +84,9 @@ const OrderSummaryStep = () => {
       setPlaceTotalPrice(totalPrice);
       clearCart();
     } catch (error: any) {
-      console.error("Payment error:", error);
+      toast.error("Order Failed", {
+        description: error.message
+      })
     }
   };
 
