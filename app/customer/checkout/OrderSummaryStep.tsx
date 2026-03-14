@@ -16,7 +16,6 @@ import { useCreateOrder } from "@/hooks/api/useOrders";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-const PENDING_CHECKOUT_KEY = "pendingCheckoutUrl";
 
 const OrderSummaryStep = () => {
   const {
@@ -32,16 +31,6 @@ const OrderSummaryStep = () => {
   const router = useRouter();
   const [checkoutUrl, setCheckoutUrl] = useState<string>("");
   const [placedTotalPrice, setPlaceTotalPrice] = useState(0);
-
-  // On mount: if there's a stored checkout URL (from a refresh mid-payment),
-  // redirect to /orders immediately.
-  useEffect(() => {
-    const stored = localStorage.getItem(PENDING_CHECKOUT_KEY);
-    if (stored) {
-      localStorage.removeItem(PENDING_CHECKOUT_KEY);
-      router.push("/orders");
-    }
-  }, []);
 
   if (cartItems.length === 0 && !checkoutUrl) {
     return (
@@ -73,14 +62,13 @@ const OrderSummaryStep = () => {
         subTotal: totalPrice,
       });
 
-      if (!data.checkoutUrl) {
+      if (!data.redirectUrl) {
         throw new Error(
           "Payment link was not generated. Please try again or contact support.",
         );
       }
 
-      setCheckoutUrl(data.checkoutUrl);
-      localStorage.setItem(PENDING_CHECKOUT_KEY, data.checkoutUrl);
+      setCheckoutUrl(data.redirectUrl);
       setPlaceTotalPrice(totalPrice);
       clearCart();
     } catch (error: any) {
@@ -91,13 +79,8 @@ const OrderSummaryStep = () => {
   };
 
   const handleModalClose = () => {
-    localStorage.removeItem(PENDING_CHECKOUT_KEY);
     setCheckoutUrl("");
     router.push("/orders");
-  };
-
-  const handlePayNow = () => {
-    localStorage.removeItem(PENDING_CHECKOUT_KEY);
   };
 
   return (
@@ -164,7 +147,7 @@ const OrderSummaryStep = () => {
                         <Plus size={14} />
                       </button>
                     </div>
-                    <span className="font-bold text-[#ef4501]">
+                    <span className="font-bold text-brand-color-500">
                       ₱{(item.price * item.quantity).toFixed(2)}
                     </span>
                   </div>
@@ -185,7 +168,7 @@ const OrderSummaryStep = () => {
             </div>
             <div className="border-t border-gray-200 pt-2 flex justify-between">
               <span className="font-bold text-gray-900">Total</span>
-              <span className="font-bold text-xl text-[#ef4501]">
+              <span className="font-bold text-xl text-brand-color-500">
                 ₱{totalPrice.toFixed(2)}
               </span>
             </div>
@@ -195,7 +178,7 @@ const OrderSummaryStep = () => {
             <button
               onClick={handlePlaceOrder}
               disabled={isPending}
-              className={`flex-1 text-white py-3 rounded-full font-bold transition-colors ${isPending ? "cursor-not-allowed bg-gray-400" : "cursor-pointer bg-[#ef4501]/90 hover:bg-[#c13500]"}`}
+              className={`flex-1 text-white py-3 rounded-full font-bold transition-colors ${isPending ? "cursor-not-allowed bg-gray-400" : "cursor-pointer bg-brand-color-500/90 hover:bg-[#c13500]"}`}
             >
               {!isPending ? (
                 "Place Order"
@@ -240,7 +223,7 @@ const OrderSummaryStep = () => {
               <span className="text-xs text-stone-600 font-medium">
                 Amount due
               </span>
-              <span className="text-base font-bold text-[#ef4501]">
+              <span className="text-base font-bold text-brand-color-500">
                 ₱{placedTotalPrice.toFixed(2)}
               </span>
             </div>
@@ -249,10 +232,8 @@ const OrderSummaryStep = () => {
             <div className="flex flex-col gap-3 w-full pt-1">
               <a
                 href={checkoutUrl}
-                target="_blank"
                 rel="noopener noreferrer"
-                onClick={handlePayNow}
-                className="w-full flex items-center justify-center gap-2 bg-[#ef4501] hover:bg-[#c13500] active:scale-[0.98] text-white py-4 rounded-xl font-bold text-base shadow-md shadow-[#ef4501]/30 transition-all"
+                className="w-full flex items-center justify-center gap-2 bg-brand-color-500 hover:bg-[#c13500] active:scale-[0.98] text-white py-4 rounded-xl font-bold text-base shadow-md shadow-brand-color-500/30 transition-all"
               >
                 Pay Now <ExternalLink size={15} />
               </a>
