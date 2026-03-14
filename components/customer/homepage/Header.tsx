@@ -66,8 +66,8 @@ const Header = () => {
             <Link href={"/menu"} className="hover:text-brand-color-500">
               Menu
             </Link>
-            <Link href={"/events"} className="hover:text-brand-color-500">
-              Events
+            <Link href={"/catering"} className="hover:text-brand-color-500">
+              Catering
             </Link>
             <Link href={"/contact"} className="hover:text-brand-color-500">
               Contact Us

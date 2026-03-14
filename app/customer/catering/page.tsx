@@ -4,7 +4,7 @@ import BrandLogo from "@/components/BrandLogo";
 import EventForm from "@/components/EventForm";
 import { Building, Cake, Handshake, PartyPopper, User, Users, VenetianMask } from "lucide-react";
 
-export default function EventsPage() {
+export default function CateringPage() {
   return (
     <div className="bg-white">
 

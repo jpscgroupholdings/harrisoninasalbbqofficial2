@@ -5,7 +5,7 @@ import { useScrollToSection } from "@/hooks/utils/useScrollToSection";
 import Link from "next/link";
 import { useSubdomainPath } from "@/hooks/useSubdomainUrl";
 import BrandLogo from "../BrandLogo";
-import { Menu, ShoppingCart, X } from "lucide-react";
+import { Menu, Section, ShoppingCart, X } from "lucide-react";
 
 const Header = () => {
   useScrollToSection();
@@ -15,6 +15,7 @@ const Header = () => {
   const NAV_ITEMS = [
     { label: "Products", section: "/#products-main-section" },
     { label: "About", section: "/#about-section" },
+    { label: "Catering", section: "/catering" },
     { label: "Franchise Now", section: "/franchise" },
     { label: "Locations", section: "/#locations-section" },
   ];
@@ -25,7 +26,7 @@ const Header = () => {
         <div className="flex items-center justify-between h-10 md:h-12">
           {/* Logo */}
           <BrandLogo />
-          
+
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center space-x-8">
             {NAV_ITEMS.map((item) => (
