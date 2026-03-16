@@ -1,16 +1,9 @@
+import { getMayaClientIP, isMayaAllowedIP } from "@/lib/mayaGuard";
 import { connectDB } from "@/lib/mongodb";
 import { Order } from "@/models/Orders";
 import { Product } from "@/models/Product";
 import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
-
-// Correct IP's from maya docs
-// https://developers.maya.ph/reference/receive-real-time-payment-information-using-webhooks
-
-const MAYA_ALLOWED_IPS: Record<string, string[]> = {
-  sandbox: ["13.229.160.234", "3.1.199.75"],
-  production: ["18.138.50.235", "3.1.207.200"],
-};
 
 // Maya's current webhook events (use these, NOT the deprecated CHECKOUT_* events)
 // Deprecated: CHECKOUT_SUCCESS, CHECKOUT_FAILURE, CHECKOUT_DROPOUT, CHECKOUT_CANCELLED
@@ -22,32 +15,13 @@ const PAYMENT_STATUS_MAP: Record<string, string> = {
   AUTHORIZED: "authorized", // Card payments only (hold/capture flow)
 };
 
-function getClientIP(request: NextRequest): string {
-  // Vercel / most cloud providers forward the real IP via x-forwarded-for
-  const forwarded = request.headers.get("x-forwareded-for");
-  if (forwarded) return forwarded.split(",")[0].trim();
-  return request.headers.get("x-real-ip") ?? "unknown";
-}
-
-function isAllowedIP(ip: string): boolean {
-  // Skip IP check in local development
-  // Add MAYA_SKIP_CHECK=true in env.local only
-  if (process.env.MAYA_SKIP_CHECK === "true") {
-    console.log("[MAYA Webhook] : IP check skipped - dev mode only");
-    return true;
-  }
-
-  const env = process.env.NODE_ENV === "production" ? "production" : "sandbox";
-  return MAYA_ALLOWED_IPS[env].includes(ip);
-}
-
 export async function POST(request: NextRequest) {
   // Step 1: IP whitelisting
   // Maya does not use HMAC signatures - security is purely IP-based.
 
-  const clientIP = getClientIP(request);
+  const clientIP = getMayaClientIP(request);
 
-  if (!isAllowedIP(clientIP)) {
+  if (!isMayaAllowedIP(clientIP)) {
     console.warn(`[Maya Webhook] Blocked unauthorized IP: ${clientIP}`);
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
