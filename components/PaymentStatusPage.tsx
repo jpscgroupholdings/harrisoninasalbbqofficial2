@@ -23,11 +23,6 @@ type StatusConfig = {
     href: string;
     className: string;
   };
-  secondaryButton: {
-    label: string;
-    href: string;
-    className: string;
-  };
 };
 
 const statusConfig: Record<PaymentStatusType, StatusConfig> = {
@@ -45,11 +40,6 @@ const statusConfig: Record<PaymentStatusType, StatusConfig> = {
       className:
         "bg-emerald-500 text-white hover:bg-emerald-600 hover:-translate-y-px",
     },
-    secondaryButton: {
-      label: "Back to Shop",
-      href: "/",
-      className: "text-gray-400 hover:text-emerald-700",
-    },
   },
   failed: {
     icon: <CircleX size={96} className="text-red-500" />,
@@ -61,13 +51,8 @@ const statusConfig: Record<PaymentStatusType, StatusConfig> = {
     titleColor: "text-red-900",
     primaryButton: {
       label: "Try Again",
-      href: "/cart",
+      href: "/orders",
       className: "bg-red-500 text-white hover:bg-red-600 hover:-translate-y-px",
-    },
-    secondaryButton: {
-      label: "Back to Shop",
-      href: "/",
-      className: "text-gray-400 hover:text-red-700",
     },
   },
   cancel: {
@@ -79,15 +64,10 @@ const statusConfig: Record<PaymentStatusType, StatusConfig> = {
     cardShadow: "shadow-[0_8px_40px_rgba(0,0,0,0.08)]",
     titleColor: "text-gray-900",
     primaryButton: {
-      label: "Return to Cart",
-      href: "/cart",
+      label: "Return to Orders",
+      href: "/orders",
       className:
         "bg-gray-800 text-white hover:bg-gray-900 hover:-translate-y-px",
-    },
-    secondaryButton: {
-      label: "Back to Shop",
-      href: "/",
-      className: "text-gray-400 hover:text-gray-700",
     },
   },
 };
@@ -172,11 +152,11 @@ export default function PaymentStatusPage({ type }: PaymentStatusPageProps) {
           >
             {config.primaryButton.label}
           </Link>
-          <Link
-            href={config.secondaryButton.href}
-            className={`rounded-xl px-6 py-3 text-sm transition-all duration-200 ${config.secondaryButton.className}`}
+          <Link 
+            href={"/menu"}
+            className={`rounded-xl px-6 py-3 text-sm transition-all duration-200 text-gray-400 hover:text-gray-700`}
           >
-            {config.secondaryButton.label}
+            Back to Menu
           </Link>
         </div>
       </div>
