@@ -210,9 +210,9 @@ const MenuSection = () => {
         </div>
 
         {/** Promo banners */}
-        <div className="max-w-7xl mx-auto">
+        {/* <div className="max-w-7xl mx-auto">
           <PromoBanner type="multi" />
-        </div>
+        </div> */}
 
         {/** Product Grid — grouped by category */}
         {groupedItems.length > 0 ? (
