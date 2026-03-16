@@ -25,7 +25,7 @@ export function getMayaClientIP(request: NextRequest): string {
 export function isMayaAllowedIP(ip: string): boolean {
   if (process.env.MAYA_SKIP_IP_CHECK === "true") return true;
 
-  const env = process.env.NODE_ENV === "production" ? "production" : "sandbox";
+  const env = process.env.NODE_ENV === "production" ? "sandbox" : "sandbox";
 
   return MAYA_ALLOWED_IPS[env].includes(ip);
 }
