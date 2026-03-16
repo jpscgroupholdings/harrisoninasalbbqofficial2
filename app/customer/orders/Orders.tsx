@@ -18,8 +18,6 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import React, { useMemo, useState } from "react";
 import { useOrders, useUpdateOrder } from "@/hooks/api/useOrders";
 import { toast } from "sonner";
-import { getAuthHeader } from "@/lib/getAuthHeader";
-import { OrderType } from "@/types/OrderTypes";
 import { apiClient } from "@/lib/apiClient";
 
 const TABS = [
@@ -393,7 +391,7 @@ const Orders = () => {
                       )}
 
                       {(order.status === "completed" ||
-                        order.status === "cancelled") && (
+                        order.status === "cancelled" || order.status === "failed") && (
                         <button
                           onClick={() => handleBuyAgain(order.items)}
                           className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-brand-color-500 hover:bg-orange-50 text-brand-color-500 text-sm font-semibold transition-all"

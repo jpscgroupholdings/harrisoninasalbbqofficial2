@@ -17,6 +17,8 @@ const STATUS_PRIORITY: Record<OrderType["status"], number> = {
   dispatched: 4,
   completed:  5,
   cancelled:  6,
+  failed: 7,
+  expired: 8
 };
 
 

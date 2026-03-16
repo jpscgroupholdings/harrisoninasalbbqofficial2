@@ -10,7 +10,9 @@ export interface OrderType {
     | "dispatched"
     | "ready"
     | "completed"
-    | "cancelled";
+    | "cancelled"
+    | "failed"
+    | "expired"
 
   items: CartItem[];
   paymentInfo: {
