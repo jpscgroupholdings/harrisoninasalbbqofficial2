@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { canAccess } from "./lib/rbac";
 import { verifyToken } from "./lib/verifyToken";
 import { StaffRole } from "./types/staff";
+import { blockNonMaya, isMayaCallbackPath } from "./lib/mayaGuard";
 
 export async function proxy(request: NextRequest) {
   const url = request.nextUrl.clone();
@@ -18,6 +19,14 @@ export async function proxy(request: NextRequest) {
     "Path:",
     pathname,
   );
+
+  // Maya callback guard (run first, before routing)
+  if(isMayaCallbackPath(pathname)){
+    const blocked = blockNonMaya(request);
+    if(blocked) return blocked;
+    // ip passed - let the request fall through to normal routing below
+  }
+
 
   // ── Admin subdomain ──────────────────────────────────────────
   if (subdomain === "admin") {
