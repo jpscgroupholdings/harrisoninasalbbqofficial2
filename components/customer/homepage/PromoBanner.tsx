@@ -128,20 +128,17 @@ const PromoBanner = ({
                 />
                 <div className="absolute inset-0 bg-linear-to-r from-black/60 to-transparent" />
                 <div className="absolute inset-0 flex flex-col justify-center px-6 sm:px-8 md:px-16 lg:px-24">
-                  {card.discount && (
-                    <span className="inline-block bg-[#ef4501] text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-full font-bold text-xs sm:text-sm mb-3 sm:mb-4 w-fit">
-                      {card.discount}
+            
+                    <span className="inline-block bg-brand-color-500 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-full font-bold text-xs sm:text-sm mb-3 sm:mb-4 w-fit">
+                     Our Menu
                     </span>
-                  )}
+                  
                   <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-2 md:mb-4">
-                    {card.title}
+                    Favourite Dishes
                   </h2>
-                  <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/90 mb-3 sm:mb-4 md:mb-6">
-                    {card.description}
+                  <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-100 mb-3 sm:mb-4 md:mb-6 max-w-2xl">
+                   From our signature Chicken Inasal to mouthwatering BBQ, every dish is grilled with love and tradition.
                   </p>
-                  <button className="bg-[#ef4501] hover:bg-[#c13500] text-white px-5 sm:px-6 md:px-8 py-2.5 sm:py-3 md:py-4 rounded-full font-bold text-sm sm:text-base md:text-lg transition-colors w-fit">
-                    Order Now!
-                  </button>
                 </div>
               </div>
             </div>
@@ -172,7 +169,7 @@ const PromoBanner = ({
               onClick={() => goToSlide(index)}
               className={`h-2 rounded-full transition-all cursor-pointer ${
                 currentIndex === index
-                  ? "bg-[#ef4501] w-8"
+                  ? "bg-brand-color-500 w-8"
                   : "bg-white/50 w-2 hover:bg-white/75"
               }`}
               aria-label={`Go to slide ${index + 1}`}
@@ -212,7 +209,7 @@ const PromoBanner = ({
                         />
                         <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/40 to-transparent" />
                         {card.discount && (
-                          <div className="absolute top-4 right-4 bg-[#ef4501] text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
+                          <div className="absolute top-4 right-4 bg-brand-color-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
                             {card.discount}
                           </div>
                         )}
@@ -223,7 +220,7 @@ const PromoBanner = ({
                           <p className="text-sm text-white/90 mb-3">
                             {card.description}
                           </p>
-                          <button className="bg-white hover:bg-gray-100 text-[#ef4501] px-4 py-2 rounded-full font-semibold text-sm transition-colors">
+                          <button className="bg-white hover:bg-gray-100 text-brand-color-500 px-4 py-2 rounded-full font-semibold text-sm transition-colors">
                             View Details
                           </button>
                         </div>
@@ -260,7 +257,7 @@ const PromoBanner = ({
                 onClick={() => goToSlide(index)}
                 className={`h-2 rounded-full transition-all ${
                   currentIndex === index
-                    ? "bg-[#ef4501] w-8"
+                    ? "bg-brand-color-500 w-8"
                     : "bg-gray-300 w-2 hover:bg-gray-400"
                 }`}
                 aria-label={`Go to slide ${index + 1}`}
