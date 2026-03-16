@@ -58,14 +58,11 @@ const Header = () => {
       }`}
     >
       <div className="max-w-400 mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-18 lg:h-20">
+        <div className="flex items-center justify-between lg:justify-around h-18 lg:h-20">
           {/* Logo */}
           <BrandLogo />
 
-          <div className="gap-4  hidden lg:flex">
-            <Link href={"/menu"} className="hover:text-brand-color-500">
-              Menu
-            </Link>
+          <div className="gap-6 hidden lg:flex">
             <Link href={"/catering"} className="hover:text-brand-color-500">
               Catering
             </Link>
