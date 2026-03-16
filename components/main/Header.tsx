@@ -13,7 +13,7 @@ const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const NAV_ITEMS = [
-    { label: "Products", section: "/#products-main-section" },
+    // { label: "Products", section: "/#products-main-section" },
     { label: "About", section: "/#about-section" },
     { label: "Catering", section: "/catering" },
     { label: "Franchise Now", section: "/franchise" },
@@ -38,13 +38,13 @@ const Header = () => {
                 {item.label}
               </Link>
             ))}
-            <a
+            {/* <a
               href={orderUrl}
               className="flex items-center justify-center gap-2 w-full bg-brand-color-500 text-white px-4 py-2 text-sm font-bold text-center hover:bg-brand-color-600 transition-colors rounded-full"
             >
               <ShoppingCart size={16} />
               <p>Order Now</p>
-            </a>
+            </a> */}
           </div>
 
           {/* Mobile menu button */}
