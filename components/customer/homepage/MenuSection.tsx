@@ -1,14 +1,12 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { Search, SlidersHorizontal, X } from "lucide-react";
+import { Search} from "lucide-react";
 import ProductCard from "../../ui/ProductCard";
-import PromoBanner from "./PromoBanner";
 import { LINKS } from "@/constant/links";
 import { useScrollToSection } from "@/hooks/utils/useScrollToSection";
 import { useProducts } from "@/hooks/api/useProducts";
 import { Category, Product } from "@/types/adminType";
-import { InputField } from "@/components/ui/InputField";
 import { useMenuCategories } from "@/components/main/CategoryCarousel";
 
 const MenuSection = () => {
@@ -22,15 +20,10 @@ const MenuSection = () => {
     refetch: refetchCategories,
   } = useMenuCategories();
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState<
-    "default" | "price-low" | "price-high" | "name"
-  >("default");
 
   const [activeCategory, setActiveCategory] = useState<string>("All");
   const [visibleItems, setVisibleItems] = useState<Set<number>>(new Set());
 
-  const headerRef = useRef<HTMLDivElement>(null);
   const filtersRef = useRef<HTMLDivElement>(null);
 
   // Refs map for each category section
@@ -42,29 +35,8 @@ const MenuSection = () => {
     items = items
       .filter((item) => {
         if (activeCategory === "All") return true;
-        if (activeCategory === "Best Sellers") return item.isPopular;
         return item.category.name === activeCategory;
       })
-      .filter((item) => {
-        if (!searchQuery) return true;
-        return (
-          item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          item.description?.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-      })
-      .sort((a, b) => {
-        switch (sortBy) {
-          case "price-low":
-            return a.price - b.price;
-          case "price-high":
-            return b.price - a.price;
-          case "name":
-            return a.name.localeCompare(b.name);
-          default:
-            return 0;
-        }
-      });
-
     return items;
   })();
 
@@ -85,7 +57,7 @@ const MenuSection = () => {
 
     // Give React a tick to re-render filtered items before scrolling
     requestAnimationFrame(() => {
-      if (category === "All" || category === "Best Sellers") {
+      if (category === "All") {
         // Scroll to the menu section top
         const section = document.getElementById("menu-section");
         if (section) {
@@ -115,7 +87,6 @@ const MenuSection = () => {
       });
     }, observerOptions);
 
-    if (headerRef.current) observer.observe(headerRef.current);
     if (filtersRef.current) observer.observe(filtersRef.current);
 
     return () => observer.disconnect();
@@ -234,11 +205,6 @@ const MenuSection = () => {
           </div>
         </div>
 
-        {/** Promo banners */}
-        {/* <div className="max-w-7xl mx-auto">
-          <PromoBanner type="multi" />
-        </div> */}
-
         {/** Product Grid — grouped by category */}
         {groupedItems.length > 0 ? (
           groupedItems.map(([category, items]) => (
@@ -318,6 +284,7 @@ const MenuSection = () => {
                   src={"/images/grab.jpg"}
                   alt="grab logo"
                   className="w-8 h-8 scale-160 mr-2"
+                  loading="lazy"
                 />
                 <p className="hidden md:block">Grab Food</p>
               </button>
@@ -329,6 +296,7 @@ const MenuSection = () => {
                   src={"/images/foodpanda_whiteoutline.png"}
                   alt="foodpanda logo"
                   className="w-8 h-8 scale-110"
+                  loading="lazy"
                 />
                 <p className="hidden md:block">Foodpanda</p>
               </button>
