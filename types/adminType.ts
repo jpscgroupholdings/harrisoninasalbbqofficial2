@@ -11,8 +11,17 @@ export interface Order {
 export interface OrderItem {
   productId: string;
   productName: string;
+  productType: "solo" | "combo" | "set";
+
   quantity: number;
   price: number;
+
+  // snapshot at time of purchase
+  includedItems?: {
+    name: string;
+    quantity: number;
+    label: string | null;
+  }[];
 }
 
 export interface IncludedItem {
