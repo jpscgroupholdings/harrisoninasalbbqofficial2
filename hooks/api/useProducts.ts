@@ -60,7 +60,7 @@ export const useCreateProduct = () => {
 
   return useMutation({
     // The actual API call
-    mutationFn: (productData: Partial<ProductPayload>) =>
+    mutationFn: (productData: ProductPayload) =>
       apiClient.post("/products", productData),
 
     // what happens after successful creation
@@ -98,46 +98,43 @@ export const useUpdateProduct = () => {
 
   type mutationProps = {
     id: string;
-    data: Partial<ProductPayload>;
+    data: ProductPayload; // ✅ not Partial — all fields are sent on update
   };
 
   return useMutation({
     mutationFn: ({ id, data }: mutationProps) =>
       apiClient.put(`/products/${id}`, data),
 
-    // OPTIMISTIC UPDATE (Advanced)
-    // Updates UI immediately, before API responds
     onMutate: async ({ id, data }) => {
-      // Cancel ongoing queries to prevent race conditions
       await queryClient.cancelQueries({ queryKey: ["products"] });
 
-      // Snapshot current data (for rollback if update fails)
       const previousProducts = queryClient.getQueryData(["products"]);
 
-      // Optimistically update cache
       queryClient.setQueryData(["products"], (old: Product[] = []) => {
         return old.map((p) => {
           if (p._id !== id) return p;
           return {
             ...p,
             ...data,
+            // ✅ Preserve populated objects — payload only has ObjectId strings
+            // but the cache holds full populated objects
             category: p.category,
+            subcategory: p.subcategory,
+            includedItems: p.includedItems,
           };
         });
       });
 
-      // Return context with previous data
       return { previousProducts };
     },
 
-    // If mutation fails, rollback
     onError: (err, variables, context) => {
       if (context?.previousProducts) {
         queryClient.setQueryData(["products"], context.previousProducts);
       }
+      toast.error("Failed to update product");
     },
 
-    // Always refetch after mutation settles (success or error)
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
     },
