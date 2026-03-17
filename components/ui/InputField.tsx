@@ -8,10 +8,14 @@ interface InputFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   error?: string;
   leftIcon?: React.ReactNode;
   rightElement?: React.ReactNode; // 🔥 NEW
+  subLabel?: string;
 }
 
 export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
-  ({ label, error, leftIcon, rightElement, className, ...props }, ref) => {
+  (
+    { label, error, leftIcon, rightElement, className, subLabel, ...props },
+    ref,
+  ) => {
     return (
       <div className="w-full space-y-2">
         {label && (
@@ -21,6 +25,15 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
           >
             {label}
             {props.required && <span className="text-red-500 ml-1">*</span>}
+          </label>
+        )}
+
+        {subLabel && (
+          <label
+            htmlFor={props.id}
+            className="block text-xs text-gray-600 mb-2"
+          >
+            {subLabel}
           </label>
         )}
 
@@ -39,7 +52,7 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
               leftIcon ? "pl-10" : "pl-4",
               rightElement ? "pr-12" : "pr-4", // 🔥 dynamic padding
               error && "border-red-500 focus:ring-red-500",
-              className
+              className,
             )}
           />
 
@@ -53,7 +66,7 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
         {error && <p className="text-sm text-red-500">{error}</p>}
       </div>
     );
-  }
+  },
 );
 
 InputField.displayName = "InputField";
