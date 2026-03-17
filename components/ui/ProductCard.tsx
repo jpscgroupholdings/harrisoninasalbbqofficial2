@@ -18,13 +18,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ item }) => {
     addToCart({
       _id: item._id,
       name: item.name,
-      price: item.price,
+      price: item.price ?? 0,
       image: item.image.url,
       category: {
         _id: item.category._id,
         name: item.category.name
       },
-      description: item.description ?? "N/a"
     });
     setIsAdded(true);
     setTimeout(() => setIsAdded(false), 500);
