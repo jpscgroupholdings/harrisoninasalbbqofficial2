@@ -10,7 +10,11 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
   });
 
   if (!response.ok) {
-    throw new Error(`HTTP ${response.status}`);
+    // ✅ Parse the error body so onError gets { error, details }
+    const errorBody = await response.json().catch(() => ({
+      error: `HTTP ${response.status}`,
+    }));
+    throw errorBody; // throw the object, not a new Error()
   }
 
   return response.json();
