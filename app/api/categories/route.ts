@@ -25,15 +25,6 @@ export async function POST(request: Request) {
 
     const { name, imageFile } = await request.json();
 
-    let image = {url: "", public_id: ""};
-    if(!imageFile){
-      const uploaded = await cloudinary.uploader.upload(imageFile, {
-        folder: "categories",
-        transformation: [{width: 400, height: 400, crop: "limit"}, {quality: "auto"}],
-      });
-      image = {url: uploaded.secure_url, public_id: uploaded.public_id}
-    }
-
     const trimmedName = name?.trim().replace(/\s+/g, " ");
 
     if (!trimmedName) {
@@ -41,6 +32,19 @@ export async function POST(request: Request) {
         { error: "Category name is required" },
         { status: 400 }
       );
+    }
+
+    // ✅ Only upload if imageFile was actually provided
+    let image = { url: "", public_id: "" };
+    if (imageFile) {
+      const uploaded = await cloudinary.uploader.upload(imageFile, {
+        folder: "categories",
+        transformation: [
+          { width: 400, height: 400, crop: "limit" },
+          { quality: "auto" },
+        ],
+      });
+      image = { url: uploaded.secure_url, public_id: uploaded.public_id };
     }
 
     const last = await Category.findOne({}).sort({ position: -1 });
