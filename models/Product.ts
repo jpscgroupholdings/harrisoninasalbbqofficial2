@@ -1,7 +1,7 @@
 import mongoose, { Schema, models } from "mongoose";
 
 const IncludedItemsSchema = new Schema({
-  products: {type: Schema.Types.ObjectId, ref: "Product", required: true},
+  product: {type: Schema.Types.ObjectId, ref: "Product", required: true},
   quantity: {type: Number, required: true, min:1 , default: 1},
 
   // Override display name if needed - e.g "Drink (choice of Coke or Water)"
@@ -21,7 +21,7 @@ const ProductSchema = new Schema(
     },
 
     category: { type: Schema.Types.ObjectId, ref: 'Category'},
-    subCategory: {type: Schema.Types.ObjectId, ref: 'SubCategory', default: null},
+    subcategory: {type: Schema.Types.ObjectId, ref: 'SubCategory', default: null},
 
     productType: {
       type: String,
