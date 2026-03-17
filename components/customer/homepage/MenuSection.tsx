@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { Search} from "lucide-react";
+import { Search } from "lucide-react";
 import ProductCard from "../../ui/ProductCard";
 import { LINKS } from "@/constant/links";
 import { useScrollToSection } from "@/hooks/utils/useScrollToSection";
@@ -20,7 +20,6 @@ const MenuSection = () => {
     refetch: refetchCategories,
   } = useMenuCategories();
 
-
   const [activeCategory, setActiveCategory] = useState<string>("All");
   const [visibleItems, setVisibleItems] = useState<Set<number>>(new Set());
 
@@ -32,11 +31,10 @@ const MenuSection = () => {
   const computedItems = (() => {
     let items: Product[] = products;
 
-    items = items
-      .filter((item) => {
-        if (activeCategory === "All") return true;
-        return item.category.name === activeCategory;
-      })
+    items = items.filter((item) => {
+      if (activeCategory === "All") return true;
+      return item.category.name === activeCategory;
+    });
     return items;
   })();
 
@@ -138,9 +136,9 @@ const MenuSection = () => {
          */}
         <div
           ref={filtersRef}
-          className="opacity-0 transition-all duration-700 delay-100 sticky top-18 md:top-20 z-30 bg-white w-full px-4 sm:px-6 lg:px-8 pb-5 pt-10 overflow-x-scroll lg:overflow-hidden"
+          className="opacity-0 transition-all duration-700 delay-100 sticky top-18 md:top-20 z-30 bg-white w-full px-4 sm:px-6 lg:px-8 pb-5 pt-10 "
         >
-          <div className="flex gap-2 mb-3 max-w-7xl mx-auto">
+          <div className="flex gap-2 mb-3 py-2 max-w-7xl mx-auto overflow-x-auto scrollbar-thin">
             {/* ── Loading ── */}
             {isCategoriesPending && (
               <>
@@ -309,6 +307,29 @@ const MenuSection = () => {
         .animate-in {
           opacity: 1 !important;
           transform: translateY(0) !important;
+        }
+
+        .scrollbar-thin::-webkit-scrollbar {
+          height: 6px; /* horizontal scrollbar height */
+        }
+
+        .scrollbar-thin::-webkit-scrollbar-track {
+          background: transparent;
+        }
+
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+          background-color: #d1d5db; /* gray-300 */
+          border-radius: 9999px;
+        }
+
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+          background-color: #9ca3af; /* gray-400 */
+        }
+
+        /* Firefox */
+        .scrollbar-thin {
+          scrollbar-width: thin;
+          scrollbar-color: #d1d5db transparent;
         }
       `}</style>
     </section>
