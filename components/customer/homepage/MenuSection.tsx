@@ -1,13 +1,50 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { Search } from "lucide-react";
+import { ChevronDown, Search } from "lucide-react";
 import ProductCard from "../../ui/ProductCard";
 import { LINKS } from "@/constant/links";
 import { useScrollToSection } from "@/hooks/utils/useScrollToSection";
 import { useProducts } from "@/hooks/api/useProducts";
 import { Category, Product } from "@/types/adminType";
 import { useMenuCategories } from "@/components/main/CategoryCarousel";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface SubcategoryGroup {
+  subcategoryName: string | null;
+  items: Product[];
+}
+
+interface CategoryGroup {
+  categoryName: string;
+  subcategoryGroups: SubcategoryGroup[];
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function groupProducts(products: Product[]): CategoryGroup[] {
+  const categoryMap = new Map<string, Map<string | null, Product[]>>();
+
+  for (const product of products) {
+    const catName = product.category?.name ?? "Uncategorized";
+    const subName = product.subcategory?.name ?? null;
+
+    if (!categoryMap.has(catName)) categoryMap.set(catName, new Map());
+    const subMap = categoryMap.get(catName)!;
+    if (!subMap.has(subName)) subMap.set(subName, []);
+    subMap.get(subName)!.push(product);
+  }
+
+  return Array.from(categoryMap.entries()).map(([categoryName, subMap]) => ({
+    categoryName,
+    subcategoryGroups: Array.from(subMap.entries()).map(
+      ([subcategoryName, items]) => ({ subcategoryName, items }),
+    ),
+  }));
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 const MenuSection = () => {
   const { data: products = [], refetch } = useProducts();
@@ -21,315 +58,415 @@ const MenuSection = () => {
   } = useMenuCategories();
 
   const [activeCategory, setActiveCategory] = useState<string>("All");
-  const [visibleItems, setVisibleItems] = useState<Set<number>>(new Set());
+  const [activeSubcategory, setActiveSubcategory] = useState<string | null>(
+    null,
+  );
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
+    new Set(),
+  );
 
-  const filtersRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
-  // Refs map for each category section
-  const categoryRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  // ── Filter + group ──────────────────────────────────────────────────────────
 
-  const computedItems = (() => {
-    let items: Product[] = products;
+  const filteredProducts = products.filter((p) => {
+    if (activeCategory !== "All" && p.category?.name !== activeCategory)
+      return false;
+    if (
+      activeSubcategory &&
+      (p.subcategory?.name ?? null) !== activeSubcategory
+    )
+      return false;
+    return true;
+  });
 
-    items = items.filter((item) => {
-      if (activeCategory === "All") return true;
-      return item.category.name === activeCategory;
-    });
-    return items;
-  })();
+  const groupedItems = groupProducts(filteredProducts);
 
-  /** Scroll to a category section, accounting for sticky header height */
-  const scrollToCategory = (categoryName: string) => {
-    const el = categoryRefs.current[categoryName];
-    if (!el) return;
+  // ── Handlers ────────────────────────────────────────────────────────────────
 
-    // Offset: sticky filter bar (~120px) + a little breathing room
-    const OFFSET = 200;
-    const top = el.getBoundingClientRect().top + window.scrollY - OFFSET;
+  const scrollToContent = () => {
+    if (!contentRef.current) return;
+    const top =
+      contentRef.current.getBoundingClientRect().top + window.scrollY - 200;
     window.scrollTo({ top, behavior: "smooth" });
   };
 
-  const handleChangeCategory = (category: string) => {
-    setActiveCategory(category);
-    setVisibleItems(new Set());
+  const handleSelectCategory = (categoryName: string) => {
+    setActiveCategory(categoryName);
+    setActiveSubcategory(null);
 
-    // Give React a tick to re-render filtered items before scrolling
-    requestAnimationFrame(() => {
-      if (category === "All") {
-        // Scroll to the menu section top
-        const section = document.getElementById("menu-section");
-        if (section) {
-          const OFFSET = 80;
-          const top =
-            section.getBoundingClientRect().top + window.scrollY - OFFSET;
-          window.scrollTo({ top, behavior: "smooth" });
-        }
-      } else {
-        scrollToCategory(category);
-      }
-    });
+    scrollToContent();
+
+    if (categoryName === "All") {
+      setExpandedCategories(new Set());
+    } else {
+      setExpandedCategories((prev) => {
+        const next = new Set<string>();
+        if (!prev.has(categoryName)) next.add(categoryName);
+        return next;
+      });
+    }
   };
 
-  /** Animate header and filters when component mounts or becomes visible */
-  useEffect(() => {
-    const observerOptions = {
-      threshold: 0.1,
-      rootMargin: "0px",
-    };
+  const handleSelectSubcategory = (subcategoryName: string | null) => {
+    setActiveSubcategory(subcategoryName);
 
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add("animate-in");
-        }
+    scrollToContent();
+  };
+
+  // ── Card visibility observer ──────────────────────────────────────────────
+
+  // ── Sidebar helpers ───────────────────────────────────────────────────────
+
+  const getSubcategoriesForCategory = (categoryName: string): string[] => {
+    const subs = new Set<string>();
+    products
+      .filter((p) => p.category?.name === categoryName)
+      .forEach((p) => {
+        if (p.subcategory?.name) subs.add(p.subcategory.name);
       });
-    }, observerOptions);
+    return Array.from(subs);
+  };
 
-    if (filtersRef.current) observer.observe(filtersRef.current);
+  // ── Render ────────────────────────────────────────────────────────────────
 
-    return () => observer.disconnect();
-  }, []);
+  let globalIndex = 0;
 
-  /** Observe product cards individually */
-  useEffect(() => {
-    const observerOptions = {
-      threshold: 0.2,
-      rootMargin: "50px",
-    };
+  const ProductGrid = ({ items }: { items: Product[] }) => (
+    <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 auto-rows-fr gap-4 md:gap-5">
+      {items.map((item) => {
+        const index = globalIndex++;
+        return (
+          <div
+            key={item._id}
+            data-index={index}
+            id={item._id}
+            className={`product-card-wrapper h-full transition-all duration-500`}
+            style={{ transitionDelay: `${(index % 8) * 60}ms` }}
+          >
+            <ProductCard item={item} />
+          </div>
+        );
+      })}
+    </div>
+  );
 
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          const index = parseInt(
-            entry.target.getAttribute("data-index") || "0",
-          );
-          setVisibleItems((prev) => new Set([...prev, index]));
-        }
-      });
-    }, observerOptions);
+  const GroupedContent = () => (
+    <>
+      {groupedItems.length > 0 ? (
+        <div className="space-y-12">
+          {groupedItems.map(({ categoryName, subcategoryGroups }) => (
+            <div key={categoryName}>
+              {/* Category header — only when All is selected */}
+              {activeCategory === "All" && (
+                <div className="mb-7">
+                  <h2 className="text-2xl font-bold text-[#1a1a1a] tracking-tight">
+                    {categoryName}
+                  </h2>
+                  <div className="w-8 h-0.5 bg-brand-color-500 mt-3 rounded-full" />
+                </div>
+              )}
 
-    const cards = document.querySelectorAll(".product-card-wrapper");
-    cards.forEach((card) => observer.observe(card));
+              <div className="space-y-9">
+                {subcategoryGroups.map(({ subcategoryName, items }) => (
+                  <div key={subcategoryName ?? "__none__"}>
+                    {subcategoryName && (
+                      <div className="flex items-center gap-3 mb-5">
+                        <h3 className="text-[11px] font-bold uppercase tracking-widest text-gray-400 shrink-0">
+                          {subcategoryName}
+                        </h3>
+                        <div className="flex-1 h-px bg-gray-100" />
+                      </div>
+                    )}
+                    <ProductGrid items={items} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-20">
+          <Search size={32} className="mx-auto text-gray-200 mb-4" />
+          <h3 className="text-base font-semibold text-gray-500 mb-1">
+            No products found
+          </h3>
+          <p className="text-sm text-gray-400">Try a different category</p>
+          <button
+            onClick={() => refetch()}
+            className="underline mt-2 text-sm text-brand-color-500 hover:text-brand-color-600 cursor-pointer"
+          >
+            Reload
+          </button>
+        </div>
+      )}
+    </>
+  );
 
-    return () => observer.disconnect();
-  }, [computedItems]);
-
-  // Group items by category for rendering
-  const groupedItems = Object.entries(
-    computedItems.reduce(
-      (acc, item) => {
-        const category = item.category.name || "Uncategorized";
-        if (!acc[category]) acc[category] = [];
-        acc[category].push(item);
-        return acc;
-      },
-      {} as Record<string, typeof computedItems>,
-    ),
+  const DeliveryCTA = () => (
+    <div className="bg-slate-50 rounded-2xl p-6 mt-12 border border-slate-100">
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="text-center md:text-left">
+          <h3 className="text-base font-bold text-gray-900 mb-1">
+            Order Through Your Favorite Delivery App
+          </h3>
+          <p className="text-sm text-gray-500">
+            Can't order directly? Get our food delivered via Grab or Foodpanda!
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <button
+            onClick={() => window.open(`${LINKS.GRAB}`, "_blank")}
+            className="px-5 py-2.5 rounded-xl font-semibold grab-background-color text-white hover:bg-green-700 flex items-center gap-2 shadow-md cursor-pointer transition-all"
+          >
+            <img
+              src="/images/grab.jpg"
+              alt="grab"
+              className="w-6 h-6 scale-125"
+              loading="lazy"
+            />
+            <span className="text-sm">Grab Food</span>
+          </button>
+          <button
+            onClick={() => window.open(`${LINKS.FOODPANDA}`, "_blank")}
+            className="px-5 py-2.5 rounded-xl font-semibold bg-pink-600 text-white hover:bg-pink-700 flex items-center gap-2 shadow-md cursor-pointer transition-all"
+          >
+            <img
+              src="/images/foodpanda_whiteoutline.png"
+              alt="foodpanda"
+              className="w-6 h-6"
+              loading="lazy"
+            />
+            <span className="text-sm">Foodpanda</span>
+          </button>
+        </div>
+      </div>
+    </div>
   );
 
   return (
-    <section id="menu-section" className="py-4 bg-white scroll-mt-24">
-      <div className="px-4 sm:px-6 lg:px-8 space-y-4">
-        {/**
-         * Sticky filter bar — two stacked rows:
-         *   Row 1: Category pills (full width, wraps naturally)
-         */}
-        <div
-          ref={filtersRef}
-          className="opacity-0 transition-all duration-700 delay-100 sticky top-18 md:top-20 z-30 bg-white w-full px-4 sm:px-6 lg:px-8 pb-5 pt-10 "
-        >
-          <div className="flex gap-2 mb-3 py-2 max-w-7xl mx-auto overflow-x-auto scrollbar-thin">
-            {/* ── Loading ── */}
-            {isCategoriesPending && (
-              <>
-                {[108, 76, 88, 64, 92].map((w, i) => (
-                  <div
-                    key={i}
-                    className="h-9 rounded-full bg-gray-100 animate-pulse shrink-0"
-                    style={{ width: w }}
-                  />
-                ))}
-              </>
-            )}
+    <section id="menu-section" className="bg-white scroll-mt-24">
+      {/* ══════════════════════════════════════════════
+          MOBILE — horizontal pill bar + content
+      ══════════════════════════════════════════════ */}
+      <div className="lg:hidden">
+        {/* Sticky pill bar */}
+        <div className="sticky top-18 z-30 bg-white border-b border-gray-100 pt-8 pb-2">
+          {/* Category pills */}
+          <div className="flex gap-2 overflow-x-auto scrollbar-thin pb-1">
+            <button
+              onClick={() => handleSelectCategory("All")}
+              className={`text-nowrap px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 shrink-0 cursor-pointer ${
+                activeCategory === "All"
+                  ? "bg-brand-color-500 text-white shadow-md shadow-brand-color-500/30"
+                  : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"
+              }`}
+            >
+              All
+            </button>
 
-            {/* ── Error ── */}
+            {isCategoriesPending &&
+              [80, 96, 72, 88].map((w, i) => (
+                <div
+                  key={i}
+                  className="h-9 rounded-full bg-gray-100 animate-pulse shrink-0"
+                  style={{ width: w }}
+                />
+              ))}
+
+            {!isCategoriesPending &&
+              !isCategoriesError &&
+              categories?.map((cat: Category) => (
+                <button
+                  key={cat._id}
+                  onClick={() => handleSelectCategory(cat.name)}
+                  className={`text-nowrap px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 shrink-0 cursor-pointer ${
+                    activeCategory === cat.name
+                      ? "bg-brand-color-500 text-white shadow-md shadow-brand-color-500/30"
+                      : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"
+                  }`}
+                >
+                  {cat.name}
+                </button>
+              ))}
+          </div>
+
+          {/* Subcategory pills (only when category has subcategories) */}
+          {activeCategory !== "All" &&
+            (() => {
+              const subs = getSubcategoriesForCategory(activeCategory);
+              if (subs.length === 0) return null;
+              return (
+                <div className="flex gap-2 overflow-x-auto scrollbar-thin pt-4">
+                  <button
+                    onClick={() => handleSelectSubcategory(null)}
+                    className={`text-nowrap px-3 py-1.5 rounded-full text-xs font-semibold transition-all shrink-0 cursor-pointer ${
+                      activeSubcategory === null
+                        ? "bg-gray-900 text-white"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }`}
+                  >
+                    All
+                  </button>
+                  {subs.map((sub) => (
+                    <button
+                      key={sub}
+                      onClick={() => handleSelectSubcategory(sub)}
+                      className={`text-nowrap px-3 py-1.5 rounded-full text-xs font-semibold transition-all shrink-0 cursor-pointer ${
+                        activeSubcategory === sub
+                          ? "bg-gray-900 text-white"
+                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      }`}
+                    >
+                      {sub}
+                    </button>
+                  ))}
+                </div>
+              );
+            })()}
+        </div>
+
+        {/* Mobile product content */}
+        <div className="px-4 py-6">
+          <GroupedContent />
+          <DeliveryCTA />
+        </div>
+      </div>
+
+      {/* ══════════════════════════════════════════════
+          DESKTOP — sticky sidebar + content
+      ══════════════════════════════════════════════ */}
+      <div className="hidden lg:flex max-w-360 mx-auto gap-8 py-8 relative mt-12">
+        {/* Sidebar */}
+        <aside className="w-72 shrink-0 sticky top-52 self-start max-h-[calc(100vh-7rem)] overflow-y-auto scrollbar-thin">
+          <div className="space-y-2 pr-1">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 px-3 pb-3">
+              Browse Menu
+            </p>
+
+            {/* All */}
+            <button
+              onClick={() => handleSelectCategory("All")}
+              className={`w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 cursor-pointer ${
+                activeCategory === "All"
+                  ? "bg-brand-color-500 text-white shadow-sm"
+                  : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+              }`}
+            >
+              All Categories
+            </button>
+
+            {/* Skeletons */}
+            {isCategoriesPending &&
+              [1, 2, 3, 4, 5].map((i) => (
+                <div
+                  key={i}
+                  className="h-10 rounded-xl bg-gray-100 animate-pulse"
+                />
+              ))}
+
+            {/* Error */}
             {isCategoriesError && !isCategoriesPending && (
-              <div className="flex items-center gap-2">
-                <span className="w-4 h-4 rounded-full bg-red-100 flex items-center justify-center shrink-0">
-                  <span className="text-red-700 text-[10px] font-bold leading-none">
-                    !
-                  </span>
-                </span>
-                <span className="text-sm text-red-600">
-                  Couldn't load categories
-                </span>
+              <div className="px-3 py-2 text-xs text-red-500">
+                Failed to load.{" "}
                 <button
                   onClick={() => refetchCategories()}
-                  className="text-sm px-3 py-1 rounded-full border border-gray-200 hover:bg-gray-100 transition-colors cursor-pointer"
+                  className="underline cursor-pointer"
                 >
                   Retry
                 </button>
               </div>
             )}
 
-            {/* ── Loaded ── */}
-            {!isCategoriesPending && !isCategoriesError && (
-              <>
-                <button
-                  onClick={() => handleChangeCategory("All")}
-                  className={`text-nowrap px-4 py-2 cursor-pointer rounded-full text-sm font-medium transition-all duration-300 ${
-                    activeCategory === "All"
-                      ? "bg-brand-color-500 text-white shadow-lg shadow-brand-color-500/30"
-                      : "bg-white text-gray-800 font-bold hover:bg-gray-100 border border-gray-200"
-                  }`}
-                >
-                  All Categories
-                </button>
-                {categories?.map((category: Category) => (
-                  <button
-                    key={category._id}
-                    onClick={() => handleChangeCategory(category.name)}
-                    className={`text-nowrap px-5 py-3 cursor-pointer rounded-full text-sm font-medium transition-all duration-300 ${
-                      activeCategory === category.name
-                        ? "bg-brand-color-500 text-white shadow-lg shadow-brand-color-500/30"
-                        : "bg-white text-gray-800 font-black hover:bg-gray-100 border border-gray-200"
-                    }`}
-                  >
-                    {category.name}
-                  </button>
-                ))}
-              </>
-            )}
-          </div>
-        </div>
+            {/* Categories */}
+            {!isCategoriesPending &&
+              !isCategoriesError &&
+              categories?.map((cat: Category) => {
+                const isActive = activeCategory === cat.name;
+                const isExpanded = expandedCategories.has(cat.name);
+                const subcategories = getSubcategoriesForCategory(cat.name);
+                const hasSubcategories = subcategories.length > 0;
 
-        {/** Product Grid — grouped by category */}
-        {groupedItems.length > 0 ? (
-          groupedItems.map(([category, items]) => (
-            <div
-              key={category}
-              // Attach the ref so we can scroll to this section
-              ref={(el) => {
-                categoryRefs.current[category] = el;
-              }}
-              className="max-w-7xl mx-auto mb-12"
-            >
-              {/* Category Header */}
-              <div className="mb-10">
-                <h2 className="text-[1.75rem] font-bold text-[#1a1a1a] tracking-tight">
-                  {category}
-                </h2>
-                <div className="w-10 h-0.75 bg-brand-color-500 mt-4 rounded-full" />
-              </div>
+                return (
+                  <div key={cat._id}>
+                    <button
+                      onClick={() => handleSelectCategory(cat.name)}
+                      className={`w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 cursor-pointer flex items-center justify-between gap-2 ${
+                        isActive
+                          ? "bg-brand-color-500 text-white shadow-sm"
+                          : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                      }`}
+                    >
+                      <span className="truncate">{cat.name}</span>
+                      {hasSubcategories && (
+                        <ChevronDown
+                          size={14}
+                          className={`shrink-0 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""} ${
+                            isActive ? "text-white/70" : "text-gray-400"
+                          }`}
+                        />
+                      )}
+                    </button>
 
-              {/* Items Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 auto-rows-fr gap-6">
-                {items.map((item, index) => (
-                  <div
-                    key={`${item.name}-${index}`}
-                    data-index={index}
-                    className={`product-card-wrapper h-full transition-all duration-500 ${
-                      visibleItems.has(index)
-                        ? "translate-y-0 opacity-100"
-                        : "translate-y-10 opacity-0"
-                    }`}
-                    style={{ transitionDelay: `${(index % 12) * 50}ms` }}
-                  >
-                    <ProductCard item={item} />
+                    {/* Subcategory list */}
+                    {hasSubcategories && isExpanded && (
+                      <div className="ml-3 my-2 border-l-2 border-gray-100 pl-3 space-y-2">
+                        <button
+                          onClick={() => handleSelectSubcategory(null)}
+                          className={`w-full text-left px-2 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                            activeSubcategory === null
+                              ? "text-brand-color-500 bg-brand-color-500/10"
+                              : "text-gray-500 hover:text-gray-800 hover:bg-gray-50"
+                          }`}
+                        >
+                          All
+                        </button>
+                        {subcategories.map((sub) => (
+                          <button
+                            key={sub}
+                            onClick={() => handleSelectSubcategory(sub)}
+                            className={`w-full text-left px-2 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                              activeSubcategory === sub
+                                ? "text-brand-color-500 bg-brand-color-500/10"
+                                : "text-gray-500 hover:text-gray-800 hover:bg-gray-50"
+                            }`}
+                          >
+                            {sub}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                ))}
-              </div>
-            </div>
-          ))
-        ) : (
-          <div className="text-center py-16">
-            <div className="text-gray-300 mb-4">
-              <Search size={25} className="mx-auto" />
-            </div>
-            <h3 className="text-xl font-semibold text-gray-600 mb-2">
-              No product found
-            </h3>
-            <p className="text-gray-400">
-              We couldn't find the product. Try to reload again
-            </p>
-            <button
-              onClick={() => refetch()}
-              className="underline mt-1 text-brand-color-500 hover:text-brand-color-600 cursor-pointer"
-            >
-              Reload
-            </button>
+                );
+              })}
           </div>
-        )}
+        </aside>
 
-        {/** Delivery CTA */}
-        <div className="max-w-7xl mx-auto bg-slate-50 rounded-2xl p-6 mb-8 border border-slate-100">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="text-center md:text-left">
-              <h3 className="text-lg font-bold text-gray-900 mb-1">
-                Order Through Your Favorite Delivery App
-              </h3>
-              <p className="text-sm text-gray-600">
-                Can't order directly? Get our food delivered via Grab or
-                Foodpanda!
-              </p>
-            </div>
-            <div className="flex w-full md:w-auto md:justify-end gap-3">
-              <button
-                onClick={() => window.open(`${LINKS.GRAB}`, "_blank")}
-                className="flex-1 md:flex-none px-6 py-3 rounded-xl font-semibold transition-all cursor-pointer grab-background-color text-white hover:bg-green-700 flex flex-col md:flex-row items-center gap-2 shadow-md hover:shadow-lg"
-              >
-                <img
-                  src={"/images/grab.jpg"}
-                  alt="grab logo"
-                  className="w-8 h-8 scale-160 mr-2"
-                  loading="lazy"
-                />
-                <p className="hidden md:block">Grab Food</p>
-              </button>
-              <button
-                onClick={() => window.open(`${LINKS.FOODPANDA}`, "_blank")}
-                className="flex-1 md:flex-none px-6 py-3 rounded-xl font-semibold transition-all cursor-pointer bg-pink-600 text-white hover:bg-pink-700 flex flex-col md:flex-row items-center gap-2 shadow-md hover:shadow-lg"
-              >
-                <img
-                  src={"/images/foodpanda_whiteoutline.png"}
-                  alt="foodpanda logo"
-                  className="w-8 h-8 scale-110"
-                  loading="lazy"
-                />
-                <p className="hidden md:block">Foodpanda</p>
-              </button>
-            </div>
-          </div>
+        {/* Content */}
+        <div ref={contentRef} className="flex-1 min-w-0">
+          <GroupedContent />
+          <DeliveryCTA />
         </div>
       </div>
 
       <style jsx>{`
-        .animate-in {
-          opacity: 1 !important;
-          transform: translateY(0) !important;
-        }
-
         .scrollbar-thin::-webkit-scrollbar {
-          height: 6px; /* horizontal scrollbar height */
+          width: 4px;
+          height: 4px;
         }
-
         .scrollbar-thin::-webkit-scrollbar-track {
           background: transparent;
         }
-
         .scrollbar-thin::-webkit-scrollbar-thumb {
-          background-color: #d1d5db; /* gray-300 */
+          background-color: #e5e7eb;
           border-radius: 9999px;
         }
-
         .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-          background-color: #9ca3af; /* gray-400 */
+          background-color: #d1d5db;
         }
-
-        /* Firefox */
         .scrollbar-thin {
           scrollbar-width: thin;
-          scrollbar-color: #d1d5db transparent;
+          scrollbar-color: #e5e7eb transparent;
         }
       `}</style>
     </section>
