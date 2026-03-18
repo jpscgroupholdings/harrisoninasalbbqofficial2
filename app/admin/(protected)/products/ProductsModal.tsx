@@ -14,6 +14,10 @@ import {
   Package,
   Utensils,
   Star,
+  Upload,
+  Images,
+  RefreshCw,
+  CheckCircle2,
 } from "lucide-react";
 import { useCreateProduct, useUpdateProduct } from "@/hooks/api/useProducts";
 import { Category, IncludedItemUI, Product } from "@/types/adminType";
@@ -22,12 +26,22 @@ import { toast } from "sonner";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type ProductType = "solo" | "combo" | "set";
+type ImageTab = "upload" | "url" | "gallery";
+
+interface CloudinaryImage {
+  public_id: string;
+  secure_url: string;
+  width: number;
+  height: number;
+  format: string;
+  bytes: number;
+  created_at: string;
+}
 
 interface IncludedItem {
-  product: string; // ObjectId ref
+  product: string;
   quantity: number;
   label: string | null;
-  // UI only — for display in the list
   _name?: string;
   _price?: number;
 }
@@ -85,6 +99,13 @@ const PRODUCT_TYPE_OPTIONS: {
   },
 ];
 
+const IMAGE_TABS: { value: ImageTab; label: string; icon: React.ReactNode }[] =
+  [
+    { value: "upload", label: "Upload", icon: <Upload size={14} /> },
+    { value: "url", label: "URL", icon: <Link size={14} /> },
+    { value: "gallery", label: "Gallery", icon: <Images size={14} /> },
+  ];
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 const ProductsModal = ({
@@ -114,10 +135,22 @@ const ProductsModal = ({
 
   const [imageFile, setImageFile] = useState<File | null>(null);
 
+  // ── Image tab state ─────────────────────────────────────────────────────────
+
+  const [activeImageTab, setActiveImageTab] = useState<ImageTab>("upload");
+  const [cloudinaryImages, setCloudinaryImages] = useState<CloudinaryImage[]>(
+    [],
+  );
+  const [loadingGallery, setLoadingGallery] = useState(false);
+  const [galleryError, setGalleryError] = useState<string | null>(null);
+  const [gallerySearch, setGallerySearch] = useState("");
+  const [selectedGalleryUrl, setSelectedGalleryUrl] = useState<string | null>(
+    null,
+  );
+
   // ── Category / Subcategory state ────────────────────────────────────────────
 
   const [categories, setCategories] = useState<Category[]>([]);
-  const [subcategories, setSubcategories] = useState<SubCategory[]>([]);
   const [filteredSubcategories, setFilteredSubcategories] = useState<
     SubCategory[]
   >([]);
@@ -142,16 +175,22 @@ const ProductsModal = ({
   const isSuccess = createMutation.isSuccess || updateMutation.isSuccess;
   const isComboOrSet = formData.productType !== "solo";
 
+  // Active preview URL — whichever source is active
+  const previewUrl = imageFile
+    ? URL.createObjectURL(imageFile)
+    : selectedGalleryUrl || formData.image || null;
+
   // ── Init edit mode ──────────────────────────────────────────────────────────
 
   useEffect(() => {
     if (editProduct) {
+      const imageUrl = editProduct.image.url || "";
       setFormData({
         name: editProduct.name || "",
         price: editProduct.price?.toString() || "",
-        image: editProduct.image.url || "",
+        image: imageUrl,
         category: editProduct.category._id || "",
-        subcategory: editProduct.subcategory?._id || "", // ✅ safe optional chain
+        subcategory: editProduct.subcategory?._id || "",
         stock: editProduct.stock?.toString() || "",
         isSignature: editProduct.isSignature || false,
         isPopular: editProduct.isPopular || false,
@@ -170,6 +209,13 @@ const ProductsModal = ({
               typeof item.product === "object" ? item.product.price : null,
           })) || [],
       });
+      // If existing image URL looks like Cloudinary, pre-select gallery tab
+      if (imageUrl.includes("cloudinary.com")) {
+        setSelectedGalleryUrl(imageUrl);
+        setActiveImageTab("gallery");
+      } else if (imageUrl) {
+        setActiveImageTab("url");
+      }
     }
   }, [editProduct]);
 
@@ -214,6 +260,30 @@ const ProductsModal = ({
     }
   };
 
+  // ── Fetch Cloudinary gallery ─────────────────────────────────────────────────
+
+  const fetchCloudinaryImages = async () => {
+    setLoadingGallery(true);
+    setGalleryError(null);
+    try {
+      const res = await fetch("/api/cloudinary/images");
+      if (!res.ok) throw new Error("Failed to fetch images");
+      const data = await res.json();
+      // Support both { resources: [] } and a plain array
+      setCloudinaryImages(data?.resources || data || []);
+    } catch (err) {
+      setGalleryError("Could not load gallery. Check your API route.");
+    } finally {
+      setLoadingGallery(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeImageTab === "gallery" && cloudinaryImages.length === 0 && !galleryError) {
+      fetchCloudinaryImages();
+    }
+  }, [activeImageTab]);
+
   // ── Fetch solo products for includedItems picker ─────────────────────────────
 
   useEffect(() => {
@@ -233,6 +303,16 @@ const ProductsModal = ({
     } finally {
       setLoadingProducts(false);
     }
+  };
+
+  // ── Tab switch handler ───────────────────────────────────────────────────────
+
+  const handleTabSwitch = (tab: ImageTab) => {
+    setActiveImageTab(tab);
+    // Clear the other sources so only the active tab contributes
+    if (tab !== "upload") setImageFile(null);
+    if (tab !== "url") setFormData((prev) => ({ ...prev, image: "" }));
+    if (tab !== "gallery") setSelectedGalleryUrl(null);
   };
 
   // ── Handlers ─────────────────────────────────────────────────────────────────
@@ -294,6 +374,10 @@ const ProductsModal = ({
       }
       setImageFile(file);
     }
+  };
+
+  const handleGallerySelect = (img: CloudinaryImage) => {
+    setSelectedGalleryUrl(img.secure_url);
   };
 
   // ── Included items ────────────────────────────────────────────────────────────
@@ -359,15 +443,23 @@ const ProductsModal = ({
     e.preventDefault();
 
     try {
-      let imageData = formData.image;
+      // Resolve final image data from whichever tab is active
+      let imageData =
+        activeImageTab === "gallery"
+          ? selectedGalleryUrl || ""
+          : activeImageTab === "url"
+            ? formData.image
+            : ""; // will be replaced by base64 below
+
       let categoryId = formData.category;
       let subcategoryId = formData.subcategory || null;
 
-      if (imageFile) {
+      if (activeImageTab === "upload" && imageFile) {
         imageData = await fileToBase64(imageFile);
       }
+
       if (!imageData) {
-        throw new Error("Please provide an image URL or upload an image");
+        throw new Error("Please provide an image via upload, URL, or gallery");
       }
 
       // Create new category if needed
@@ -377,14 +469,11 @@ const ProductsModal = ({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name: customCategory }),
         });
-
-        // ✅ Stop here if category creation failed
         if (!res.ok) {
           const err = await res.json();
           toast.error(err.error || "Failed to create category");
-          return; // 👈 this is the missing piece
+          return;
         }
-
         const newCat = await res.json();
         categoryId = newCat._id;
       }
@@ -441,6 +530,12 @@ const ProductsModal = ({
       toast.error("Something went wrong. Please try again.");
     }
   };
+
+  // ── Gallery filtered images ───────────────────────────────────────────────────
+
+  const filteredGalleryImages = cloudinaryImages.filter((img) =>
+    img.public_id.toLowerCase().includes(gallerySearch.toLowerCase()),
+  );
 
   // ─── Render ──────────────────────────────────────────────────────────────────
 
@@ -727,12 +822,10 @@ const ProductsModal = ({
                     key={index}
                     className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg"
                   >
-                    {/* Product name */}
                     <span className="flex-1 text-sm font-medium text-gray-800 truncate">
                       {item._name || item.product}
                     </span>
 
-                    {/* Optional label override */}
                     <input
                       type="text"
                       placeholder="Label (optional)"
@@ -747,7 +840,6 @@ const ProductsModal = ({
                       className="w-32 text-xs px-2 py-1.5 border border-gray-300 rounded-md outline-none focus:ring-1 focus:ring-brand-color-500"
                     />
 
-                    {/* Quantity */}
                     <div className="flex items-center gap-1.5 shrink-0">
                       <button
                         type="button"
@@ -780,7 +872,6 @@ const ProductsModal = ({
                       </button>
                     </div>
 
-                    {/* Remove */}
                     <button
                       type="button"
                       onClick={() => removeIncludedItem(index)}
@@ -801,47 +892,217 @@ const ProductsModal = ({
           </div>
         )}
 
-        {/* ── Image Upload ── */}
-        <div className="border-2 border-dashed border-gray-300 rounded-lg p-5">
-          <InputField
-            label="Product Image"
-            subLabel="Upload (Max 5MB)"
-            type="file"
-            id="imageFile"
-            accept="image/*"
-            required={!formData.image && !imageFile}
-            onChange={handleImageChange}
-            className="file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-brand-color-500/20 file:text-brand-color-500 hover:file:bg-brand-color-500/30 cursor-pointer"
-          />
+        {/* ── Image Section (tabbed) ── */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Product Image <span className="text-red-500">*</span>
+          </label>
 
-          {imageFile && (
-            <p className="text-sm text-green-600 mt-2">
-              ✓ {imageFile.name} ({(imageFile.size / 1024 / 1024).toFixed(2)}{" "}
-              MB)
-            </p>
+          {/* Tab switcher */}
+          <div className="flex gap-1 p-1 bg-gray-100 rounded-lg mb-3">
+            {IMAGE_TABS.map((tab) => (
+              <button
+                key={tab.value}
+                type="button"
+                onClick={() => handleTabSwitch(tab.value)}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-md text-sm font-semibold transition-all duration-150 cursor-pointer
+                  ${
+                    activeImageTab === tab.value
+                      ? "bg-white text-brand-color-500 shadow-sm"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+              >
+                {tab.icon}
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* ── Tab: Upload ── */}
+          {activeImageTab === "upload" && (
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-5">
+              <InputField
+                subLabel="Upload (Max 5MB)"
+                type="file"
+                id="imageFile"
+                accept="image/*"
+                required={!previewUrl}
+                onChange={handleImageChange}
+                className="file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-brand-color-500/20 file:text-brand-color-500 hover:file:bg-brand-color-500/30 cursor-pointer"
+              />
+              {imageFile && (
+                <p className="text-sm text-green-600 mt-2">
+                  ✓ {imageFile.name} (
+                  {(imageFile.size / 1024 / 1024).toFixed(2)} MB)
+                </p>
+              )}
+            </div>
           )}
 
-          <div className="text-center text-gray-400 text-xs my-3">— OR —</div>
+          {/* ── Tab: URL ── */}
+          {activeImageTab === "url" && (
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-5">
+              <InputField
+                subLabel="Paste any image URL"
+                type="url"
+                id="image"
+                name="image"
+                value={formData.image}
+                onChange={handleChange}
+                required={!previewUrl}
+                placeholder="https://example.com/image.jpg"
+                leftIcon={<Link size={16} />}
+              />
+            </div>
+          )}
 
-          <InputField
-            subLabel="Paste Cloudinary Image URL"
-            type="url"
-            id="image"
-            name="image"
-            value={formData.image}
-            onChange={handleChange}
-            disabled={!!imageFile}
-            placeholder="https://example.com/image.jpg"
-            leftIcon={<Link size={16} />}
-          />
+          {/* ── Tab: Gallery ── */}
+          {activeImageTab === "gallery" && (
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+              {/* Gallery header */}
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs text-gray-500">
+                  {cloudinaryImages.length > 0
+                    ? `${cloudinaryImages.length} image${cloudinaryImages.length !== 1 ? "s" : ""} in your Cloudinary`
+                    : "Your uploaded Cloudinary images"}
+                </p>
+                <button
+                  type="button"
+                  onClick={fetchCloudinaryImages}
+                  disabled={loadingGallery}
+                  className="flex items-center gap-1 text-xs text-brand-color-500 hover:text-brand-color-600 font-medium disabled:opacity-50 transition"
+                >
+                  <RefreshCw
+                    size={12}
+                    className={loadingGallery ? "animate-spin" : ""}
+                  />
+                  Refresh
+                </button>
+              </div>
+
+              {/* Search */}
+              {cloudinaryImages.length > 0 && (
+                <div className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg mb-3 focus-within:ring-2 focus-within:ring-brand-color-500">
+                  <Search size={14} className="text-gray-400 shrink-0" />
+                  <input
+                    type="text"
+                    placeholder="Search by filename..."
+                    value={gallerySearch}
+                    onChange={(e) => setGallerySearch(e.target.value)}
+                    className="flex-1 text-sm outline-none bg-transparent placeholder:text-gray-400"
+                  />
+                  {gallerySearch && (
+                    <button
+                      type="button"
+                      onClick={() => setGallerySearch("")}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      <X size={12} />
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* States */}
+              {loadingGallery ? (
+                <div className="flex flex-col items-center justify-center py-10 gap-2 text-gray-400">
+                  <LoaderCircle size={24} className="animate-spin" />
+                  <p className="text-sm">Loading gallery...</p>
+                </div>
+              ) : galleryError ? (
+                <div className="flex flex-col items-center justify-center py-8 gap-2">
+                  <p className="text-sm text-red-500">{galleryError}</p>
+                  <button
+                    type="button"
+                    onClick={fetchCloudinaryImages}
+                    className="text-xs text-brand-color-500 underline"
+                  >
+                    Try again
+                  </button>
+                </div>
+              ) : filteredGalleryImages.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8 gap-1 text-gray-400">
+                  <Images size={28} />
+                  <p className="text-sm">
+                    {gallerySearch
+                      ? "No images match your search"
+                      : "No images found in Cloudinary"}
+                  </p>
+                </div>
+              ) : (
+                /* Image grid */
+                <div className="grid grid-cols-3 gap-2 max-h-64 overflow-y-auto pr-1">
+                  {filteredGalleryImages.map((img) => {
+                    const isSelected = selectedGalleryUrl === img.secure_url;
+                    return (
+                      <button
+                        key={img.public_id}
+                        type="button"
+                        onClick={() => handleGallerySelect(img)}
+                        className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all duration-150 cursor-pointer group
+                          ${
+                            isSelected
+                              ? "border-brand-color-500 ring-2 ring-brand-color-500/30"
+                              : "border-gray-200 hover:border-gray-400"
+                          }`}
+                      >
+                        <img
+                          src={img.secure_url}
+                          alt={img.public_id}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                        {/* Selected overlay */}
+                        {isSelected && (
+                          <div className="absolute inset-0 bg-brand-color-500/20 flex items-center justify-center">
+                            <CheckCircle2
+                              size={22}
+                              className="text-brand-color-500 drop-shadow"
+                            />
+                          </div>
+                        )}
+                        {/* Hover overlay with filename */}
+                        {!isSelected && (
+                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-end p-1">
+                            <p className="text-white text-[9px] leading-tight truncate w-full">
+                              {img.public_id.split("/").pop()}
+                            </p>
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Selected image info */}
+              {selectedGalleryUrl && (
+                <div className="mt-3 flex items-center gap-2 px-3 py-2 bg-brand-color-500/10 border border-brand-color-500/30 rounded-lg">
+                  <CheckCircle2 size={14} className="text-brand-color-500 shrink-0" />
+                  <p className="text-xs text-brand-color-500 font-medium truncate flex-1">
+                    Image selected from gallery
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedGalleryUrl(null)}
+                    className="text-brand-color-500 hover:text-brand-color-600 shrink-0"
+                  >
+                    <X size={13} />
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Image Preview */}
-        {(formData.image || imageFile) && (
+        {/* ── Image Preview ── */}
+        {previewUrl && (
           <div className="border border-gray-200 rounded-lg p-4">
-            <p className="text-sm font-semibold text-gray-700 mb-3">Preview:</p>
+            <p className="text-sm font-semibold text-gray-700 mb-3">
+              Preview:
+            </p>
             <img
-              src={imageFile ? URL.createObjectURL(imageFile) : formData.image}
+              src={previewUrl}
               alt="Product preview"
               className="w-full max-w-md h-56 object-cover rounded-lg mx-auto shadow-sm"
               onError={(e) => {
