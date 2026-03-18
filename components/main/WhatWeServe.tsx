@@ -94,7 +94,7 @@ const ProductsError = ({ onRetry }: { onRetry: () => void }) => (
 const WhatWeServe = () => {
   const { data: menuData = [], isLoading, isError, refetch } = useProducts();
   const { isMobile, isTablet } = useBreakpoint();
-  const orderUrl = useSubdomainPath("/menu", "food");
+  const orderUrl = useSubdomainPath("/", "food");
 
   const menuList = menuData
     .filter((item) => item.isSignature)
