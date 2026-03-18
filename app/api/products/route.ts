@@ -5,6 +5,7 @@ import cloudinary from "@/lib/cloudinary";
 import { z } from "zod";
 import "@/models/Category";
 import "@/models/SubCategory";
+import { extractPublicId } from "@/helper/extractImagePublicId";
 
 // ─── Zod Schemas ──────────────────────────────────────────────────────────────
 
@@ -126,23 +127,6 @@ export async function GET(request: NextRequest) {
   } catch (error: any) {
     console.error("GET /products error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-}
-
-function extractPublicId(url: string): string {
-  try {
-    const parts = url.split("/upload/")[1];
-    // v1771405509/products/xxxx.png
-
-    const withoutVersion = parts.replace(/^v\d+\//, "");
-    // products/xxxx.png
-
-    const publicId = withoutVersion.replace(/\.[^/.]+$/, "");
-    // products/xxxx
-
-    return publicId;
-  } catch (error) {
-    return "";
   }
 }
 
