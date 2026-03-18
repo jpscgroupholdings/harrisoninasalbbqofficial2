@@ -39,6 +39,7 @@ const Footer = ({
       { name: "Menu", href: menuUrl },
       { name: "News", href: "/news" },
       { name: "Franchise", href: "/franchise" },
+      { name: "Catering", href: "/catering" },
     ],
   };
 
@@ -61,7 +62,7 @@ const Footer = ({
       value: "harrisoninasalbbq@gmail.com",
       href: "https://mail.google.com/mail/?view=cm&fs=1&to=harrisoninasalbbq@gmail.com&subject=Inquiry",
     },
-     {
+    {
       icon: "PhoneCall",
       value: "+63 960 334 9533",
       href: "viber://chat?number=%2B639603349533",
