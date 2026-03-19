@@ -1,4 +1,12 @@
+/**
+ * ORDER HOOKS (React Query)
+ *
+ * Uses orderConstants.ts for status priority, transitions, and UI config
+ * Single source of truth eliminates duplication
+ */
+
 import { apiClient } from "@/lib/apiClient";
+import { isValidOrderStatus, ORDER_ACTION_CONFIG, STATUS_PRIORITY, STATUS_TRANSITIONS } from "@/types/orderConstants";
 import {
   CreateOrderPayload,
   CreateOrderResponse,
@@ -9,42 +17,61 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-const STATUS_PRIORITY: Record<OrderType["status"], number> = {
-  paid:       0, // needs immediate attention
-  pending:    1,
-  preparing:  2,
-  ready:      3,
-  dispatched: 4,
-  completed:  5,
-  cancelled:  6,
-  failed: 7,
-  expired: 8
-};
-
-
 export const useOrders = () => {
   return useQuery<OrderType[]>({
     // unique query
     queryKey: ["orders"],
     queryFn: () => apiClient.get("/orders"),
     staleTime: 30000,
-    select: (data) => 
+    select: (data) =>
       [...data].sort((a, b) => {
-        const priorityDiff = STATUS_PRIORITY[a.status] - STATUS_PRIORITY[b.status];
+        const priorityDiff =
+          STATUS_PRIORITY[a.status] - STATUS_PRIORITY[b.status];
 
         // if same status, keep most recent first
-        if(priorityDiff !== 0) return priorityDiff;
+        if (priorityDiff !== 0) return priorityDiff;
 
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      })
+        return (
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      }),
   });
 };
+
+/**
+ * Fetch a single order by ID
+ */
 
 export const useOrder = (id: string) => {
   return useQuery<OrderType>({
     queryKey: ["orders", id],
     queryFn: () => apiClient.get(`/orders/${id}`),
     staleTime: 30000,
+
+    // Validate status on fetch
+    select: (data) => {
+      if (!isValidOrderStatus(data.status)) {
+        console.warn(`Invalid status received: ${data.status}`);
+      }
+      return data;
+    },
+  });
+};
+
+/**
+ * Fetch orders for a specific customer
+ */
+export const useCustomerOrders = (email: string) => {
+  return useQuery<OrderType[]>({
+    queryKey: ["orders", "customer", email],
+    queryFn: () => apiClient.get(`/orders/customer/${email}`),
+    staleTime: 30000,
+
+    select: (data) =>
+      [...data].sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      ),
   });
 };
 
@@ -62,54 +89,40 @@ export const useCreateOrder = () => {
    */
   return useMutation<CreateOrderResponse, Error, CreateOrderPayload>({
     retry: false,
-    mutationFn: async (payload) => {
-      const response = await fetch("/api/paymaya/checkout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+    mutationFn: (payload: CreateOrderPayload) =>
+      apiClient.post<CreateOrderResponse>("/paymaya/checkout", payload),
 
-      const data = await response.json();
+    onError: (error: any) => {
+      let userMessage = "Unable to create payment link. Please try again.";
 
-      if (!response.ok) {
-        // Parse user-friendly error messages from PayMongo
-        let userMessage = "Unable to create payment link. Please try again.";
+      const data = error?.details;
 
-        if (data.error?.errors && Array.isArray(data.error.errors)) {
-          const errorDetails = data.error.errors[0];
+      if (data?.error?.errors && Array.isArray(data.error.errors)) {
+        const errorDetails = data.error.errors[0];
 
-          // Handle specific PayMongo error codes
-          switch (errorDetails.code) {
-            case "parameter_below_minimum":
-              userMessage = `Order amount is below the minimum requirement of ₱100.00. Please add more items to your cart.`;
-              break;
-            case "parameter_above_maximum":
-              userMessage = `Order amount exceeds the maximum limit. Please contact support.`;
-              break;
-            case "parameter_invalid":
-              userMessage = `Invalid payment details. Please check your information and try again.`;
-              break;
-            case "authentication_failed":
-              userMessage = `Payment service is temporarily unavailable. Please try again later or contact support.`;
-              break;
-            default:
-              // Show the actual error detail if it's user-friendly
-              if (errorDetails.detail && errorDetails.detail.length < 100) {
-                userMessage = errorDetails.detail;
-              }
-          }
-        } else if (data.error) {
-          // Fallback for simple error messages
-          userMessage =
-            typeof data.error === "string" ? data.error : userMessage;
+        switch (errorDetails.code) {
+          case "parameter_below_minimum":
+            userMessage = "Order must be at least ₱100.";
+            break;
+          case "parameter_above_maximum":
+            userMessage = "Order exceeds maximum limit.";
+            break;
+          case "parameter_invalid":
+            userMessage = "Invalid payment details.";
+            break;
+          case "authentication_failed":
+            userMessage = "Payment service unavailable.";
+            break;
+          default:
+            if (errorDetails.detail?.length < 100) {
+              userMessage = errorDetails.detail;
+            }
         }
-
-        throw new Error(userMessage);
+      } else if (data?.error) {
+        userMessage = typeof data.error === "string" ? data.error : userMessage;
       }
 
-      return data;
+      toast.error(userMessage);
     },
 
     onSuccess: () => {
@@ -119,6 +132,11 @@ export const useCreateOrder = () => {
   });
 };
 
+/**
+ * Update order status with validation
+ * Uses STATUS_TRANSITIONS from constants for safety
+ */
+
 export const useUpdateOrder = () => {
   const queryClient = useQueryClient();
 
@@ -127,23 +145,8 @@ export const useUpdateOrder = () => {
     Error,
     { id: string; data: UpdateOrderPayLoad }
   >({
-    mutationFn: async ({ id, data }) => {
-      const response = await fetch(`/api/orders/${id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "Failed to update order!");
-      }
-
-      return result;
-    },
+    mutationFn: ({ id, data }: { id: string; data: UpdateOrderPayLoad }) =>
+      apiClient.patch(`/orders/${id}`, data),
 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
@@ -152,4 +155,39 @@ export const useUpdateOrder = () => {
       toast.error(error.message);
     },
   });
+};
+ 
+// ============================================
+// HELPER HOOKS
+// ============================================
+ 
+/**
+ * Get the action config for a specific order status
+ * Returns button label and styling, or null if no action
+ */
+export const useOrderActionConfig = (status: string) => {
+  if (!isValidOrderStatus(status)) {
+    return null;
+  }
+  return ORDER_ACTION_CONFIG[status];
+};
+ 
+/**
+ * Check if an order can transition to a new status
+ */
+export const useCanTransition = (currentStatus: string) => {
+  if (!isValidOrderStatus(currentStatus)) {
+    return null;
+  }
+  return STATUS_TRANSITIONS[currentStatus];
+};
+ 
+/**
+ * Get priority score for sorting
+ */
+export const useStatusPriority = (status: string) => {
+  if (!isValidOrderStatus(status)) {
+    return Infinity;  // Low priority for invalid statuses
+  }
+  return STATUS_PRIORITY[status];
 };
