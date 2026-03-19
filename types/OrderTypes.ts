@@ -59,6 +59,23 @@ export interface OrderType {
   reviewedAt?: string;
 }
 
+// Order response
+export interface OrdersApiResponse {
+  data: OrderType[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasMore: boolean;
+  };
+  filters: {
+    status: string | null;
+    email: string | null;
+    sortBy: string;
+  };
+}
+
 // ============================================
 // API PAYLOADS
 // ============================================
