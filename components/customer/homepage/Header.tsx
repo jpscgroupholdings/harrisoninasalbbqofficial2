@@ -24,7 +24,8 @@ import { useLogoutCustomer } from "@/hooks/api/useLogout";
 import LogoutModal from "@/components/ui/LogoutModal";
 import Modal from "@/components/ui/Modal";
 import Map from "@/app/customer/map/Map";
-import MapPage from "@/app/customer/map/page"
+import MapPage from "@/app/customer/map/page";
+import { Branch } from "@/app/customer/map/mockupData";
 
 const Header = () => {
   const { data: currentUser, isPending } = useCustomerMe();
@@ -37,7 +38,17 @@ const Header = () => {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
 
-  const [showMap, setShowmap] = useState(false)
+ const [selectedBranch, setSelectedBranch] = useState<Branch | null>(() => {
+  try {
+    const saved = localStorage.getItem("selected_branch");
+    return saved ? JSON.parse(saved) : null;
+  } catch (error) {
+    console.error("Error loading selected branch", error);
+    return null;
+  }
+});
+
+  const [showMap, setShowmap] = useState(false);
 
   const [logoutModal, setLogoutModal] = useState(false);
 
@@ -71,12 +82,12 @@ const Header = () => {
           <BrandLogo />
 
           <button
-          onClick={() => setShowmap(true)}
+            onClick={() => setShowmap(true)}
             className="flex items-center justify-center gap-2 bg-white hover:bg-brand-color-50 hover:text-brand-color-600 text-brand-color-500 px-4 py-2 text-sm font-bold rounded-full transition-colors cursor-pointer"
           >
             <MapPin size={16} />
-            Select Branch
-            <ChevronDown size={16}/>
+            {selectedBranch ? selectedBranch.name : "Select Branch"}
+            <ChevronDown size={16} />
           </button>
 
           <div className="gap-6 hidden lg:flex">
