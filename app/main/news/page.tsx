@@ -1,4 +1,4 @@
-import NewsSection from '@/app/main/components/NewsSection'
+import NewsSection from '@/components/main/NewsSection'
 import React from 'react'
 
 const page = () => {

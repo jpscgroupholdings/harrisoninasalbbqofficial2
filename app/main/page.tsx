@@ -1,14 +1,16 @@
-import About from "@/app/main/components/About";
-import CTA from "@/app/main/components/CTA";
-import HeroVideo from "@/app/main/components/HeroBanner";
-import MainIntro from "@/app/main/components/MainIntro";
-import Promotion from "@/app/main/components/Promotion";
-import WhatWeServe from "@/app/main/components/WhatWeServe";
+import About from "./components/About";
+import CTA from "./components/CTA";
+import CarouselBanner from "./components/HeroBanner";
+import MainIntro from "./components/MainIntro";
+import Promotion from "./components/Promotion";
+import WhatWeServe from "./components/WhatWeServe";
+
+
 
 const MainPage = () => {
   return (
     <>
-      <HeroVideo />
+      <CarouselBanner />
       <MainIntro />
       <About />
       <WhatWeServe />
