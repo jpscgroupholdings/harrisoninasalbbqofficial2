@@ -7,7 +7,7 @@ import { LINKS } from "@/constant/links";
 import { useScrollToSection } from "@/hooks/utils/useScrollToSection";
 import { useProducts } from "@/hooks/api/useProducts";
 import { Category, Product } from "@/types/adminType";
-import { useMenuCategories } from "@/components/main/CategoryCarousel";
+import { useMenuCategories } from "@/app/main/components/CategoryCarousel";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

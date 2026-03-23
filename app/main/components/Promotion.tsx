@@ -89,7 +89,7 @@ const ImagePlaceholder = ({
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-const HeroBanner = () => {
+const Promotion = () => {
   const [current, setCurrent] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [direction, setDirection] = useState<"next" | "prev">("next");
@@ -124,7 +124,7 @@ const HeroBanner = () => {
   const slide = SLIDES[current];
 
   return (
-    <div className="w-full bg-white py-12 my-12 px-4 sm:px-6 lg:px-8">
+    <div id="promotions" className="w-full bg-white py-12 my-12 px-4 sm:px-6 lg:px-8">
       <div className="text-center mb-12 md:mb-16">
         <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-orange-600 mb-4">
           Make Every Meal a Moment
@@ -280,4 +280,4 @@ const HeroBanner = () => {
   );
 };
 
-export default HeroBanner;
+export default Promotion;

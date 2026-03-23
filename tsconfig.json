@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-, "app/testing/page.jsx", "app/admin-testing/ClientPage.jsx", "components/main/HeroBanner.tsx", "public/test.text", "app/customer/map/Map.tsx"  ],
+, "app/testing/page.jsx", "app/admin-testing/ClientPage.jsx", "app/main/components/HeroBanner.tsx", "public/test.text", "app/customer/map/Map.tsx"  ],
   "exclude": ["node_modules"]
 }

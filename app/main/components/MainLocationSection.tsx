@@ -3,15 +3,9 @@
 import { LINKS } from "@/constant/links";
 import { animationStyle } from "@/helper/animationStyle";
 import { useIntersectionAnimation, useIntersectionAnimationList } from "@/hooks/utils/useIntersectionAnimation";
-import { useSubdomainPath } from "@/hooks/useSubdomainUrl";
 import { MapPin } from "lucide-react";
-import Link from "next/link";
-import React from "react";
 
 const MainLocationSection = () => {
-
-  const orderUrl = useSubdomainPath("/", "food");
-
   // Locations data
   const locations = [
     {
@@ -29,7 +23,6 @@ const MainLocationSection = () => {
   ];
 
   const {ref: locationRef, isVisible} = useIntersectionAnimation();
-  const {ref: ctaRef, isVisible: isCTAVisible} = useIntersectionAnimation();
   const {itemRefs: mapRef, visibleItems} = useIntersectionAnimationList(locations.length);
 
   return (
@@ -72,25 +65,6 @@ const MainLocationSection = () => {
               </div>
             ))}
           </div>
-        </div>
-      </section>
-        
-
-            {/* CTA Section */}
-      <section ref={ctaRef} className={`py-20 px-4 bg-brand-color-500/90 ${animationStyle(isCTAVisible).className}`}>
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-            Craving Authentic Inasal BBQ?
-          </h2>
-          <p className="text-xl text-white/90 mb-10">
-            Order now and experience the bold, smoky flavors of our
-            charcoal-grilled Filipino favorites.
-          </p>
-          <Link 
-          href={orderUrl}
-          className="w-48 h-14 py-4 px-6 bg-white text-brand-color-500 hover:text-brand-color-600 font-bold text-2xl hover:bg-gray-100 transition-colors">
-            Order Now
-          </Link>
         </div>
       </section>
     </>

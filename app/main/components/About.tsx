@@ -38,18 +38,17 @@ const About = () => {
             {/* Description */}
             <div className="space-y-6">
               <p className="text-lg leading-relaxed text-gray-700 max-w-2xl lg:max-w-md text-justify">
-                Inspired by the rich tradition of Filipino grilling, Harrison's
-                brings together great-tasting food, generous servings, and warm
-                hospitality.
+                Harrison’s House of Inasal & BBQ is inspired by how Filipinos
+                truly eat. Not just for the food, but for the experience.Here,
+                meals are served with warmth, flavors are rooted in tradition,
+                and every guest is welcomed like they belong.
               </p>
 
               <p className="text-base leading-relaxed text-gray-600 max-w-2xl lg:max-w-md text-justify">
-                We believe that good food creates great memories—that's why
-                every dish is prepared fresh, marinated well, and grilled to
-                perfection. Just like the most loved grill brands in the
-                Philippines, we focus on delivering consistent quality,
-                flavorful meals, and an enjoyable dining experience for
-                everyone.
+                Each dish is marinated with care, grilled fresh, and prepared to
+                bring people closer. Whether it’s a quiet solo meal or a lively
+                gathering. Because at Harrison’s, it’s not just about serving
+                food. It’s about creating moments people come back for.
               </p>
             </div>
           </div>

@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useScrollToSection } from "@/hooks/utils/useScrollToSection";
 import Link from "next/link";
 import { useSubdomainPath } from "@/hooks/useSubdomainUrl";
-import BrandLogo from "../BrandLogo";
+import BrandLogo from "../../../components/BrandLogo";
 import { Menu, Section, ShoppingCart, X } from "lucide-react";
 
 const Header = () => {
@@ -18,7 +18,7 @@ const Header = () => {
     { label: "About", section: "/#about-section" },
      { label: "Franchise", section: "/franchise" },
     { label: "What we serve", section: "/#what-we-serve" },
-    { label: "Promotions", section: "/promotions" },
+    { label: "Promotions", section: "/#promotions" },
     { label: "Contact us", section: "/contact-us" },
   ];
 
