@@ -7,7 +7,7 @@ const HeroBanner = () => {
       {/* Content wrapper */}
       <div className="relative z-10 flex items-center justify-center px-4 sm:px-6 lg:px-8">
         <div className="w-full mx-auto">
-          <div className={`${fredoka.className} text-center mb-8 leading-tight`}>
+          <div className={`text-center mb-8 leading-tight`}>
             <h1
               className={`text-3xl sm:text-4xl lg:text-5xl font-black text-white`}
             >
