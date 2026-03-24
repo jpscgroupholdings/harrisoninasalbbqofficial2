@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Toaster } from "sonner";
 import { QueryProvider } from "@/provider/QueryProvider";
-import { syne } from "./font";
+import { larken, syne } from "./font";
 
 export const metadata: Metadata = {
   title: "Home | Harrison House of Inasal & BBQ",
@@ -69,7 +69,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${syne.className} antialiased`}>
+      <body className={`${larken.className} antialiased`}>
         <QueryProvider>
           <Toaster richColors position="top-right" closeButton />
           {children}
