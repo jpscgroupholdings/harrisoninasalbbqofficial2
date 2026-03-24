@@ -30,6 +30,8 @@ import {
   BRANCHES,
   branchIcon,
   nearestBranchIcon,
+  selectedAndNearestBranchIcon,
+  selectedBranchIcon,
   userIcon,
 } from "./mockupData";
 import { haversine } from "./functions/haversine";
@@ -72,7 +74,7 @@ const Map = () => {
   const [isPending, setIsPending] = useState(false);
 
   // selected branch from context
-  const {selectedBranch, setSelectedBranch} = useBranch();
+  const { selectedBranch, setSelectedBranch } = useBranch();
 
   const [nearestInfo, setNearestInfo] = useState<{
     branch: Branch;
@@ -195,6 +197,21 @@ const Map = () => {
     [placeMarker],
   );
 
+  const getBranchIcon = (branch: Branch) => {
+    const isNearest = nearestInfo?.branch.id === branch.id && !isPending;
+    const isSelected = selectedBranch?.id === branch.id;
+
+    if (isNearest && isSelected) return selectedAndNearestBranchIcon;
+    if (isNearest) return nearestBranchIcon;
+    if (isSelected) return selectedBranchIcon;
+
+    return branchIcon;
+  };
+
+  function getDistance(a: [number, number], b: [number, number]): number {
+    return haversine(a, b) / 1000; // returns km directly
+  }
+
   return (
     <section className="relative w-full font-sans z-0">
       <div className="relative max-w-7xl h-full mx-auto space-y-4 my-4">
@@ -271,6 +288,27 @@ const Map = () => {
           </div>
         )}
 
+        {selectedBranch && !isPending && (
+          <div className="flex items-center justify-between w-full py-3 px-4 rounded-lg bg-brand-color-50 border border-brand-color-200 text-sm shadow-sm">
+            <div>
+              <p className="font-semibold text-brand-color-600">
+                Your selected Branch: {selectedBranch.name}
+              </p>
+              <p className="text-brand-color-500 mt-0.5">
+                {selectedBranch.address} &mdash;{" "}
+                {userMarker && (
+                  <span className="font-medium">
+                    {getDistance(selectedBranch.position, userMarker).toFixed(
+                      1,
+                    )}{" "}
+                    km from your location
+                  </span>
+                )}
+              </p>
+            </div>
+          </div>
+        )}
+
         {error && (
           <div className="w-full py-2.5 px-3.5 rounded-lg bg-white border border-brand-color-500 text-brand-color-500 text-sm font-medium shadow">
             {error}
@@ -319,11 +357,7 @@ const Map = () => {
             <Marker
               key={branch.id}
               position={branch.position}
-              icon={
-                nearestInfo?.branch.id === branch.id && !isPending
-                  ? nearestBranchIcon
-                  : branchIcon
-              }
+              icon={getBranchIcon(branch)}
             >
               <Popup>
                 <div className="min-w-40">
@@ -331,6 +365,7 @@ const Map = () => {
                     <p className="font-bold mb-0.5">{branch.name}</p>
                     <p className="text-sm text-gray-500 mb-1.5">
                       {branch.address}
+                      {branch.position[0]} , {branch.position[1]}
                     </p>
                     {/* Badge shown on the nearest branch after user confirms location */}
                     {nearestInfo?.branch.id === branch.id && !isPending && (
@@ -421,6 +456,29 @@ const Map = () => {
             </span>
           </div>
         </MapContainer>
+      </div>
+
+      {/* ── Legend ── */}
+      <div className="grid grid-cols-3 bg-white px-3 py-2 font-bold text-sm gap-4">
+        {[
+          { icon: userIcon, label: "Your Location" },
+          { icon: branchIcon, label: "Branch" },
+          { icon: selectedBranchIcon, label: "Selected" },
+          { icon: nearestBranchIcon, label: "Nearest" },
+          {
+            icon: selectedAndNearestBranchIcon,
+            label: "Selected & Nearest",
+          },
+        ].map(({ icon, label }) => (
+          <div key={label} className="flex items-center gap-2">
+            <img
+              src={icon.options.iconUrl}
+              className="h-4 w-auto"
+              alt={label}
+            />
+            <span className="text-gray-600">{label}</span>
+          </div>
+        ))}
       </div>
     </section>
   );
