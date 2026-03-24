@@ -34,6 +34,7 @@ import {
 } from "./mockupData";
 import { haversine } from "./functions/haversine";
 import { nearestBranch } from "./functions/nearestBranch";
+import { useBranch } from "@/contexts/BranchContext";
 
 const METRO_MANILA_CENTER: [number, number] = [14.5995, 120.9842];
 const ALLOWED_RADIUS_METERS = 25_000; // 25 km - covers the entire NCR
@@ -69,6 +70,9 @@ const Map = () => {
 
   // true = geolocated but user hasn't confirmed (shows "Select a place?" popup)
   const [isPending, setIsPending] = useState(false);
+
+  // selected branch from context
+  const {selectedBranch, setSelectedBranch} = useBranch();
 
   const [nearestInfo, setNearestInfo] = useState<{
     branch: Branch;
@@ -190,15 +194,6 @@ const Map = () => {
     },
     [placeMarker],
   );
-
-  const saveSelectedBranch = useCallback((branch: Branch) => {
-    localStorage.setItem("selected_branch", JSON.stringify(branch));
-  }, []);
-
-  const [selectedBranch, setSelectedBranch] = useState<Branch | null>(() => {
-    const saved = localStorage.getItem("selected_branch");
-    return saved ? JSON.parse(saved) : null;
-  });
 
   return (
     <section className="relative w-full font-sans z-0">
@@ -349,7 +344,6 @@ const Map = () => {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      saveSelectedBranch(branch);
                       setSelectedBranch(branch);
                     }}
                     className={`mt-2 w-full py-1.5 text-xs font-semibold rounded-md border-0 cursor-pointer transition-colors ${
