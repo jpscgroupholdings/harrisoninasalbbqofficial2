@@ -23,34 +23,33 @@ import { useCustomerMe } from "@/hooks/api/useAuthMe";
 import { useLogoutCustomer } from "@/hooks/api/useLogout";
 import LogoutModal from "@/components/ui/LogoutModal";
 import Modal from "@/components/ui/Modal";
-import Map from "@/app/customer/map/Map";
 import MapPage from "@/app/customer/map/page";
 import { Branch } from "@/app/customer/map/mockupData";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 const Header = () => {
   const { data: currentUser, isPending } = useCustomerMe();
   const userLogout = useLogoutCustomer();
 
+  const searchParams = useSearchParams();
+  const modalType = searchParams.get("modal");
+  const pathname = usePathname();
+  const router = useRouter();
+
   const { totalItems, setIsCartOpen } = useCart();
   const { data: placedOrders } = useOrders();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [authMode, setAuthMode] = useState<"login" | "signup">("login");
 
- const [selectedBranch, setSelectedBranch] = useState<Branch | null>(() => {
-  try {
-    const saved = localStorage.getItem("selected_branch");
-    return saved ? JSON.parse(saved) : null;
-  } catch (error) {
-    console.error("Error loading selected branch", error);
-    return null;
-  }
-});
-
-  const [showMap, setShowmap] = useState(false);
-
-  const [logoutModal, setLogoutModal] = useState(false);
+  const [selectedBranch, setSelectedBranch] = useState<Branch | null>(() => {
+    try {
+      const saved = localStorage.getItem("selected_branch");
+      return saved ? JSON.parse(saved) : null;
+    } catch (error) {
+      console.error("Error loading selected branch", error);
+      return null;
+    }
+  });
 
   const activeOrdersCount =
     placedOrders?.filter(
@@ -65,9 +64,23 @@ const Header = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const handleAuthClick = (mode: typeof authMode = "login") => {
-    setAuthModalOpen(true);
-    setAuthMode(mode);
+  // Preserve other query params
+  const handleOpenModal = (modalType: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("modal", modalType);
+
+    const query = params.toString();
+    router.replace(query ? `?${query}` : "");
+  };
+
+  const handleCloseModal = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("modal");
+    console.log("modalType:", modalType);
+
+    const query = params.toString();
+    router.replace(query ? `?${query}` : pathname);
+    console.log("modalType:", modalType);
   };
 
   return (
@@ -82,12 +95,12 @@ const Header = () => {
           <BrandLogo />
 
           <button
-            onClick={() => setShowmap(true)}
-            className="flex items-center justify-center gap-2 bg-white hover:bg-brand-color-50 hover:text-brand-color-600 text-brand-color-500 px-4 py-2 text-sm font-bold rounded-full transition-colors cursor-pointer"
+            onClick={() => handleOpenModal("map")}
+            className="flex items-center justify-center gap-2 bg-white hover:bg-brand-color-50 hover:text-brand-color-600 text-brand-color-500 px-4 py-2 text-sm font-bold rounded-full transition-colors cursor-pointer max-w-35 sm:max-w-none"
           >
-            <MapPin size={16} />
-            {selectedBranch ? selectedBranch.name : "Select Branch"}
-            <ChevronDown size={16} />
+            <MapPin size={16} className="shrink-0"/>
+            <span className="truncate">{selectedBranch ? selectedBranch.name : "Select Branch"}</span>
+            <ChevronDown size={16} className="shrink-0"/>
           </button>
 
           <div className="gap-6 hidden lg:flex">
@@ -158,7 +171,7 @@ const Header = () => {
 
                   {/* Logout */}
                   <button
-                    onClick={() => setLogoutModal(true)}
+                    onClick={() => handleOpenModal("logout")}
                     disabled={userLogout.isPending}
                     className="flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-red-500 px-3 py-2 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
                   >
@@ -173,14 +186,14 @@ const Header = () => {
               ) : (
                 <>
                   <button
-                    onClick={() => handleAuthClick("login")}
+                    onClick={() => handleOpenModal("login")}
                     className="flex items-center gap-2 text-slate-600 hover:text-slate-900 px-3 py-2 rounded-lg transition-colors cursor-pointer"
                   >
                     <LogIn size={18} />
                     <span className="text-sm font-medium">Login</span>
                   </button>
                   <button
-                    onClick={() => handleAuthClick("signup")}
+                    onClick={() => handleOpenModal("signup")}
                     className="flex items-center justify-center gap-2 bg-brand-color-500 hover:bg-brand-color-600 text-white px-4 py-2 text-sm font-bold rounded-full transition-colors cursor-pointer"
                   >
                     <User size={16} />
@@ -246,8 +259,8 @@ const Header = () => {
                 {/* Mobile logout */}
                 <button
                   onClick={() => {
-                    setLogoutModal(true);
                     setIsMobileMenuOpen(false);
+                    handleOpenModal("logout");
                   }}
                   className="flex items-center justify-center gap-2 text-white bg-red-500/80 hover:bg-red-600 px-4 py-3 rounded-lg transition-colors disabled:opacity-50"
                 >
@@ -264,7 +277,7 @@ const Header = () => {
               <div className="flex gap-2 pt-2">
                 <button
                   onClick={() => {
-                    handleAuthClick("login");
+                    handleOpenModal("login");
                     setIsMobileMenuOpen(false);
                   }}
                   className="flex-1 flex items-center justify-center gap-2 text-white bg-white/10 px-4 py-3 rounded-lg"
@@ -274,7 +287,7 @@ const Header = () => {
                 </button>
                 <button
                   onClick={() => {
-                    handleAuthClick("signup");
+                    handleOpenModal("signup");
                     setIsMobileMenuOpen(false);
                   }}
                   className="flex-1 flex items-center justify-center gap-2 bg-brand-color-500 text-white px-4 py-3 rounded-lg"
@@ -288,23 +301,22 @@ const Header = () => {
         </div>
       )}
 
-      {authModalOpen && (
-        <AuthModal
-          isOpen={authModalOpen}
-          onClose={() => setAuthModalOpen(false)}
-          initialMode={authMode}
-        />
-      )}
-      {logoutModal && (
+      <AuthModal
+        isOpen={modalType === "login" || modalType === "signup"}
+        onClose={handleCloseModal}
+        initialMode={(modalType as "login") || "signup"}
+      />
+
+      {modalType === "logout" && (
         <LogoutModal
-          onClose={() => setLogoutModal(false)}
           onConfirm={() => userLogout.mutate()}
+          onClose={handleCloseModal}
           isLoading={userLogout.isPending}
         />
       )}
 
-      {showMap && (
-        <Modal onClose={() => setShowmap(false)} title="Select Harrison Branch">
+      {modalType === "map" && (
+        <Modal onClose={handleCloseModal} title="Select Harrison Branch">
           <MapPage />
         </Modal>
       )}
