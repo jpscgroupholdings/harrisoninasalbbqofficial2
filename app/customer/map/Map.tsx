@@ -64,6 +64,23 @@ function ClickHandler({
   return null;
 }
 
+const ClickHintHandler = () => {
+  const [show, setShow] = useState(false);
+
+  useMapEvents({
+    click: () => {
+      setShow(true);
+      setTimeout(() => setShow(false), 2000);
+    },
+  });
+
+  return show ? (
+    <div className="absolute top-8 left-1/2 -translate-x-1/2 z-999 px-4 py-2 bg-white text-brand-color-500 text-sm font-medium rounded-full shadow-md border border-brand-color-100 transition-opacity">
+      Double-click on the map to set your location
+    </div>
+  ) : null;
+};
+
 // ---- Search bar ------------
 interface SearchResult {
   display_name: string;
@@ -486,12 +503,12 @@ const Map = () => {
               </Popup>
             </Marker>
           )}
-          <ClickHandler onPlace={placeMarker} />
 
-          {/** Double click message */}
-          <div className="absolute top-8 left-1/2 -translate-x-1/2 z-999 px-4 py-2 bg-white text-brand-color-500 text-sm font-medium rounded-full shadow-md border border-brand-color-100">
-            <p>Double-click on the map to set your location</p>
-          </div>
+          {/** Double click to map hint when user click once */}
+          <ClickHintHandler />
+
+          {/** Double click on map to place marker*/}
+          <ClickHandler onPlace={placeMarker} />
 
           {/* ── Logo badge overlaid on map bottom-left ── */}
           <div className="absolute bottom-2 left-2 bg-white shadow-md px-3 py-2 rounded-lg flex items-center z-9999">
