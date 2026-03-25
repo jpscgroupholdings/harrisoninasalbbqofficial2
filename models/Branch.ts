@@ -1,6 +1,6 @@
-import mongoose, {models, Schema} from "mongoose";
+import mongoose, { models, Schema } from "mongoose";
 
-const BranchShema = new Schema(
+const BranchSchema = new Schema(
   {
     name: {
       type: String,
@@ -15,11 +15,20 @@ const BranchShema = new Schema(
       trim: true,
     },
     address: {
-      street: { type: String, required: true },
-      city: { type: String, required: true },
-      state: { type: String },
-      zipCode: { type: String },
-      country: { type: String, default: "Philippines" },
+      type: String,
+      required: [true, "Branch address is required"],
+      trim: true,
+    },
+    location: {
+      type: {
+        type: String,
+        enum: ["Point"],
+        default: "Point",
+      },
+      coordinates: {
+        type: [Number], // [longitude, latitude] — GeoJSON order - flip when saving
+        required: true,
+      },
     },
     contactNumber: {
       type: String,
@@ -29,19 +38,15 @@ const BranchShema = new Schema(
       type: String,
       lowercase: true,
       trim: true,
+      match: [/^\S+@\S+\.\S+$/, "Invalid email format"],
     },
     manager: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: "Staff",
     },
-    operatingHours: {
-      open: { type: String, default: "08:00" },   // e.g. "08:00"
-      close: { type: String, default: "22:00" },  // e.g. "22:00"
-      daysOpen: {
-        type: [String],
-        enum: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-        default: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-      },
+   operatingHours: {
+      open: { type: String, default: "08:00", match: [/^\d{2}:\d{2}$/, "Use HH:MM format"] },
+      close: { type: String, default: "22:00", match: [/^\d{2}:\d{2}$/, "Use HH:MM format"] },
     },
     isActive: {
       type: Boolean,
@@ -49,13 +54,13 @@ const BranchShema = new Schema(
     },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: "Staff",
       required: false,
     },
   },
   {
     timestamps: true,
-  }
+  },
 );
 
-export const Branch = models.Branch || mongoose.model('Branch', BranchShema)
+export const Branch = models.Branch || mongoose.model("Branch", BranchSchema);
