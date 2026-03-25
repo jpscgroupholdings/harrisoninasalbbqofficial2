@@ -25,11 +25,18 @@ import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility
 
 import { InputField } from "@/components/ui/InputField";
 import {
+  CheckIcon,
   ChevronDown,
+  ClockIcon,
+  Globe,
+  HomeIcon,
   LoaderCircle,
   MapPin,
+  MapPinIcon,
   MapPinned,
+  PhoneIcon,
   Search,
+  SunIcon,
 } from "lucide-react";
 import {
   branchIcon,
@@ -446,92 +453,188 @@ const Map = () => {
                   icon={getBranchIcon(branch)}
                 >
                   <Popup>
-                    <div className="min-w-44 space-y-2">
+                    <div className="w-56 overflow-hidden rounded-xl border border-gray-200 shadow-lg bg-white">
                       {/* Header */}
-                      <div className="border-b border-gray-100 pb-2">
-                        <p className="font-bold text-sm text-gray-800">
-                          {branch.name}
-                        </p>
-                        <p className="text-xs text-gray-400 mt-0.5">
-                          {branch.address}
-                        </p>
-                      </div>
-
-                      {/* Badges */}
-                      <div className="flex flex-wrap gap-1">
+                      <div className="bg-dark-green-700 px-3 py-2.5">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <p className="text-[10px] font-medium text-white/60 uppercase tracking-widest">
+                              Branch
+                            </p>
+                            <p className="mt-0.5 font-medium text-white uppercase">
+                              {branch.name}
+                            </p>
+                          </div>
+                          <div className="shrink-0 w-7 h-7 rounded-full bg-white/15 flex items-center justify-center">
+                            <MapPinIcon className="w-3.5 h-3.5 text-white" />
+                          </div>
+                        </div>
                         {nearestInfo?.branch._id === branch._id &&
                           !isMarkerPending && (
-                            <span className="inline-flex items-center gap-1 bg-dark-green-50 text-dark-green-600 text-xs font-semibold py-0.5 px-2 rounded-full border border-dark-green-200">
-                              <span className="w-1.5 h-1.5 rounded-full bg-dark-green-500 inline-block" />
-                              Nearest to you
-                            </span>
+                            <div className="mt-1.5">
+                              <span className="inline-flex text-[10px] font-medium text-white bg-white/20 rounded-full px-2 py-0.5">
+                                Nearest to you
+                              </span>
+                            </div>
                           )}
-                        {selectedBranch?._id === branch._id && (
-                          <span className="inline-flex items-center gap-1 bg-brand-color-50 text-brand-color-600 text-xs font-semibold py-0.5 px-2 rounded-full border border-brand-color-200">
-                            <span className="w-1.5 h-1.5 rounded-full bg-brand-color-500 inline-block" />
-                            Selected
+                      </div>
+
+                      {/* Details */}
+                      <div className="px-3 py-2.5 space-y-1.5 border-b border-gray-100">
+                        <div className="flex items-start gap-1.5">
+                          <HomeIcon className="w-3 h-3 text-gray-400 mt-0.5 shrink-0" />
+                          <span className="text-[11px] text-gray-500 leading-snug capitalize">
+                            {branch.address}
                           </span>
+                        </div>
+                        {branch.contactNumber && (
+                          <div className="flex items-center gap-1.5">
+                            <PhoneIcon className="w-3 h-3 text-gray-400 shrink-0" />
+                            <span className="text-[11px] text-gray-500">
+                              {branch.contactNumber}
+                            </span>
+                          </div>
+                        )}
+                        {branch.operatingHours && (
+                          <div className="flex items-center gap-1.5">
+                            <ClockIcon className="w-3 h-3 text-gray-400 shrink-0" />
+                            <span className="text-[11px] text-gray-500">
+                              {branch.operatingHours.open} –{" "}
+                              {branch.operatingHours.close}
+                            </span>
+                          </div>
+                        )}
+                        {branch.location?.coordinates && (
+                          <div className="flex items-center gap-1.5">
+                            <Globe className="w-3 h-3 text-gray-400 shrink-0" />
+                            <span className="text-[11px] text-gray-500">
+                              {lat.toFixed(4)}, {lng.toFixed(4)}
+                            </span>
+                          </div>
                         )}
                       </div>
 
-                      {/* Distance — only if user placed a marker */}
-                      {userMarker && !isMarkerPending && (
-                        <p className="text-xs text-gray-400">
-                          {getDistance(
-                            toLatLng(branch.location.coordinates),
-                            userMarker,
-                          ).toFixed(1)}{" "}
-                          km from your location
-                        </p>
-                      )}
-
-                      {/* Select button */}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedBranch(branch);
-                        }}
-                        className={`w-full py-1.5 text-xs font-semibold rounded-md border-0 cursor-pointer transition-colors ${
-                          selectedBranch?._id === branch._id
-                            ? "bg-dark-green-500 text-white"
-                            : "bg-brand-color-500 hover:bg-brand-color-600 text-white"
-                        }`}
-                      >
-                        {selectedBranch?._id === branch._id
-                          ? "✓ Selected branch"
-                          : "Select this branch"}
-                      </button>
+                      {/* Footer */}
+                      <div className="px-3 py-2">
+                        {userMarker && !isMarkerPending && (
+                          <p className="text-[10px] text-gray-400 mb-1.5">
+                            {getDistance(
+                              toLatLng(branch.location.coordinates),
+                              userMarker,
+                            ).toFixed(1)}{" "}
+                            km from your location
+                          </p>
+                        )}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedBranch(branch);
+                          }}
+                          className={`w-full py-1.5 text-xs font-medium rounded-lg border-0 cursor-pointer transition-colors flex items-center justify-center gap-1.5 ${
+                            selectedBranch?._id === branch._id
+                              ? "bg-green-50 text-dark-green-700 border border-green-200"
+                              : "bg-dark-green-700 hover:bg-dark-green-800 text-white"
+                          }`}
+                        >
+                          {selectedBranch?._id === branch._id ? (
+                            <>
+                              <CheckIcon className="w-3.5 h-3.5" />
+                              Selected branch
+                            </>
+                          ) : (
+                            "Select this branch"
+                          )}
+                        </button>
+                      </div>
                     </div>
                   </Popup>
                 </Marker>
               );
             })}
 
-          {/* ── User marker (blue pin) ── */}
+          {/* ── User marker (brand-color pin) ── */}
           {userMarker && (
             <Marker position={userMarker} icon={userIcon} ref={userMarkerRef}>
               <Popup>
                 {isMarkerPending ? (
-                  // ── Pending state: auto-geolocated, not yet confirmed ──
-                  <div className="min-w-40">
-                    <p className="font-bold mb-1">Select Place?</p>
-                    <p className="text-sm text-gray-500 mb-2.5">
-                      This is your detected location. Confirm it or click
-                      anywhere on the map to choose a different spot.
-                    </p>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        placeMarker(userMarker);
-                      }}
-                      className="w-full py-2 bg-brand-color-500 text-white border-0 rounded-sm text-sm font-semibold cursor-pointer"
-                    >
-                      Confirm this location
-                    </button>
+                  // ── Pending state ──
+                  <div className="w-56 overflow-hidden rounded-xl bg-white">
+                    <div className="bg-brand-color-500 px-3 py-2.5">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="text-[10px] font-medium text-white/60 uppercase tracking-widest">
+                            Your Location
+                          </p>
+                          <p className="mt-0.5 text-sm font-medium text-white leading-snug">
+                            Confirm this spot?
+                          </p>
+                        </div>
+                        <div className="shrink-0 w-7 h-7 rounded-full bg-white/15 flex items-center justify-center">
+                          <SunIcon className="w-3.5 h-3.5 text-white" />{" "}
+                          {/* or CrosshairIcon */}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="px-3 py-2.5 border-b border-gray-100">
+                      <p className="text-[11px] text-gray-500 leading-relaxed">
+                        This is your auto-detected location. Confirm it or tap
+                        anywhere on the map to choose a different spot.
+                      </p>
+                    </div>
+
+                    <div className="px-3 py-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          placeMarker(userMarker);
+                        }}
+                        className="w-full py-1.5 bg-brand-color-500 hover:bg-brand-color-600 text-white text-xs font-medium rounded-lg border-0 cursor-pointer transition-colors flex items-center justify-center gap-1.5"
+                      >
+                        <CheckIcon className="w-3.5 h-3.5" />
+                        Confirm this location
+                      </button>
+                    </div>
                   </div>
                 ) : (
-                  //** confirmed state */}
-                  "Your are here"
+                  // ── Confirmed state ──
+                  <div className="w-56 overflow-hidden rounded-xl bg-white">
+                    <div className="bg-teal-700 px-3 py-2.5">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="text-[10px] font-medium text-white/60 uppercase tracking-widest">
+                            You are here
+                          </p>
+                          <p className="mt-0.5 text-sm font-medium text-white leading-snug">
+                            Location confirmed
+                          </p>
+                        </div>
+                        <div className="shrink-0 w-7 h-7 rounded-full bg-white/15 flex items-center justify-center">
+                          <MapPinIcon className="w-3.5 h-3.5 text-white" />
+                        </div>
+                      </div>
+                      <div className="mt-1.5">
+                        <span className="inline-flex text-[10px] font-medium text-white bg-white/20 rounded-full px-2 py-0.5">
+                          Pinned location
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="px-3 py-2.5 border-b border-gray-100 space-y-1.5">
+                      <div className="flex items-center gap-1.5">
+                        <Globe className="w-3 h-3 text-gray-400 shrink-0" />
+                        <span className="text-[11px] text-gray-500">
+                          {userMarker[0].toFixed(4)}, {userMarker[1].toFixed(4)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="px-3 py-2">
+                      <p className="text-[10px] text-gray-400 text-center">
+                        Tap the map to move your pin
+                      </p>
+                    </div>
+                  </div>
                 )}
               </Popup>
             </Marker>
