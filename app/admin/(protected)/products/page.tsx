@@ -1,11 +1,11 @@
 "use client";
 
-import ProductTable from "@/components/admin/ProductTable";
+import ProductTable from "@/app/admin/components/ProductTable";
 import { useState } from "react";
 import ProductsModal from "./ProductsModal";
 import { Product } from "@/types/adminType";
 import { useProducts } from "@/hooks/api/useProducts";
-import SectionHeader from "@/components/admin/SectionHeader";
+import SectionHeader from "@/app/admin/components/SectionHeader";
 
 const ProductsPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);

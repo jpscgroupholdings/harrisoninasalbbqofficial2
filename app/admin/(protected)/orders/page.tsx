@@ -1,7 +1,7 @@
 "use client";
 
 import { InputField } from "@/components/ui/InputField";
-import OrdersTable from "@/components/admin/OrdersTable";
+import OrdersTable from "@/app/admin/components/OrdersTable";
 import React, { useState } from "react";
 import { useOrders } from "@/hooks/api/useOrders";
 

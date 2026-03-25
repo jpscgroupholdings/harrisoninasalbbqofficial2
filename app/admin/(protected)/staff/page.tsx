@@ -1,6 +1,6 @@
 "use client";
 
-import SectionHeader from "@/components/admin/SectionHeader";
+import SectionHeader from "@/app/admin/components/SectionHeader";
 import { InputField } from "@/components/ui/InputField";
 import Modal from "@/components/ui/Modal";
 import {

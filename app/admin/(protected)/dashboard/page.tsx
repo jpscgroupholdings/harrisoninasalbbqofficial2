@@ -1,6 +1,6 @@
 import React from "react";
-import DashboardCards from "@/components/admin/DashboardCard";
-import SalesChart from "@/components/admin/SalesChart";
+import DashboardCards from "@/app/admin/components/DashboardCard";
+import SalesChart from "@/app/admin/components/SalesChart";
 import { mockSalesData, mockTopProducts } from "@/data/mockData";
 import { getDashboardStats } from "@/lib/dashboardStats";
 
