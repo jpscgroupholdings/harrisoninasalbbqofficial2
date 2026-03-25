@@ -5,6 +5,11 @@ export type OperatingHours = {
   close: string;
 };
 
+export type Location = {
+  type: "Point";
+  coordinates: [number, number] // [longitude, latitude] - GeoJSON format
+}
+
 export type Branch = {
   _id: string;
   name: string;
@@ -12,6 +17,7 @@ export type Branch = {
   address: string;
   contactNumber?: string;
   operatingHours: OperatingHours;
+  location: Location,
   isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -23,6 +29,10 @@ export type BranchFormData = {
   contactNumber?: string;
   open: string;
   close: string;
+  location?: {
+    latitude: string;
+    longitude: string
+  }
 };
 
-export type BranchFormErrors = Partial<Record<keyof BranchFormData, string>>;
+export type BranchFormErrors = Partial<Record<keyof BranchFormData | "location", string>>;
