@@ -1,13 +1,8 @@
 "use client";
 
+import { createContext, ReactNode, useContext, useEffect, useState } from "react";
 import { Branch } from "@/types/branch";
-import {
-  createContext,
-  ReactNode,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import { useBranches } from "@/hooks/api/useBranch";
 
 type BranchContextType = {
   selectedBranch: Branch | null;
@@ -17,26 +12,29 @@ type BranchContextType = {
 const BranchContext = createContext<BranchContextType | null>(null);
 
 export const BranchProvider = ({ children }: { children: ReactNode }) => {
-  const [selectedBranch, setSelectedBranchState] = useState<Branch | null>(
-    null,
-  );
-  // Load from locatStorage once on mount (avoid SSR warnign)
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const { data: branches = [] } = useBranches();
+
+  // Load only the ID from localStorage, not the full object
   useEffect(() => {
     try {
-      const savedBranch = localStorage.getItem("selected_branch");
-      if (savedBranch) setSelectedBranchState(JSON.parse(savedBranch));
+      const savedId = localStorage.getItem("selected_branch_id");
+      if (savedId) setSelectedId(savedId);
     } catch (error) {
       console.error(error);
     }
   }, []);
 
-  const setSelectedBranch = (branch: Branch | null) => {
-    setSelectedBranchState(branch);
+  // Always resolve against fresh API data — never stale
+  const selectedBranch = branches.find((b) => b._id === selectedId) ?? null;
 
-    if (branch) {
-      localStorage.setItem("selected_branch", JSON.stringify(branch));
+  const setSelectedBranch = (branch: Branch | null) => {
+    setSelectedId(branch?._id ?? null);
+
+    if (branch?._id) {
+      localStorage.setItem("selected_branch_id", branch._id);
     } else {
-      localStorage.removeItem("selected_branch");
+      localStorage.removeItem("selected_branch_id");
     }
   };
 
