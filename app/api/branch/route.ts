@@ -23,13 +23,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const {
       name,
-      street,
-      city,
-      zipCode,
+      address,
       contactNumber,
       open,
       close,
-      daysOpen,
     } = body;
 
     const count = await Branch.countDocuments();
@@ -38,16 +35,11 @@ export async function POST(request: NextRequest) {
     const data = await Branch.create({
       name,
       code,
-      address: {
-        street,
-        city,
-        zipCode,
-      },
+      address,
       contactNumber,
       operatingHours: {
         open,
-        close,
-        daysOpen,
+        close
       },
     });
 

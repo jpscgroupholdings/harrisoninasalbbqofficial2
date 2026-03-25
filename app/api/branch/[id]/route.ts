@@ -64,29 +64,21 @@ export async function PUT(
 
     const {
       name,
-      street,
-      city,
-      zipCode,
+      address,
       contactNumber,
       open,
       close,
-      daysOpen,
     } = body;
 
     const updated = await Branch.findByIdAndUpdate(
       id,
       {
         name,
-        address: {
-          street,
-          city,
-          zipCode,
-        },
+        address,
         contactNumber,
         operatingHours: {
           open,
           close,
-          daysOpen,
         },
       },
       {
