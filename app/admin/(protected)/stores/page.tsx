@@ -1,7 +1,7 @@
 // BranchManagement.tsx  — cleaned up
 "use client";
 
-import SectionHeader from "@/components/admin/SectionHeader";
+import SectionHeader from "@/app/admin/components/SectionHeader";
 import { InputField } from "@/components/ui/InputField";
 import Modal from "@/components/ui/Modal";
 import {
@@ -23,17 +23,12 @@ import {
   useUpdateBranch,
 } from "@/hooks/api/useBranch";
 
-const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-
 const emptyForm: BranchFormData = {
   name: "",
-  street: "",
-  city: "",
-  zipCode: "",
+  address: "",
   contactNumber: "",
   open: "08:00",
   close: "22:00",
-  daysOpen: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
 };
 
 export default function BranchManagement() {
@@ -52,15 +47,13 @@ export default function BranchManagement() {
     (b) =>
       b.name.toLowerCase().includes(search.toLowerCase()) ||
       b.code.toLowerCase().includes(search.toLowerCase()) ||
-      b.address.city.toLowerCase().includes(search.toLowerCase()),
+      b.address.toLowerCase().includes(search.toLowerCase()),
   );
 
   const validate = (): BranchFormErrors => {
     const e: BranchFormErrors = {};
     if (!form.name.trim()) e.name = "Branch name is required.";
-    if (!form.street.trim()) e.street = "Street is required.";
-    if (!form.city.trim()) e.city = "City is required.";
-    if (form.daysOpen.length === 0) e.daysOpen = "Select at least one day.";
+    if (!form.address.trim()) e.address = "Address is required.";
     return e;
   };
 
@@ -68,13 +61,10 @@ export default function BranchManagement() {
     setBranchToEdit(branch);
     setForm({
       name: branch.name,
-      street: branch.address.street,
-      city: branch.address.city,
-      zipCode: branch.address.zipCode,
+      address: branch.address,
       contactNumber: branch.contactNumber,
       open: branch.operatingHours.open,
       close: branch.operatingHours.close,
-      daysOpen: branch.operatingHours.daysOpen,
     });
     setShowModal(true);
   };
@@ -111,14 +101,6 @@ export default function BranchManagement() {
     setErrors((prev) => ({ ...prev, [name]: undefined })); // clear error on change
   };
 
-  const toggleDay = (day: string) => {
-    setForm((prev) => ({
-      ...prev,
-      daysOpen: prev.daysOpen.includes(day)
-        ? prev.daysOpen.filter((d) => d !== day)
-        : [...prev.daysOpen, day],
-    }));
-  };
 
   return (
     <div style={{ fontFamily: "'DM Sans', sans-serif" }}>
@@ -196,7 +178,6 @@ export default function BranchManagement() {
                 "Address",
                 "Contact",
                 "Hours",
-                "Days Open",
                 "Status",
                 "Action",
               ].map((h) => (
@@ -240,30 +221,11 @@ export default function BranchManagement() {
                     </span>
                   </TableCell>
                   <TableCell>
-                    <div>{branch.address.street}</div>
-                    <div className="text-gray-500">
-                      {branch.address.city}
-                      {branch.address.zipCode
-                        ? `, ${branch.address.zipCode}`
-                        : ""}
-                    </div>
+                    <div>{branch.address}</div>
                   </TableCell>
                   <TableCell>{branch.contactNumber || "—"}</TableCell>
                   <TableCell>
                     {branch.operatingHours.open} – {branch.operatingHours.close}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1 flex-wrap max-w-40">
-                      {DAYS.map((d) => (
-                        <span
-                          key={d}
-                          style={{ fontFamily: "'DM Mono', monospace" }}
-                          className={`text-xs py-0.5 px-1.5 rounded-lg ${branch.operatingHours.daysOpen.includes(d) ? "bg-brand-color-500 text-white" : "bg-gray-100 text-gray-900"}`}
-                        >
-                          {d}
-                        </span>
-                      ))}
-                    </div>
                   </TableCell>
                   <TableCell>
                     <span
@@ -300,10 +262,7 @@ export default function BranchManagement() {
       {showModal && (
         <Modal title="Add New Branch" onClose={handleCloseModal}>
           <div>
-            <p className="text-sm font-bold text-gray-900 tracking-widest uppercase mb-3">
-              Basic Info
-            </p>
-            <div className="grid grid-cols-1 gap-3 mb-5">
+            <div className="flex flex-col gap-2.5 mb-4">
               <InputField
                 label="Branch Name"
                 value={form.name}
@@ -314,41 +273,17 @@ export default function BranchManagement() {
                 required
                 className="capitalize"
               />
-            </div>
 
-            <p className="text-sm font-semibold text-gray-900 tracking-widest uppercase mb-3">
-              Address
-            </p>
-            <div className="flex flex-col gap-2.5 mb-4">
               <InputField
-                label="Street"
-                value={form.street}
+                label="Address"
+                value={form.address}
                 onChange={handleChangeForm}
-                name="street"
+                name="address"
                 placeholder="e.g., 123 Rizal Ave"
-                error={errors.street}
+                error={errors.address}
                 className="capitalize"
                 required
               />
-              <div className="grid grid-cols-2 gap-3">
-                <InputField
-                  label="City"
-                  value={form.city}
-                  onChange={handleChangeForm}
-                  name="city"
-                  placeholder="e.g., Makati"
-                  error={errors.city}
-                  className="capitalize"
-                  required
-                />
-                <InputField
-                  label="ZIP Code"
-                  value={form.zipCode}
-                  onChange={handleChangeForm}
-                  name="zipCode"
-                  placeholder="e.g., 1000"
-                />
-              </div>
               <InputField
                 label="Contact Number"
                 value={form.contactNumber}
@@ -375,27 +310,6 @@ export default function BranchManagement() {
                 onChange={handleChangeForm}
               />
             </div>
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-900 mb-2">
-                Days Open *
-              </label>
-              <div className="flex gap-2 flex-wrap mt-1.5">
-                {DAYS.map((d) => (
-                  <button
-                    key={d}
-                    type="button"
-                    onClick={() => toggleDay(d)}
-                    className={`py-1.5 px-3 rounded-lg cursor-pointer font-semibold border transition-all duration-75 text-sm ${form.daysOpen.includes(d) ? "bg-brand-color-500 hover:bg-brand-color-600 text-white" : "bg-gray-100 text-brand-color-500"}`}
-                  >
-                    {d}
-                  </button>
-                ))}
-              </div>
-              {errors.daysOpen && (
-                <p className="mt-1.5 text-sm text-red-500">{errors.daysOpen}</p>
-              )}
-            </div>
-
             <div className="flex gap-2 justify-end">
               <button
                 onClick={() => setShowModal(false)}
