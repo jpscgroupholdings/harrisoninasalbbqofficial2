@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { X, Mail, Lock, User, Eye, EyeOff, Phone } from "lucide-react";
-import { InputField } from "../ui/InputField";
-import BrandLogo from "../BrandLogo";
+import { InputField } from "../../../components/ui/InputField";
+import BrandLogo from "../../../components/BrandLogo";
 import {
   useCustomerLogin,
   useCustomerSignup,

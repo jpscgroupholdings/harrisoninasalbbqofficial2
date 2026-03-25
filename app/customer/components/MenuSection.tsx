@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { ChevronDown, Search } from "lucide-react";
-import ProductCard from "../../ui/ProductCard";
+import ProductCard from "../../../components/ui/ProductCard";
 import { LINKS } from "@/constant/links";
 import { useScrollToSection } from "@/hooks/utils/useScrollToSection";
 import { useProducts } from "@/hooks/api/useProducts";

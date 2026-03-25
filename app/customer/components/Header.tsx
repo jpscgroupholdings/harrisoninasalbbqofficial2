@@ -17,7 +17,7 @@ import {
 import Link from "next/link";
 import { useOrders } from "@/hooks/api/useOrders";
 import BrandLogo from "@/components/BrandLogo";
-import AuthModal from "../AuthModal";
+import AuthModal from "./AuthModal";
 import { useCustomerMe } from "@/hooks/api/useAuthMe";
 import { useLogoutCustomer } from "@/hooks/api/useLogout";
 import LogoutModal from "@/components/ui/LogoutModal";

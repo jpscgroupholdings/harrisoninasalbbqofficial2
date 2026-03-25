@@ -1,12 +1,12 @@
 import CartDrawer from "@/components/CartDrawer";
 import Footer from "@/components/ui/Footer";
-import Header from "@/components/customer/homepage/Header";
+import Header from "@/app/customer/components/Header";
 import { CartProvider } from "@/contexts/CartContext";
 import React, { Suspense } from "react";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import { Metadata } from "next";
 import { BranchProvider } from "@/contexts/BranchContext";
-import HeaderSkeleton from "@/components/customer/homepage/HeaderSkeleton"
+import HeaderSkeleton from "@/app/customer/components/HeaderSkeleton"
 
 export const metadata: Metadata = {
   title: "Customer | House of Inasal & BBQ",
