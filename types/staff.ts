@@ -19,7 +19,7 @@ export type Staff = {
   email: string;
   phone?: string;
   role: StaffRole;
-  branch: {
+  branch?: {
     _id: string;
     name: string;
     code: string;
@@ -35,7 +35,7 @@ export type StaffFormData = {
   password: string;
   phone?: string;
   role: StaffRole | "";
-  branch: string;
+  branch: string | "";
 };
 
 export type StaffFormErrors = Partial<Record<keyof StaffFormData, string>>;
