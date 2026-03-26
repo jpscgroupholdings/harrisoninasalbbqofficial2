@@ -6,7 +6,6 @@ import {
   Layers,
   Link,
   LoaderCircle,
-  Plus,
   Search,
   Trash2,
   X,
@@ -22,6 +21,7 @@ import {
 import { useCreateProduct, useUpdateProduct } from "@/hooks/api/useProducts";
 import { Category, IncludedItemUI, Product } from "@/types/adminType";
 import { toast } from "sonner";
+import { TextareaField } from "@/components/ui/TextAreaField";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -58,7 +58,8 @@ interface ProductFormData {
   image: string;
   category: string;
   subcategory: string;
-  stock: string;
+  info: string;
+  description: string;
   isSignature: boolean;
   isPopular: boolean;
   productType: ProductType;
@@ -125,7 +126,8 @@ const ProductsModal = ({
     image: "",
     category: "",
     subcategory: "",
-    stock: "",
+    info: "",
+    description: "",
     isSignature: false,
     isPopular: false,
     productType: "solo",
@@ -191,7 +193,8 @@ const ProductsModal = ({
         image: imageUrl,
         category: editProduct.category._id || "",
         subcategory: editProduct.subcategory?._id || "",
-        stock: editProduct.stock?.toString() || "",
+        info: editProduct.info || "",
+        description: editProduct.description || "",
         isSignature: editProduct.isSignature || false,
         isPopular: editProduct.isPopular || false,
         productType: editProduct.productType || "solo",
@@ -279,7 +282,11 @@ const ProductsModal = ({
   };
 
   useEffect(() => {
-    if (activeImageTab === "gallery" && cloudinaryImages.length === 0 && !galleryError) {
+    if (
+      activeImageTab === "gallery" &&
+      cloudinaryImages.length === 0 &&
+      !galleryError
+    ) {
       fetchCloudinaryImages();
     }
   }, [activeImageTab]);
@@ -494,12 +501,13 @@ const ProductsModal = ({
 
       const payload = {
         name: formData.name,
+        info: formData.info,
+        description: formData.description,
         price: formData.price ? parseFloat(formData.price) : null,
         image: imageData.startsWith("https") ? imageData : undefined,
         imageFile: imageData.startsWith("data:") ? imageData : undefined,
         category: categoryId,
         subcategory: subcategoryId,
-        stock: parseFloat(formData.stock) || 0,
         isSignature: formData.isSignature,
         isPopular: formData.isPopular,
         productType: formData.productType,
@@ -704,30 +712,17 @@ const ProductsModal = ({
           </div>
         )}
 
-        {/* ── Price & Stock ── */}
-        <div className="grid grid-cols-2 gap-4">
-          <InputField
-            label="Price (₱)"
-            placeholder="0.00"
-            type="number"
-            id="price"
-            name="price"
-            value={formData.price}
-            onChange={handleChange}
-            required
-          />
-          <InputField
-            label="Stock"
-            leftIcon={<Layers size={18} />}
-            placeholder="0"
-            type="number"
-            id="stock"
-            name="stock"
-            value={formData.stock}
-            onChange={handleChange}
-            required
-          />
-        </div>
+        {/* ── Price ── */}
+        <InputField
+          label="Price (₱)"
+          placeholder="0.00"
+          type="number"
+          id="price"
+          name="price"
+          value={formData.price}
+          onChange={handleChange}
+          required
+        />
 
         {/* ── Pax Count (set only) ── */}
         {formData.productType === "set" && (
@@ -1078,7 +1073,10 @@ const ProductsModal = ({
               {/* Selected image info */}
               {selectedGalleryUrl && (
                 <div className="mt-3 flex items-center gap-2 px-3 py-2 bg-brand-color-500/10 border border-brand-color-500/30 rounded-lg">
-                  <CheckCircle2 size={14} className="text-brand-color-500 shrink-0" />
+                  <CheckCircle2
+                    size={14}
+                    className="text-brand-color-500 shrink-0"
+                  />
                   <p className="text-xs text-brand-color-500 font-medium truncate flex-1">
                     Image selected from gallery
                   </p>
@@ -1098,9 +1096,7 @@ const ProductsModal = ({
         {/* ── Image Preview ── */}
         {previewUrl && (
           <div className="border border-gray-200 rounded-lg p-4">
-            <p className="text-sm font-semibold text-gray-700 mb-3">
-              Preview:
-            </p>
+            <p className="text-sm font-semibold text-gray-700 mb-3">Preview:</p>
             <img
               src={previewUrl}
               alt="Product preview"
@@ -1112,6 +1108,23 @@ const ProductsModal = ({
             />
           </div>
         )}
+
+        <div>
+          <TextareaField
+            label="Product Info"
+            placeholder="e.g. Crispy fried chicken with rice and salad"
+            name="info"
+            value={formData.info}
+            onChange={handleChange}
+          />
+          <TextareaField
+            label="Product Description"
+            placeholder="e.g. Our signature crispy fried chicken, marinated in our secret blend of 12 spices for 24 hours. Served with jasmine rice and fresh garden salad. Includes your choice of beverage. Available as 2-piece, 4-piece, or 6-piece."
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+          />
+        </div>
 
         {/* ── Toggles ── */}
         <div className="space-y-3">

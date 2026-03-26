@@ -20,6 +20,9 @@ const ProductSchema = new Schema(
       public_id: { type: String, required: true },
     },
 
+    info: {type: String, default: "Product info is not available"},
+    description: {type: String, default: "Product description is not available"},
+
     category: { type: Schema.Types.ObjectId, ref: 'Category'},
     subcategory: {type: Schema.Types.ObjectId, ref: 'SubCategory', default: null},
 
@@ -36,7 +39,6 @@ const ProductSchema = new Schema(
 
     isPopular: { type: Boolean, default: false },
     isSignature: { type: Boolean, default: false },
-    stock: { type: Number, default: 0 },
   },
   { timestamps: true }, 
 );

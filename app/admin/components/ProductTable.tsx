@@ -24,10 +24,8 @@ export default function ProductTable({ products, onEdit }: ProductTableProps) {
     "Product",
     "Type",
     "Category",
-    "Sub Category",
     "Price",
     "Pax",
-    "Stock",
     "Actions",
   ];
 
@@ -42,7 +40,7 @@ export default function ProductTable({ products, onEdit }: ProductTableProps) {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
@@ -58,12 +56,12 @@ export default function ProductTable({ products, onEdit }: ProductTableProps) {
             </TableRow>
           </TableHeader>
 
-          <TableBody className="divide-y divide-gray-100">
+          <TableBody className="divide-y divide-slate-100">
             {products.length > 0 ? (
               products.map((product) => (
                 <TableRow
                   key={product._id}
-                  className="hover:bg-gray-50 transition-colors"
+                  className="hover:bg-slate-50 transition-colors"
                 >
                   {/* IMAGE */}
                   <TableCell className="px-6 py-4 flex items-center justify-center">
@@ -93,13 +91,13 @@ export default function ProductTable({ products, onEdit }: ProductTableProps) {
 
                   {/* NAME + INCLUDED ITEMS */}
                   <TableCell className="px-6 py-4">
-                    <p className="font-semibold text-gray-800">
+                    <p className="font-semibold text-slate-800">
                       {product.name}
                     </p>
 
                     {product.productType !== "solo" &&
                       product.includedItems?.length > 0 && (
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs text-slate-500 mt-1">
                           {product.includedItems.length} items included
                         </p>
                       )}
@@ -107,27 +105,26 @@ export default function ProductTable({ products, onEdit }: ProductTableProps) {
 
                   {/* TYPE */}
                   <TableCell className="px-6 py-4 text-center">
-                    <span className="text-xs font-medium px-2 py-1 rounded-full bg-gray-100 uppercase">
+                    <span className="text-xs font-medium px-2 py-1 rounded-full bg-slate-100 uppercase">
                       {product.productType || "No Product Type"} 
                     </span>
                   </TableCell>
 
                   {/* CATEGORY */}
                   <TableCell className="px-6 py-4">
-                    <span className="text-sm text-gray-600">
-                      {product.category?.name}
-                    </span>
-                  </TableCell>
-
-                  <TableCell className="px-6 py-4">
-                    <span className="text-sm text-gray-600">
-                      {product.subcategory?.name}
-                    </span>
+                    <p className="flex flex-col">
+                      <span className=" capitalize text-slate-900 font-bold">
+                        {product.category?.name}
+                      </span>
+                      <span className="text-sm text-slate-600">
+                        {product.subcategory?.name ?? "No Subcategory"}
+                      </span>
+                    </p>
                   </TableCell>
 
                   {/* PRICE */}
                   <TableCell className="px-6 py-4">
-                    <span className="text-sm font-semibold text-gray-800">
+                    <span className="text-sm font-semibold text-slate-800">
                       {product.price !== null
                         ? `₱${product.price.toFixed(2)}`
                         : "Varies"}
@@ -136,13 +133,13 @@ export default function ProductTable({ products, onEdit }: ProductTableProps) {
 
                   {/* PAX */}
                   <TableCell className="px-6 py-4 text-center">
-                    <span className="text-sm text-gray-600">
+                    <span className="text-sm text-slate-600">
                       {product.paxCount ? `${product.paxCount} pax` : "-"}
                     </span>
                   </TableCell>
 
                   {/* STOCK */}
-                  <TableCell className="px-6 py-4">
+                  {/* <TableCell className="px-6 py-4">
                     <span
                       className={`text-sm font-medium ${
                         product.stock === 0
@@ -154,7 +151,7 @@ export default function ProductTable({ products, onEdit }: ProductTableProps) {
                     >
                       {product.stock} left
                     </span>
-                  </TableCell>
+                  </TableCell> */}
 
                   {/* ACTIONS */}
                   <TableCell className="px-6 py-4">
@@ -179,11 +176,11 @@ export default function ProductTable({ products, onEdit }: ProductTableProps) {
               <TableRow>
                 <TableCell colSpan={productHeaders.length}>
                   <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <Search size={48} className="text-gray-300 mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-700">
+                    <Search size={48} className="text-slate-300 mb-4" />
+                    <h3 className="text-lg font-semibold text-slate-700">
                       No Products Found
                     </h3>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm text-slate-500 mt-1">
                       There are currently no products available.
                     </p>
                   </div>

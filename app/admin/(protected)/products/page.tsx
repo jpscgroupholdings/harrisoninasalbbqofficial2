@@ -19,7 +19,7 @@ const ProductsPage = () => {
     refetch,
   } = useProducts();
 
-  const sortedProducts = [...products].sort((a, b) => a.stock - b.stock);
+  const sortedProducts = [...products];
 
   if (isLoading) {
     return (
@@ -45,7 +45,7 @@ const ProductsPage = () => {
       {/* Header */}
       <SectionHeader
         title={"Products Management"}
-        subTitle="Manage your menu items and inventory"
+        subTitle="Manage your resturant's products"
         onClick={() => {
           setSelectedProduct(null);
           setIsModalOpen(true);
@@ -65,7 +65,7 @@ const ProductsPage = () => {
             {products.filter((p) => p.isPopular).length}
           </p>
         </div>
-        <div className="bg-white rounded-xl p-4 border border-stone-100">
+        {/* <div className="bg-white rounded-xl p-4 border border-stone-100">
           <p className="text-sm text-stone-500 mb-1">Low Stock</p>
           <p className="text-2xl font-bold text-amber-600">
             {products.filter((p) => p.stock < 20).length}
@@ -76,7 +76,7 @@ const ProductsPage = () => {
           <p className="text-2xl font-bold text-red-600">
             {products.filter((p) => p.stock === 0).length}
           </p>
-        </div>
+        </div> */}
       </div>
 
       {/* Products Table */}
