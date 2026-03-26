@@ -1,6 +1,4 @@
 "use client";
-
-import SectionHeader from "@/app/admin/components/SectionHeader";
 import { InputField } from "@/components/ui/InputField";
 import Modal from "@/components/ui/Modal";
 import {
@@ -29,6 +27,7 @@ import {
 } from "@/types/staff"
 import { Ban, Loader2, Search } from "lucide-react";
 import { ChangeEvent, useState } from "react";
+import SectionHeader from "../../components/SectionHeader";
 
 const ROLES: { value: StaffRole; label: string }[] = [
   { value: "superadmin", label: "Super Admin" },
@@ -126,7 +125,7 @@ export default function StaffManagement() {
       password: "",
       phone: staff.phone ?? "",
       role: staff.role,
-      branch: staff.branch._id,
+      branch: staff.branch?._id || "",
     });
     setErrors({});
     setShowModal(true);
