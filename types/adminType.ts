@@ -42,6 +42,8 @@ export interface IncludedItemUI {
 export interface Product {
   _id: string;
   name: string;
+  info: string;
+  description: string;
   category: Category;
   subcategory?: SubCategory | null;
   price: number | null;
@@ -49,7 +51,6 @@ export interface Product {
     url: string;
     public_id?: string;
   };
-  stock: number;
   productType: "solo" | "combo" | "set";
   includedItems: IncludedItem[];
   paxCount?: number | null;
@@ -64,7 +65,9 @@ export interface ProductPayload {
   price: number | null;
   category: string;                  // ObjectId
   subcategory?: string | null;       // ObjectId
-  stock: number;
+
+  info?: string;
+  description?: string;
   image?: string;
   imageFile?: string;
   isSignature?: boolean;
