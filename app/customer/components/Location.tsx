@@ -365,7 +365,7 @@ const LocationsSection = () => {
       </div>
 
       {/* Bottom CTA */}
-      <div className="mt-16 p-16 text-center w-full border-t border-gray-300">
+      {/* <div className="mt-16 p-16 text-center w-full border-t border-gray-300">
         <h3 className="text-3xl font-bold text-gray-900 mb-3">
           Can't visit us? We deliver to your doorstep!
         </h3>
@@ -399,7 +399,7 @@ const LocationsSection = () => {
             hoverTextColor="group-hover:text-pink-600"
           />
         </div>
-      </div>
+      </div> */}
     </section>
   );
 };
