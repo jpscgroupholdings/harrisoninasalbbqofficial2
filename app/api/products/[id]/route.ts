@@ -21,9 +21,10 @@ export async function PUT(
       price,
       image,
       imageFile,
+      info,
+      description,
       category,
       subcategory,
-      stock,
       isSignature,
       isPopular,
       productType,
@@ -94,7 +95,10 @@ export async function PUT(
         image: finalImage,
         category,
         subcategory: subcategory ?? null,
-        stock: parseInt(stock) ?? existingProduct.stock,
+
+        info: info ?? "Product info is not available",
+        description: description ?? "Product description is not available",
+
         isSignature,
         isPopular,
         productType: resolvedProductType,

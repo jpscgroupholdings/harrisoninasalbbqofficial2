@@ -23,9 +23,23 @@ const productBaseSchema = z.object({
   price: z.coerce.number().positive().nullable().optional(),
   category: z.string().min(1, "Category is required"),
   subcategory: z.string().nullable().optional(),
-  stock: z.coerce.number().int().nonnegative().default(0),
   image: z.string().optional(),
   imageFile: z.string().optional(),
+  
+  // ✅ NEW: Creative content fields
+  info: z
+    .string()
+    .min(10, "Info must be at least 10 characters")
+    .max(200, "Info must be less than 200 characters")
+    .optional()
+    .default("Product info is not available"),
+  description: z
+    .string()
+    .min(20, "Description must be at least 20 characters")
+    .max(2000, "Description must be less than 2000 characters")
+    .optional()
+    .default("Product description is not available"),
+  
   isSignature: z.boolean().optional().default(false),
   isPopular: z.boolean().optional().default(false),
   productType: z.enum(["solo", "combo", "set"]).default("solo"),
@@ -53,6 +67,14 @@ const productCreateSchema = productBaseSchema
 
 // ─── GET ──────────────────────────────────────────────────────────────────────
 
+/**
+ * GET /api/products
+ * Fetch products with optional filtering and population
+ * 
+ * Query params:
+ * - type: Filter by productType (solo, combo, set)
+ * - limit: Limit results (0 = no limit)
+ */
 export async function GET(request: NextRequest) {
   try {
     await connectDB();
@@ -132,6 +154,11 @@ export async function GET(request: NextRequest) {
 
 // ─── POST ─────────────────────────────────────────────────────────────────────
 
+/**
+ * POST /api/products
+ * Create a new product
+ * 
+ */
 export async function POST(request: NextRequest) {
   let uploadResult: any;
 
@@ -146,9 +173,10 @@ export async function POST(request: NextRequest) {
       price,
       category,
       subcategory,
-      stock,
       imageFile,
       image,
+      info,
+      description,
       isSignature,
       isPopular,
       productType,
@@ -186,9 +214,11 @@ export async function POST(request: NextRequest) {
       name,
       price: price ?? null,
       image: finalImage,
-      category, // ✅ ObjectId string — no normalization
+      category,
       subcategory: subcategory ?? null,
-      stock,
+      
+      info: info ?? "Product info is not available",
+      description: description ?? "Product description is not available",      
       isSignature,
       isPopular,
       productType,
