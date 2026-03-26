@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
       id: staff._id.toString(),
       email: staff.email,
       role: staff.role,
-      branch: staff.branch.toString(),
+      branch: staff.branch ? staff.branch.toString() : null,
     })
       .setProtectedHeader({ alg: "HS256" })
       .setExpirationTime("8h")
