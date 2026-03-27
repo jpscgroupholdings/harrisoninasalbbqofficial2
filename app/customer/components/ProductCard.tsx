@@ -29,14 +29,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ item }) => {
     setTimeout(() => setIsAdded(false), 500);
   };
 
-  const getStockStatus = () => {
-    if (item.stock <= 0) return { status: "out", label: "Out of Stock" };
-    if (item.stock <= 5)
-      return { status: "low", label: `Only ${item.stock} left!` };
-    return { status: "available", label: `${item.stock} available` };
-  };
+  // const getStockStatus = () => {
+  //   if (item.stock <= 0) return { status: "out", label: "Out of Stock" };
+  //   if (item.stock <= 5)
+  //     return { status: "low", label: `Only ${item.stock} left!` };
+  //   return { status: "available", label: `${item.stock} available` };
+  // };
 
-  const stockStatus = getStockStatus();
+  // const stockStatus = getStockStatus();
   const subcategoryName = item.subcategory?.name ?? null;
 
   // Build included items display string
@@ -54,9 +54,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ item }) => {
 
   return (
     <div
-      className={`group h-full bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden transform hover:-translate-y-1 ${
-        item.stock <= 0 ? "opacity-70" : ""
-      }`}
+      // className={`group h-full bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden transform hover:-translate-y-1 ${
+      //   item.stock <= 0 ? "opacity-70" : ""
+      // }`}
+
+       className={`group h-full bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden transform hover:-translate-y-1`}
     >
       {/** Image container */}
       <div className="relative overflow-hidden aspect-square">
@@ -70,7 +72,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ item }) => {
         />
 
         {/** Stock Status Badges */}
-        {item.stock <= 0 ? (
+        {/* {item.stock <= 0 ? (
           <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-10">
             <div className="bg-red-500 text-white px-4 py-2 rounded-full font-bold">
               <AlertTriangle className="inline mr-1" size={16} />
@@ -81,14 +83,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ item }) => {
           <div className="absolute left-3 top-3 bg-yellow-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-pulse">
             {stockStatus.label}
           </div>
-        ) : null}
+        ) : null} */}
 
         {/** Best Seller Badge */}
-        {item.isPopular && item.stock > 0 && (
+        {/* {item.isPopular && item.stock > 0 && (
           <div className="absolute left-3 top-3 bg-brand-color-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg z-10">
             Best Seller
           </div>
-        )}
+        )} */}
 
         {/** Combo / Set badge */}
         {item.productType !== "solo" && (
@@ -111,12 +113,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ item }) => {
         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
           <button
             onClick={handleAddToCart}
-            disabled={isAdded || item.stock === 0}
+            // disabled={isAdded || item.stock === 0}
             className={`${
               isAdded
                 ? "bg-green-500 scale-110"
-                : item.stock === 0
-                  ? "bg-gray-400 cursor-not-allowed"
+                // : item.stock === 0
+                //   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-brand-color-500 hover:bg-[#c13500]"
             } text-white px-6 py-3 rounded-full font-semibold flex items-center gap-2 transform transition-all duration-300 hover:scale-105 shadow-lg`}
           >
@@ -125,9 +127,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ item }) => {
                 <Check size={18} />
                 Added!
               </>
-            ) : item.stock === 0 ? (
-              "Out of Stock"
-            ) : (
+            ) 
+            // : item.stock === 0 ? (
+            //   "Out of Stock"
+            // ) 
+            
+            : (
               <>
                 <Plus size={18} />
                 Add To Cart
@@ -174,20 +179,24 @@ const ProductCard: React.FC<ProductCardProps> = ({ item }) => {
 
           <button
             onClick={handleAddToCart}
-            disabled={isAdded || item.stock === 0}
+            // disabled={isAdded || item.stock === 0}
             className={`${
               isAdded
                 ? "bg-green-500"
-                : item.stock === 0
-                  ? "bg-gray-300 cursor-not-allowed"
+                // : item.stock === 0
+                //   ? "bg-gray-300 cursor-not-allowed"
                   : "bg-[#1a1a1a] hover:bg-brand-color-500"
             } text-white p-3 rounded-full transition-all duration-300 shadow-md hover:shadow-lg`}
           >
             {isAdded ? (
               <Check size={18} />
-            ) : item.stock === 0 ? (
-              <AlertTriangle size={18} />
-            ) : (
+            ) 
+            
+            // : item.stock === 0 ? (
+            //   <AlertTriangle size={18} />
+            // ) 
+            
+            : (
               <ShoppingBag size={18} />
             )}
           </button>

@@ -3,9 +3,9 @@
 import { useState, useEffect, useCallback } from "react";
 
 const images = [
-  "/images/BANNER 1.png",
-  "/images/BANNER 2.png",
-  "/images/BANNER 3.png",
+  "/images/slider3.jpg",
+  "/images/Slider1.png",
+  "/images/banner_slider.png",
 ];
 
 export default function CarouselBanner() {
@@ -35,9 +35,8 @@ export default function CarouselBanner() {
   }, [current, next]);
 
   return (
-    <div className="w-full flex items-center justify-center">
+    <div className="w-full flex flex-col items-center justify-center">
       <div role="region" aria-label="Image Carousel" className="relative w-full h-[30vh] md:h-[50vh] lg:h-[60vh] overflow-hidden" style={{ aspectRatio: "16/9" }}>
-
         {/* Images */}
         {images.map((src, i) => (
           <img
