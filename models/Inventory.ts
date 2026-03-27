@@ -1,14 +1,14 @@
-import mongoose, { model, models, Schema } from "mongoose";
+import mongoose, { models, Schema } from "mongoose";
 
 const InventorySchema = new Schema(
   {
-    product: {
+    productId: {
       type: Schema.Types.ObjectId,
       ref: "Product",
       required: true,
     },
 
-    branch: {
+    branchId: {
       type: Schema.Types.ObjectId,
       ref: "Branch",
       required: true,
@@ -33,5 +33,7 @@ const InventorySchema = new Schema(
   },
   { timestamps: true },
 );
+
+InventorySchema.index({ productId: 1, branchId: 1 }, { unique: true });
 
 export const Inventory = models.Inventory || mongoose.model("Inventory", InventorySchema)
