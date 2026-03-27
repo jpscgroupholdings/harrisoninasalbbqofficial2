@@ -20,21 +20,23 @@ export async function GET(request: NextRequest) {
     const { payload } = await jwtVerify(token, JWT_SECRET);
     await connectDB();
 
-    const admin = await Staff.findById(payload.id).lean();
+    const adminData = await Staff.findById(payload.id)
+      .populate("branch", "name code address")
+      .lean();
 
-    if (!admin) {
-      return NextResponse.json(
-        { error: "Admin not found!" },
-        { status: 404 },
-      );
+    if (!adminData) {
+      return NextResponse.json({ error: "Admin not found!" }, { status: 404 });
     }
 
-    return NextResponse.json(admin);
+    console.log(adminData);
+    return NextResponse.json(adminData);
   } catch (error: any) {
     return NextResponse.json(
       {
         error:
-          error.error instanceof Error ? error.message : "Failed to fetch admin",
+          error.error instanceof Error
+            ? error.message
+            : "Failed to fetch admin",
       },
       { status: 500 },
     );

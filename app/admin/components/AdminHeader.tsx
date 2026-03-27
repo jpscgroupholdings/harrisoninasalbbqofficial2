@@ -13,37 +13,37 @@ const AdminHeader = ({ onMenuClick }: { onMenuClick: () => void }) => {
   const {data: currentAdmin, isPending} = useAdminMe();
 
   return (
-    <header className="h-20 bg-white border-b border-gray-200 flex item-center justify-between px-4 lg:px-8 sticky top-0 z-30">
+    <header className="h-20 bg-white border-b border-slate-200 flex item-center justify-between px-4 lg:px-8 sticky top-0 z-30">
       <div className="flex items-center gap-4">
         {/** Mobile menu button */}
         <button
           onClick={onMenuClick}
-          className="lg:hidden p-2 hover:bg-gray-200 rounded-lg transition-colors"
+          className="lg:hidden p-2 hover:bg-slate-200 rounded-lg transition-colors"
           aria-label="Toggle Menu"
         >
           <Menu size={16} />
         </button>
 
         <div>
-          <h2 className="text-lg lg:text-xl font-bold text-gray-800">
-            Welcome back, {currentAdmin?.firstName || "Administrator!"}
+          <h2 className="text-lg lg:text-2xl font-bold text-slate-800">
+          Welcome to <span className="text-brand-color-500">{currentAdmin?.branch?.name}</span>
           </h2>
-          <p className="text-xs lg:text-sm text-gray-500 mt-1">{currentData}</p>
+          <p className="text-xs lg:text-sm text-slate-500 mt-1">{currentData}</p>
         </div>
       </div>
 
       <div className="flex items-center gap-2 lg:gap-4">
         {/** Notifications */}
-        <button className="relative p-2 lg:p-3 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer">
+        <button className="relative p-2 lg:p-3 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer">
           <Bell size={20} />
           <div className="absolute top-1 lg:top-2 right-1 lg:right-2 rounded-full h-2 w-2 bg-red-500" />
         </button>
 
         {/** Profile */}
-        <div className="flex items-center gap-2 lg:gap-3 pl-2 lg:pl-4 border-l border-gray-200">
+        <div className="flex items-center gap-2 lg:gap-3 pl-2 lg:pl-4 border-l border-slate-200">
           <div className="text-right hidden sm:block">
-            <p className="text-sm font-semibold text-gray-800">{`${currentAdmin?.firstName ?? "Admin"} ${currentAdmin?.lastName ?? ""}`} </p>
-            <p className="text-xs text-gray-500">{currentAdmin?.role ?? "Admin role"}</p>
+            <p className="text-sm font-semibold text-slate-800">{`${currentAdmin?.firstName ?? "Admin"} ${currentAdmin?.lastName ?? ""}`} </p>
+            <p className="text-xs text-slate-500">{currentAdmin?.role ?? "Admin role"}</p>
           </div>
 
           <CircleUser size={24}/>
