@@ -140,7 +140,7 @@ const Header = () => {
                 size={20}
                 className="group-hover:scale-110 transition-transform darkText"
               />
-              {totalItems > 0 && (
+              {mounted && totalItems > 0 && (
                 <span className="absolute -top-1 -right-1 w-5 h-5 bg-brand-color-500 text-white text-xs font-bold rounded-full flex items-center justify-center animate-bounce">
                   {totalItems}
                 </span>
