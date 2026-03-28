@@ -13,9 +13,8 @@ export default function Home() {
       {/* <PromoBannerV2 /> */}
       <div className="max-w-360 mx-auto mt-12 mb-3">
         <div className="mx-4">
-          <PromoBanner type="single" />
           <Suspense fallback={<MenuSectionSkeleton />}>
-            <MenuSection />
+            <MenuSection /> {/** Includes the banner */}
           </Suspense>
         </div>
       </div>
