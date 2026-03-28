@@ -10,12 +10,12 @@ import { toast } from "sonner";
 
 interface ProductCardProps {
   item: BranchProduct;
-  selectedBranch?: string;
+  hasBranch?: boolean;
 }
 
 // ── Helpers (pure, no need to live inside component) ──────────────────────────
 
-const getStockLabel = (status: string, quantity: number): string => {
+const getStockLabel = (status: string, quantity: number | null): string => {
   if (status === STOCK_STATUSES.OUT_OF_STOCK) return "Out of stock";
   if (status === STOCK_STATUSES.LOW_STOCK) return `Only ${quantity} left!`;
   return `${quantity} available`;
@@ -31,15 +31,16 @@ const getIncludedItemsText = (
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-const ProductCard: React.FC<ProductCardProps> = ({ item, selectedBranch }) => {
+const ProductCard: React.FC<ProductCardProps> = ({ item, hasBranch }) => {
   const { addToCart } = useCart();
   const [isAdded, setIsAdded] = useState(false);
 
   // ── Derived state (declared early, used throughout) ───────────────────────
-  const quantity = item.quantity ?? 0;
-  const status = item.status ?? "";
-  const isOutOfStock = status === STOCK_STATUSES.OUT_OF_STOCK || quantity <= 0;
-  const isLowStock = status === STOCK_STATUSES.LOW_STOCK;
+  // Stock info is only meaningful when a branch is selected
+  const quantity = hasBranch ? (item.quantity ?? 0) : null;
+  const status = hasBranch ? (item.status ?? "")  : "";
+  const isOutOfStock = hasBranch && (status === STOCK_STATUSES.OUT_OF_STOCK || (quantity ?? 1) <= 0);
+  const isLowStock   = hasBranch && status === STOCK_STATUSES.LOW_STOCK;
   const isCombo = item.productType === "combo";
   const isSet = item.productType === "set";
   const isNonSolo = item.productType !== "solo";
@@ -48,7 +49,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ item, selectedBranch }) => {
 
   // ── Handlers ──────────────────────────────────────────────────────────────
   const handleAddToCart = () => {
-    if (!selectedBranch) {
+    if (!hasBranch) {
       toast.warning("Please select a branch first");
       return;
     }
