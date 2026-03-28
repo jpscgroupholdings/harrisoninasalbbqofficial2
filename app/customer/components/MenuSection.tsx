@@ -1,19 +1,22 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import { ChevronDown, Search } from "lucide-react";
 import ProductCard from "./ProductCard";
 import { LINKS } from "@/constant/links";
 import { useScrollToSection } from "@/hooks/utils/useScrollToSection";
-import { useProducts } from "@/hooks/api/useProducts";
-import { Category, Product } from "@/types/adminType";
+import { Category } from "@/types/adminType";
 import { useMenuCategories } from "@/app/main/components/CategoryCarousel";
+import { BranchProduct, useBranchProduct } from "@/hooks/api/useBranchProduct";
+import { useBranch } from "@/contexts/BranchContext";
+import { useProducts } from "@/hooks/api/useProducts";
+import PromoBanner from "./PromoBanner";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface SubcategoryGroup {
   subcategoryName: string | null;
-  items: Product[];
+  items: BranchProduct[];
 }
 
 interface CategoryGroup {
@@ -23,8 +26,8 @@ interface CategoryGroup {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function groupProducts(products: Product[]): CategoryGroup[] {
-  const categoryMap = new Map<string, Map<string | null, Product[]>>();
+function groupProducts(products: BranchProduct[]): CategoryGroup[] {
+  const categoryMap = new Map<string, Map<string | null, BranchProduct[]>>();
 
   for (const product of products) {
     const catName = product.category?.name ?? "Uncategorized";
@@ -44,11 +47,38 @@ function groupProducts(products: Product[]): CategoryGroup[] {
   }));
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// ─── Component ────────────────────────────────────────────────────────────
 
 const MenuSection = () => {
-  const { data: products = [], refetch } = useProducts();
+  const { selectedBranch } = useBranch();
+  const branchId = selectedBranch?._id;
+
+  // Always fetch all products (for no-branch browsing)
+  const {
+    data: allProducts = [],
+    refetch: refetchAll,
+    isLoading: isAllLoading,
+    isError: isAllError,
+  } = useProducts();
+
+  // Fetch branch products only when branch is selected
+  const {
+    data: branchProductsRaw,
+    refetch: refetchBranch,
+    isLoading: isBranchLoading,
+    isError: isBranchError,
+  } = useBranchProduct(branchId ?? "");
+
+  // Use branch products if available, otherwise fall back to all products
+  const dynamicProducts: BranchProduct[] = branchId
+    ? (branchProductsRaw ?? [])
+    : allProducts;
+
   useScrollToSection();
+
+  const isLoading = branchId ? isBranchLoading : isAllLoading;
+  const isError = branchId ? isBranchError : isAllError;
+  const refetch = branchId ? refetchBranch : refetchAll;
 
   const {
     data: categories,
@@ -69,7 +99,7 @@ const MenuSection = () => {
 
   // ── Filter + group ──────────────────────────────────────────────────────────
 
-  const filteredProducts = products.filter((p) => {
+  const filteredProducts = dynamicProducts.filter((p) => {
     if (activeCategory !== "All" && p.category?.name !== activeCategory)
       return false;
     if (
@@ -114,13 +144,11 @@ const MenuSection = () => {
     scrollToContent();
   };
 
-  // ── Card visibility observer ──────────────────────────────────────────────
-
   // ── Sidebar helpers ───────────────────────────────────────────────────────
 
   const getSubcategoriesForCategory = (categoryName: string): string[] => {
     const subs = new Set<string>();
-    products
+    dynamicProducts
       .filter((p) => p.category?.name === categoryName)
       .forEach((p) => {
         if (p.subcategory?.name) subs.add(p.subcategory.name);
@@ -132,19 +160,19 @@ const MenuSection = () => {
 
   let globalIndex = 0;
 
-  const ProductGrid = ({ items }: { items: Product[] }) => (
+  const ProductGrid = ({ items }: { items: BranchProduct[] }) => (
     <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 auto-rows-fr gap-4 md:gap-5">
       {items.map((item) => {
         const index = globalIndex++;
         return (
           <div
-            key={item._id}
+            key={index}
             data-index={index}
             id={item._id}
             className={`product-card-wrapper h-full transition-all duration-500`}
             style={{ transitionDelay: `${(index % 8) * 60}ms` }}
           >
-            <ProductCard item={item} />
+            <ProductCard item={item} selectedBranch={branchId} />
           </div>
         );
       })}
@@ -184,6 +212,29 @@ const MenuSection = () => {
               </div>
             </div>
           ))}
+        </div>
+      ) : isLoading ? (
+        <div className="text-center py-20">
+          <div className="inline-block animate-spin mb-4">
+            <div className="h-8 w-8 border-4 border-gray-200 border-t-brand-color-500 rounded-full" />
+          </div>
+          <h3 className="text-base font-semibold text-gray-500 mb-1">
+            Loading products...
+          </h3>
+        </div>
+      ) : isError ? (
+        <div className="text-center py-20">
+          <Search size={32} className="mx-auto text-red-200 mb-4" />
+          <h3 className="text-base font-semibold text-gray-500 mb-1">
+            Failed to load products
+          </h3>
+          <p className="text-sm text-gray-400 mb-4">Something went wrong</p>
+          <button
+            onClick={() => refetch()}
+            className="underline text-sm text-brand-color-500 hover:text-brand-color-600 cursor-pointer"
+          >
+            Try again
+          </button>
         </div>
       ) : (
         <div className="text-center py-20">
@@ -244,8 +295,11 @@ const MenuSection = () => {
     </div>
   );
 
+  // ── Main Render ────────────────────────────────────────────────────────────
   return (
     <section id="menu-section" className="bg-white scroll-mt-24">
+      <PromoBanner type="single" />
+
       {/* ══════════════════════════════════════════════
           MOBILE — horizontal pill bar + content
       ══════════════════════════════════════════════ */}
