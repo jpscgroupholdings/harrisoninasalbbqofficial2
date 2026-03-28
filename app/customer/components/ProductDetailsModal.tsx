@@ -8,6 +8,7 @@ import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
 import Modal from "@/components/ui/Modal";
 import ProductCard from "./ProductCard";
+import { syne } from "@/app/font";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -154,8 +155,13 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <Modal onClose={onClose} title="Add to cart">
-      <div className="flex flex-col overflow-auto max-h-[75vh]">
+    <Modal
+      onClose={onClose}
+      title="Product Details"
+      subTitle="Recommended items to go with this product"
+      contentClassName="p-0"
+    >
+      <div className={`${syne.className} flex flex-col overflow-auto max-h-[75vh]`}>
         <div className="flex overflow-hidden">
           {/* scrollable content */}
           <div className="flex-1 flex flex-col overflow-hidden">
@@ -223,7 +229,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 <div className="flex gap-0 border border-gray-200 rounded-lg overflow-hidden w-fit mb-3">
                   <button
                     onClick={() => setActiveTab("info")}
-                    className={`px-4 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
+                    className={`px-4 py-1.5 text-xs transition-colors cursor-pointer ${
                       activeTab === "info"
                         ? "bg-brand-color-500 text-white"
                         : "text-gray-500 hover:bg-gray-50"
@@ -271,7 +277,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                         </span>
                         <QuantityStepper
                           value={c.quantity}
-                          min={1}
+                          min={0}
                           onChange={(qty) =>
                             updateAddon(compliments, setCompliments, c._id, qty)
                           }
