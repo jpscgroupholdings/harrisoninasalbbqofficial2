@@ -95,7 +95,7 @@ interface SearchResult {
 
 // ── Replace your BranchInfoCard component ────────────────────────────────────
 type BranchInfoCardProps = {
-  type: "nearest" | "selected";
+  type: "nearest" | "selected" | "branch";
   branch: Branch;
   distanceKm?: number;
   onViewMap: () => void;
@@ -108,39 +108,61 @@ const BranchInfoCard = ({
   onViewMap,
 }: BranchInfoCardProps) => {
   const isNearest = type === "nearest";
+  const isSelected = type === "selected";
+  const isBranch = type === "branch";
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden w-full">
-      {/* Badge pill header */}
-      <div className="px-3 pt-3 pb-0">
-        <span
-          className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-            isNearest
-              ? "bg-slate-50 text-slate-700 border border-slate-200"
-              : "bg-brand-color-50 text-brand-color-700 border border-brand-color-200"
-          }`}
-        >
-          {isNearest ? "📍 Nearest" : "✓ Selected"}
-        </span>
-      </div>
+    <div
+      className={`border rounded-xl overflow-hidden w-full transition-colors ${
+        isNearest
+          ? "bg-white border-slate-200 shadow-sm"
+          : isSelected
+            ? "bg-white border-brand-color-200 shadow-sm"
+            : "bg-gray-50 border-gray-100"
+      }`}
+    >
+      {/* Badge pill — only for nearest and selected */}
+      {!isBranch && (
+        <div className="px-3 pt-3 pb-0">
+          <span
+            className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+              isNearest
+                ? "bg-slate-50 text-slate-700 border border-slate-200"
+                : "bg-brand-color-50 text-brand-color-700 border border-brand-color-200"
+            }`}
+          >
+            {isNearest ? "📍 Nearest" : "✓ Selected"}
+          </span>
+        </div>
+      )}
 
       {/* Branch info */}
-      <div className="px-3 pt-2 pb-3 space-y-0.5">
-        <p className="text-sm font-semibold text-slate-900 leading-snug">
+      <div
+        className={`px-3 pb-3 space-y-0.5 ${!isBranch ? "pt-2" : "pt-3"}`}
+      >
+        <p
+          className={`text-sm font-semibold leading-snug ${
+            isBranch ? "text-slate-600" : "text-slate-900"
+          }`}
+        >
           {branch.name}
         </p>
-        <p className="text-[11px] text-slate-500 leading-snug capitalize">
+        <p className="text-[11px] text-slate-400 leading-snug capitalize">
           {branch.address}
         </p>
         {distanceKm !== undefined && (
-          <p className="text-[11px] text-slate-400">
+          <p className="text-[11px] text-brand-color-400">
             {distanceKm.toFixed(1)} km away
           </p>
         )}
 
         <button
           onClick={onViewMap}
-          className="mt-2 w-full py-1.5 px-3 bg-dark-green-700 hover:bg-dark-green-800 text-white text-[11px] font-medium rounded-lg border-0 cursor-pointer transition-colors"
+          className={`mt-2 w-full py-1.5 px-3 text-[11px] font-medium rounded-lg border-0 cursor-pointer transition-colors ${
+            isBranch
+              ? "bg-gray-200 hover:bg-gray-300 text-gray-600"
+              : "bg-dark-green-700 hover:bg-dark-green-800 text-white"
+          }`}
         >
           View on map
         </button>
@@ -600,17 +622,12 @@ const Map = () => {
                               Location confirmed
                             </p>
                             <p className="mt-0.5 text-sm font-medium text-white leading-snug">
-                              You are here!
+                              Your pinned location on the map.
                             </p>
                           </div>
                           <div className="shrink-0 w-7 h-7 rounded-full bg-white/15 flex items-center justify-center">
                             <MapPinIcon className="w-3.5 h-3.5 text-white" />
                           </div>
-                        </div>
-                        <div className="mt-1.5">
-                          <span className="inline-flex text-[10px] font-medium text-white bg-white/20 rounded-full px-2 py-0.5">
-                            Pinned location
-                          </span>
                         </div>
                       </div>
                       <div className="px-3 py-2.5 border-b border-gray-100 space-y-1.5">
@@ -665,7 +682,7 @@ const Map = () => {
         </div>
       </div>
 
-      {(nearestInfo || selectedBranch) && !isMarkerPending && (
+   
         <div>
           {/* ── Legend ── */}
           <div className="z-9999">
@@ -718,32 +735,65 @@ const Map = () => {
           </div>
           {/* Right side panel — only visible when there's something to show */}
           <div className="flex flex-row md:flex-col gap-3 shrink-0 pt-1">
-            {nearestInfo && (
-              <BranchInfoCard
-                type="nearest"
-                branch={nearestInfo.branch}
-                distanceKm={nearestInfo.km}
-                onViewMap={() => flyToBranchAndOpenPopup(nearestInfo.branch)}
-              />
-            )}
-            {selectedBranch && (
-              <BranchInfoCard
-                type="selected"
-                branch={selectedBranch}
-                distanceKm={
-                  userMarker
-                    ? getDistance(
-                        toLatLng(selectedBranch.location.coordinates),
-                        userMarker,
-                      )
-                    : undefined
-                }
-                onViewMap={() => flyToBranchAndOpenPopup(selectedBranch)}
-              />
-            )}
+        {/* Scrollable branch list */}
+<div className="flex flex-col gap-3 overflow-y-auto">
+
+  {/* Pinned: nearest */}
+  {nearestInfo && (
+    <BranchInfoCard
+      type="nearest"
+      branch={nearestInfo.branch}
+      distanceKm={nearestInfo.km}
+      onViewMap={() => flyToBranchAndOpenPopup(nearestInfo.branch)}
+    />
+  )}
+
+  {/* Pinned: selected (only if different from nearest) */}
+  {selectedBranch && selectedBranch._id !== nearestInfo?.branch._id && (
+    <BranchInfoCard
+      type="selected"
+      branch={selectedBranch}
+      distanceKm={
+        userMarker
+          ? getDistance(toLatLng(selectedBranch.location.coordinates), userMarker)
+          : undefined
+      }
+      onViewMap={() => flyToBranchAndOpenPopup(selectedBranch)}
+    />
+  )}
+
+  {/* Divider */}
+  {(nearestInfo || selectedBranch) && branches.length > 0 && (
+    <div className="flex items-center gap-2 px-1">
+      <div className="flex-1 h-px bg-gray-100" />
+      <span className="text-[10px] text-gray-400 font-medium">All branches</span>
+      <div className="flex-1 h-px bg-gray-100" />
+    </div>
+  )}
+
+  {/* All branches (excluding nearest and selected) */}
+  {branches
+    .filter(b =>
+      b._id !== nearestInfo?.branch._id &&
+      b._id !== selectedBranch?._id
+    )
+    .map((branch) => (
+      <BranchInfoCard
+        key={branch._id}
+        type="branch"
+        branch={branch}
+        distanceKm={
+          userMarker
+            ? getDistance(toLatLng(branch.location.coordinates), userMarker)
+            : undefined
+        }
+        onViewMap={() => flyToBranchAndOpenPopup(branch)}
+      />
+    ))}
+</div>
           </div>
         </div>
-      )}
+      
     </section>
   );
 };
