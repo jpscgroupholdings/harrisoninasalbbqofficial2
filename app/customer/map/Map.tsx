@@ -156,6 +156,9 @@ const Map = () => {
   const mapRef = useRef<L.Map | null>(null);
   const userMarkerRef = useRef<L.Marker | null>(null);
 
+  // store ref for each branch marker so we can open their popups programmatically when user clicks "View on map" in the side panel
+  const branchMarkerRef = useRef<Record<string, L.Marker | null>>({});
+
   // null - not yet located
   const [userMarker, setUserMarker] = useState<[number, number] | null>(null);
 
@@ -314,10 +317,20 @@ const Map = () => {
     coordinates[0],
   ];
 
+  const flyToBranchAndOpenPopup = useCallback((branch: Branch) => {
+    const latlng = toLatLng(branch.location.coordinates);
+    mapRef.current?.flyTo(latlng, 16, { duration: 1.2 });
+    setTimeout(() => {
+      branchMarkerRef.current[branch._id]?.openPopup();
+    }, 1400); // slight longer than fly duration to ensure popup opens after animation completes
+  }, []);
+
   const dotColors = ["#e53e3e", "#38a169", "#d69e2e", "#7c3aed", "#3b82f6"];
 
   return (
-    <section className={`${fredoka.className} flex flex-col md:flex-row gap-3 items-start  w-full`}>
+    <section
+      className={`${fredoka.className} flex flex-col md:flex-row gap-3 items-start  w-full`}
+    >
       <div className="relative max-w-7xl h-full mx-auto space-y-4 w-full z-10">
         {/** Search */}
         <div className="flex gap-2">
@@ -425,6 +438,9 @@ const Map = () => {
                     position={[lat, lng]}
                     title={branch.name}
                     icon={getBranchIcon(branch)}
+                    ref={(ref) => {
+                      branchMarkerRef.current[branch._id] = ref;
+                    }} // store each branch marker ref by its _id
                   >
                     <Popup>
                       <div className="w-56 overflow-hidden rounded-xl border border-gray-200 shadow-lg bg-white">
@@ -698,13 +714,7 @@ const Map = () => {
                 type="nearest"
                 branch={nearestInfo.branch}
                 distanceKm={nearestInfo.km}
-                onViewMap={() =>
-                  mapRef.current?.flyTo(
-                    toLatLng(nearestInfo.branch.location.coordinates),
-                    16,
-                    { duration: 1.2 },
-                  )
-                }
+                onViewMap={() => flyToBranchAndOpenPopup(nearestInfo.branch)} 
               />
             )}
             {selectedBranch && (
@@ -719,13 +729,7 @@ const Map = () => {
                       )
                     : undefined
                 }
-                onViewMap={() =>
-                  mapRef.current?.flyTo(
-                    toLatLng(selectedBranch.location.coordinates),
-                    16,
-                    { duration: 1.2 },
-                  )
-                }
+                  onViewMap={() => flyToBranchAndOpenPopup(selectedBranch)} 
               />
             )}
           </div>
