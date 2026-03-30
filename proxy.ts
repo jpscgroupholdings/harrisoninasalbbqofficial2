@@ -4,6 +4,7 @@ import { canAccess } from "./lib/rbac";
 import { verifyToken } from "./lib/verifyToken";
 import { StaffRole } from "./types/staff";
 import { blockNonMaya, isMayaCallbackPath } from "./lib/mayaGuard";
+import { isRouteBlocked } from "./lib/pageStatus";
 
 export async function proxy(request: NextRequest) {
   const url = request.nextUrl.clone();
@@ -19,6 +20,16 @@ export async function proxy(request: NextRequest) {
     "Path:",
     pathname,
   );
+
+  // Check for coming soon pages first
+  if (pathname === '/coming-soon') {
+    return NextResponse.next()
+  }
+
+  // Check if the route is blocked (coming soon) - this runs before any routing logic, so it applies to all subdomains
+   if (isRouteBlocked(pathname)) {
+    return NextResponse.rewrite(new URL('/coming-soon', request.url))
+  }
 
   // Maya callback guard (run first, before routing)
   if(isMayaCallbackPath(pathname)){
