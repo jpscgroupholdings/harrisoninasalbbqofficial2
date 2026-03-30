@@ -153,20 +153,22 @@ const BranchInfoCard = ({
 const Map = () => {
   const { data: branches = [], isPending } = useBranches();
 
+  // selected branch from context
+  const {
+    selectedBranch,
+    setSelectedBranch,
+    userLocation: userMarker,
+    setUserLocation,
+  } = useBranch();
+
   const mapRef = useRef<L.Map | null>(null);
   const userMarkerRef = useRef<L.Marker | null>(null);
 
   // store ref for each branch marker so we can open their popups programmatically when user clicks "View on map" in the side panel
   const branchMarkerRef = useRef<Record<string, L.Marker | null>>({});
 
-  // null - not yet located
-  const [userMarker, setUserMarker] = useState<[number, number] | null>(null);
-
   // true = geolocated but user hasn't confirmed (shows "Select a place?" popup)
   const [isMarkerPending, setIsMarkerPending] = useState(false);
-
-  // selected branch from context
-  const { selectedBranch, setSelectedBranch } = useBranch();
 
   const [nearestInfo, setNearestInfo] = useState<{
     branch: Branch;
@@ -187,6 +189,17 @@ const Map = () => {
   // Drops a pending marker at the user's detected location with a
   // "Select a place?" popup so they can confirm or choose a different spot.
   useEffect(() => {
+    // ── Already have a saved location from sessionStorage — skip geolocation ──
+    if (userMarker) {
+      setTimeout(() => {
+        mapRef.current?.flyTo(userMarker, 14, { duration: 1.5 });
+         setTimeout(() => {
+            userMarkerRef.current?.openPopup();
+          }, 1800);
+      }, 600);
+      return;
+    }
+
     if (!navigator.geolocation) return;
 
     navigator.geolocation.getCurrentPosition(
@@ -195,26 +208,22 @@ const Map = () => {
           pos.coords.latitude,
           pos.coords.longitude,
         ];
-        setUserMarker(latlng);
+        setUserLocation(latlng);
         setIsMarkerPending(true);
-        // Small delay so MapContainer has fully initialised before flyTo
         setTimeout(() => {
           mapRef.current?.flyTo(latlng, 14, { duration: 1.5 });
-
-          // open popup afer fly animation finishes
           setTimeout(() => {
             userMarkerRef.current?.openPopup();
           }, 1800);
         }, 600);
       },
       () => {
-        // Permission denied or unavailable — silent fail, user can still click
         setError(
           "Location access denied. Please enable it or select manually.",
         );
       },
     );
-  }, []);
+  }, []); // ── empty deps — runs once on mount only ──
 
   // ---------- Place Marker with radius check --------------
   const placeMarker = useCallback(
@@ -231,7 +240,7 @@ const Map = () => {
       // Pass branches from useBranches() hook
       const info = nearestBranch(latlng, branches);
 
-      setUserMarker(latlng);
+      setUserLocation(latlng);
       setIsMarkerPending(false);
       setNearestInfo(info);
       setError(null);
@@ -584,14 +593,14 @@ const Map = () => {
                   ) : (
                     // ── Confirmed state ──
                     <div className="w-56 overflow-hidden rounded-xl bg-white">
-                      <div className="bg-teal-700 px-3 py-2.5">
+                      <div className="bg-dark-green-700 px-3 py-2.5">
                         <div className="flex items-start justify-between gap-2">
                           <div>
                             <p className="text-[10px] font-medium text-white/60 uppercase tracking-widest">
-                              You are here
+                              Location confirmed
                             </p>
                             <p className="mt-0.5 text-sm font-medium text-white leading-snug">
-                              Location confirmed
+                              You are here!
                             </p>
                           </div>
                           <div className="shrink-0 w-7 h-7 rounded-full bg-white/15 flex items-center justify-center">
@@ -714,7 +723,7 @@ const Map = () => {
                 type="nearest"
                 branch={nearestInfo.branch}
                 distanceKm={nearestInfo.km}
-                onViewMap={() => flyToBranchAndOpenPopup(nearestInfo.branch)} 
+                onViewMap={() => flyToBranchAndOpenPopup(nearestInfo.branch)}
               />
             )}
             {selectedBranch && (
@@ -729,7 +738,7 @@ const Map = () => {
                       )
                     : undefined
                 }
-                  onViewMap={() => flyToBranchAndOpenPopup(selectedBranch)} 
+                onViewMap={() => flyToBranchAndOpenPopup(selectedBranch)}
               />
             )}
           </div>
