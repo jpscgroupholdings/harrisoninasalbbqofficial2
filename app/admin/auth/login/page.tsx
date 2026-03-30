@@ -109,7 +109,7 @@ const LoginPage = () => {
           </div>
 
           <div className="w-full max-w-xl">
-            <div className="mb-8 text-center lg:text-start">
+            {/* <div className="mb-8 text-center lg:text-start">
               <p className="mb-4 text-dark-green-500">
                 Test Account: <br />
                 Email : harrisonmain@gmail.com
@@ -122,7 +122,7 @@ const LoginPage = () => {
               <p className="text-sm text-gray-400">
                 Sign in to your admin account
               </p>
-            </div>
+            </div> */}
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <InputField
