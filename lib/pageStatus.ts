@@ -1,6 +1,6 @@
 export const pageStatus = {
     '/checkout' : true,
-    '/orders': false,
+    '/orders': true,
 }
 
 export function isRouteBlocked(pathname: string): boolean {
