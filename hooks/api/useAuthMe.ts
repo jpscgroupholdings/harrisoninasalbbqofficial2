@@ -14,7 +14,7 @@ export const useCustomerMe = () => {
 
 export const useAdminMe = () => {
   return useQuery<Staff>({
-    queryKey: ["admins"],
+    queryKey: ["admin"],
     queryFn: () => apiClient.get("/auth/admin/me"),
     retry: false, // don't retry on 401
     staleTime: 1000 * 60 * 5, // cache for 5 mins
