@@ -1,5 +1,7 @@
 import { getAuthHeader } from "@/lib/getAuthHeader";
 import { connectDB } from "@/lib/mongodb";
+import { Branch } from "@/models/Branch";
+import { Inventory } from "@/models/Inventory";
 import { Order } from "@/models/Orders";
 import { Product } from "@/models/Product";
 import { ORDER_STATUSES } from "@/types/orderConstants";
@@ -17,10 +19,36 @@ export async function POST(request: NextRequest) {
     const MINIMUM_AMOUNT = 100;
     const TAX_RATE = 0.12;
 
-    const { items } = body;
+    const {
+      branchId,
+      items,
+      customerName,
+      customerEmail,
+      customerPhone,
+      note,
+    } = body;
+
+    if (!branchId) {
+      return NextResponse.json(
+        { error: "Branch is required." },
+        { status: 400 },
+      );
+    }
+    if (!customerName || !customerPhone) {
+      return NextResponse.json(
+        { error: "Customer details are required." },
+        { status: 400 },
+      );
+    }
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json({ error: "Cart is empty." }, { status: 400 });
+    }
+
+    const branch = await Branch.findById(branchId).session(session);
+
+    if (!branch) {
+      return NextResponse.json({ error: "Branch not found!" }, { status: 400 });
     }
 
     let recalculatedSubTotal = 0;
@@ -40,25 +68,39 @@ export async function POST(request: NextRequest) {
         throw new Error("Product not found!");
       }
 
-      if (product.stock < cartItem.quantity) {
-        return NextResponse.json(
-          {
-            error: `${product.name} only has ${product.stock} item(s) left in stock`,
-          },
-          { status: 400 },
+      // Check inventory for SPECIFIC branch
+      const inventory = await Inventory.findOne({
+        productId: cartItem._id,
+        branchId: branchId,
+      }).session(session);
+
+      // No inventory record = treat as out of stock
+      if (!inventory) {
+        throw new Error(`${product.name} is not available at this branch.`);
+      }
+
+      if (inventory.quantity === 0) {
+        throw new Error(
+          `${product.name} only has ${inventory.quantity} item(s) left in stock.`,
         );
       }
 
-      // ✅ Deduct stock inside the transaction
-      await Product.findByIdAndUpdate(
-        product._id,
-        { $inc: { stock: -cartItem.quantity } },
+      if (inventory.quantity < cartItem.quantity) {
+        throw new Error(
+          `${product.name} only has ${inventory.quantity} item(s) left in stock.`,
+        );
+      }
+
+      // Deduct stock inside the transaction
+      await Inventory.findOneAndUpdate(
+        { productId: cartItem._id, branchId: branchId },
+        { $inc: { quantity: -cartItem.quantity } },
         { session },
       );
 
       recalculatedSubTotal += product.price * cartItem.quantity;
 
-      // ✅ Only fields that exist in your OrderItemSchema
+      // Only fields that exist in your OrderItemSchema
       orderItems.push({
         productId: product._id,
         name: product.name,
@@ -140,14 +182,25 @@ export async function POST(request: NextRequest) {
     await Order.create(
       [
         {
+          branchId,
+          branchSnapshot: {
+            name: branch.name,
+            code: branch.code,
+            addres: branch.address,
+            contactNumber: branch.contactNumber,
+          },
           status: ORDER_STATUSES.PENDING,
-          items: orderItems, // ✅ clean snapshot, matches OrderItemSchema
+          items: orderItems, // clean snapshot, matches OrderItemSchema
           paymentInfo: {
             checkoutId: data.checkoutId,
             referenceNumber,
+            customerName,
+            customerEmail, // optional
+            customerPhone,
           },
           total: { subTotal: recalculatedSubTotal, tax, total: grandTotal },
-          // ✅ No timeline.createdAt — timestamps:true already gives you createdAt
+          note, // optional
+          //  No timeline.createdAt — timestamps:true already gives you createdAt
         },
       ],
       { session },
@@ -167,7 +220,9 @@ export async function POST(request: NextRequest) {
     await session.abortTransaction();
     session.endSession();
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to checkout!" },
+      {
+        error: error instanceof Error ? error.message : "Failed to checkout!",
+      },
       { status: 500 },
     );
   }
