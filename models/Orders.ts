@@ -78,7 +78,13 @@ const OrderSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "Branch",
       required: true,
-      index: true
+      index: true,
+    },
+    branchSnapshot: {
+      name: String, // captured at order time
+      code: String, // e.g. OR-001
+      address: String,
+      contactNumber: String
     },
     status: {
       type: String,
@@ -117,12 +123,6 @@ const OrderSchema = new Schema(
         type: String,
         required: true,
       },
-
-      branchSnapshot: {
-        branchId: { type: Schema.Types.ObjectId, ref: "Branch"},
-        name: String, // captured at order time
-        code: String // e.g. OR-001
-      }
     },
 
     total: {
@@ -131,15 +131,15 @@ const OrderSchema = new Schema(
       total: { type: Number, required: true },
     },
 
-    estimatedTime: { type: String, default: "30-45 minutes",},
+    estimatedTime: { type: String, default: "30-45 minutes" },
 
-      // Timeline of status changes
+    // Timeline of status changes
     timeline: {
       type: TimelineSchema,
       default: {},
     },
 
-     // Delivery/dispatch information
+    // Delivery/dispatch information
     dispatchInfo: {
       riderId: {
         type: Schema.Types.ObjectId,
@@ -147,7 +147,7 @@ const OrderSchema = new Schema(
       },
       riderName: String,
       riderPhone: String,
-      vehicleType: String,  // motorcycle, car, etc.
+      vehicleType: String, // motorcycle, car, etc.
     },
 
     note: String,
@@ -155,7 +155,7 @@ const OrderSchema = new Schema(
     isReviewed: {
       type: Boolean,
       default: false,
-      index: true
+      index: true,
     },
 
     reviewedAt: Date,
@@ -169,14 +169,14 @@ const OrderSchema = new Schema(
 
 // Optimize queries by status
 OrderSchema.index({ status: 1, createdAt: -1 });
- 
+
 // Optimize customer queries
 OrderSchema.index({ "paymentInfo.customerEmail": 1 });
- 
+
 // Optimize review queries
 OrderSchema.index({ isReviewed: 1, reviewedAt: -1 });
 
-OrderSchema.index({branchId: 1, status: 1, createdAt: -1});
-OrderSchema.index({branchId: 1, isReviewed: 1});
+OrderSchema.index({ branchId: 1, status: 1, createdAt: -1 });
+OrderSchema.index({ branchId: 1, isReviewed: 1 });
 
 export const Order = models.Order || model("Order", OrderSchema);
