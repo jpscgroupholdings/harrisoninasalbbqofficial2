@@ -23,20 +23,17 @@ import { useLogoutCustomer } from "@/hooks/api/useLogout";
 import LogoutModal from "@/components/ui/LogoutModal";
 import Modal from "@/components/ui/Modal";
 import MapPage from "@/app/customer/map/page";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useBranch } from "@/contexts/BranchContext";
 import { syne } from "@/app/font";
+import { MODAL_TYPES, useModalQuery } from "@/hooks/utils/useModalQuery";
 
 const Header = () => {
   const { data: currentUser, isPending, fetchStatus  } = useCustomerMe();
   const userLogout = useLogoutCustomer();
-
-  const searchParams = useSearchParams();
-  const modalType = searchParams.get("modal");
-  const pathname = usePathname();
-  const router = useRouter();
-
   const { selectedBranch } = useBranch();
+
+  const {modal: modalType, openModal: handleOpenModal, closeModal: handleCloseModal } = useModalQuery();
+
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -61,25 +58,6 @@ const Header = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Preserve other query params
-  const handleOpenModal = (modalType: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("modal", modalType);
-
-    const query = params.toString();
-    router.replace(query ? `?${query}` : "");
-  };
-
-  const handleCloseModal = () => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete("modal");
-    console.log("modalType:", modalType);
-
-    const query = params.toString();
-    router.replace(query ? `?${query}` : pathname);
-    console.log("modalType:", modalType);
-  };
-
   return (
     <header
       className={`sticky top-0 z-40 bg-white transition-all duration-300 ${
@@ -92,7 +70,7 @@ const Header = () => {
           <BrandLogo />
 
           <button
-            onClick={() => handleOpenModal("map")}
+            onClick={() => handleOpenModal(MODAL_TYPES.MAP)}
             className="flex items-center justify-center gap-2 bg-white hover:bg-brand-color-50 hover:text-brand-color-600 text-brand-color-500 px-4 py-2 text-sm font-bold rounded-full transition-colors cursor-pointer max-w-35 sm:max-w-none"
           >
             <MapPin size={16} className="shrink-0" />
@@ -175,7 +153,7 @@ const Header = () => {
 
                   {/* Logout */}
                   <button
-                    onClick={() => handleOpenModal("logout")}
+                    onClick={() => handleOpenModal(MODAL_TYPES.LOGOUT)}
                     disabled={userLogout.isPending}
                     className="flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-red-500 px-3 py-2 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
                   >
@@ -190,14 +168,14 @@ const Header = () => {
               ) : (
                 <>
                   <button
-                    onClick={() => handleOpenModal("login")}
+                    onClick={() => handleOpenModal(MODAL_TYPES.LOGIN)}
                     className="flex items-center gap-2 text-slate-600 hover:text-slate-900 px-3 py-2 rounded-lg transition-colors cursor-pointer"
                   >
                     <LogIn size={18} />
                     <span className="text-sm font-medium">Login</span>
                   </button>
                   <button
-                    onClick={() => handleOpenModal("signup")}
+                    onClick={() => handleOpenModal(MODAL_TYPES.SIGNUP)}
                     className={`${syne.className} flex bg-brand-color-500 text-white items-center justify-center text-sm hover:bg-brand-color-600 font-bold py-2 px-4 rounded-full`}
                   >
                     <User className="inline-block mr-2" size={18}  />
@@ -264,7 +242,7 @@ const Header = () => {
                 <button
                   onClick={() => {
                     setIsMobileMenuOpen(false);
-                    handleOpenModal("logout");
+                    handleOpenModal(MODAL_TYPES.LOGOUT);
                   }}
                   className="flex items-center justify-center gap-2 text-white bg-red-500/80 hover:bg-red-600 px-4 py-3 rounded-lg transition-colors disabled:opacity-50"
                 >
@@ -281,7 +259,7 @@ const Header = () => {
               <div className="flex gap-2 pt-2">
                 <button
                   onClick={() => {
-                    handleOpenModal("login");
+                    handleOpenModal(MODAL_TYPES.LOGIN);
                     setIsMobileMenuOpen(false);
                   }}
                   className="flex-1 flex items-center justify-center gap-2 text-white bg-white/10 px-4 py-3 rounded-lg"
@@ -291,7 +269,7 @@ const Header = () => {
                 </button>
                 <button
                   onClick={() => {
-                    handleOpenModal("signup");
+                    handleOpenModal(MODAL_TYPES.SIGNUP);
                     setIsMobileMenuOpen(false);
                   }}
                   className="flex-1 flex items-center justify-center gap-2 bg-brand-color-500 text-white px-4 py-3 rounded-lg"
@@ -306,12 +284,12 @@ const Header = () => {
       )}
 
       <AuthModal
-        isOpen={modalType === "login" || modalType === "signup"}
+        isOpen={modalType === MODAL_TYPES.LOGIN || modalType === MODAL_TYPES.SIGNUP}
         onClose={handleCloseModal}
-        initialMode={(modalType as "login") || "signup"}
+        initialMode={(modalType as typeof MODAL_TYPES.LOGIN || typeof MODAL_TYPES.SIGNUP)}
       />
 
-      {modalType === "logout" && (
+      {modalType === MODAL_TYPES.LOGOUT && (
         <LogoutModal
           onConfirm={() => userLogout.mutate()}
           onClose={handleCloseModal}
@@ -319,7 +297,7 @@ const Header = () => {
         />
       )}
 
-      {modalType === "map" && (
+      {modalType === MODAL_TYPES.MAP && (
         <Modal onClose={handleCloseModal} title="Select Harrison's Branch" subTitle="Explore the map to find the nearest branch" className={`${syne.className}`}>
           <MapPage />
         </Modal>
