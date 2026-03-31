@@ -15,6 +15,7 @@ type BranchContextType = {
 const BranchContext = createContext<BranchContextType | null>(null);
 
 const LOCATION_KEY = "user_map_location";
+const SELECTED_BRANCH_KEY = "selected_branch_id";
 
 const loadLocation = (): [number, number] | null => {
   try {
@@ -42,10 +43,10 @@ export const BranchProvider = ({ children }: { children: ReactNode }) => {
   const [userLocation, setUserLocationState] = useState<[number, number] | null>(loadLocation);
   const { data: branches = [] } = useBranches();
 
-  // Load selected branch ID from localStorage on mount
+  // Load selected branch ID from sessionStorage on mount
   useEffect(() => {
     try {
-      const savedId = localStorage.getItem("selected_branch_id");
+      const savedId = sessionStorage.getItem(SELECTED_BRANCH_KEY);
       if (savedId) setSelectedId(savedId);
     } catch (error) {
       console.error(error);
@@ -59,9 +60,9 @@ export const BranchProvider = ({ children }: { children: ReactNode }) => {
     setSelectedId(branch?._id ?? null);
 
     if (branch?._id) {
-      localStorage.setItem("selected_branch_id", branch._id);
+      sessionStorage.setItem(SELECTED_BRANCH_KEY, branch._id);
     } else {
-      localStorage.removeItem("selected_branch_id");
+      sessionStorage.removeItem(SELECTED_BRANCH_KEY);
     }
   };
 
