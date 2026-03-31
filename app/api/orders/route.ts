@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
     // QUERY PARAMETERS
     // ============================================
     const searchParams = request.nextUrl.searchParams;
-    const status = searchParams.get("status") || ORDER_STATUSES.PAID;
+    const status = searchParams.get("status");
     const email = searchParams.get("email");
     const sortBy = searchParams.get("sortBy") || "priority"; // priority | date
     const page = parseInt(searchParams.get("page") || "1");
