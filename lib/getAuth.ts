@@ -1,6 +1,8 @@
 import { StaffRole } from "@/types/staff";
 import { jwtVerify } from "jose";
 import { NextRequest, NextResponse } from "next/server";
+import { connectDB } from "./mongodb";
+import Staff from "@/models/Staff";
 
 if (!process.env.JWT_SECRET) {
   throw new Error("JWT_SECRET is not defined in env variables!");
@@ -18,6 +20,7 @@ export type CookieType = (typeof COOKIE_NAMES)[keyof typeof COOKIE_NAMES];
 export async function verifyToken(token: string) {
   try {
     const { payload } = await jwtVerify(token, JWT_SECRET);
+    if (!payload) throw new Error("Unauthorized");
     return payload;
   } catch (error) {
     console.error("JWT verification failed:", error);
@@ -42,9 +45,6 @@ export async function getAdminAuth(request: NextRequest) {
 
   return {
     id: payload.id as string,
-    email: payload.email as string,
-    role: payload.role as StaffRole,
-    branch: payload.branch as string,
   };
 }
 
@@ -54,7 +54,6 @@ export async function getCustomerAuth(request: NextRequest) {
 
   return {
     id: payload.id as string,
-    email: payload.email as string,
   };
 }
 
@@ -62,5 +61,8 @@ export async function requireAdmin(request: NextRequest) {
   const admin = await getAdminAuth(request);
   if (!admin) throw new Error("Unauthorized!");
 
-  return admin;
+  await connectDB();
+  const staffRecord = await Staff.findById(admin.id).lean();
+   if (!staffRecord || !staffRecord.isActive) throw new Error("Unauthorized");
+  return staffRecord
 }
