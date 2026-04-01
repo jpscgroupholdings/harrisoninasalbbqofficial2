@@ -11,32 +11,16 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   STATUS_PRIORITY,
   ORDER_ACTION_CONFIG,
-  ORDER_STATUSES,
   OrderStatus,
 } from "@/types/orderConstants";
-import { jwtVerify } from "jose";
-
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
-
-if (!JWT_SECRET) {
-  throw new Error("JWT_SECRET is not defined");
-}
+import { requireAdmin } from "@/lib/getAuth";
 
 export async function GET(request: NextRequest) {
   try {
     await connectDB();
 
-    // get token first
-    const token = request.cookies.get("admin_token")?.value;
-
-    if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // verify + decode JWT
-    const { payload } = await jwtVerify(token, JWT_SECRET);
-
-    const branchId = payload.branch as string;
+    const admin = await requireAdmin(request);
+    const branchId = admin.branch;
 
     if (!branchId) {
       return NextResponse.json(
@@ -52,8 +36,8 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status");
     const email = searchParams.get("email");
     const sortBy = searchParams.get("sortBy") || "priority"; // priority | date
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "20");
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
+    const limit = Math.min(50, Math.max(1, parseInt(searchParams.get("limit") || "20")))
 
     const skip = (page - 1) * limit;
 
@@ -139,6 +123,11 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error: any) {
+
+    if (error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     console.error("GET /api/orders error:", error);
     return NextResponse.json(
       { error: "Failed to fetch orders" },
