@@ -4,7 +4,7 @@ import { canAccess } from "./lib/roleBasedAccessCtrl";
 import { StaffRole } from "./types/staff";
 import { blockNonMaya, isMayaCallbackPath } from "./lib/mayaGuard";
 import { isRouteBlocked } from "./lib/pageStatus";
-import { COOKIE_NAMES, getAdminAuth } from "./lib/getAuth";
+import { COOKIE_NAMES, getAdminAuth, requireAdmin } from "./lib/getAuth";
 
 export async function proxy(request: NextRequest) {
   const url = request.nextUrl.clone();
@@ -40,13 +40,14 @@ export async function proxy(request: NextRequest) {
 
   // ── Admin subdomain ──────────────────────────────────────────
   if (subdomain === "admin") {
-    const admin = await getAdminAuth(request);
-
+    
     const isPublic = ["/auth/login", "/auth/signup"].some((p) =>
       pathname.startsWith(p),
     );
 
     const isRoot = pathname === "/";
+
+    const admin = await getAdminAuth(request);
 
     // redirect root to dashboard if logged in, else to login
     if (isRoot) {
@@ -67,19 +68,6 @@ export async function proxy(request: NextRequest) {
       );
       response.cookies.delete(COOKIE_NAMES.ADMIN_TOKEN);
       return response;
-    }
-
-    // verify token validity on protected pages
-    if (!isPublic && admin) {
-      const role = admin.role as StaffRole;
-
-      // Example: "/orders/123".split("/") → ["", "orders", "123"]
-      // We take index [1] to get the resource segment ("orders")
-      const segment = pathname.split("/")[1];
-
-      if (!canAccess(role, `${segment}.read`)) {
-        return NextResponse.redirect(new URL("/dashboard", request.url));
-      }
     }
 
     // rewrite to /admin folder
