@@ -53,9 +53,6 @@ export async function POST(request: NextRequest) {
     // sign JWT
     const token = await new SignJWT({
       id: staff._id.toString(),
-      email: staff.email,
-      role: staff.role,
-      branch: staff.branch ? staff.branch.toString() : null,
     })
       .setProtectedHeader({ alg: "HS256" })
       .setExpirationTime("8h")
