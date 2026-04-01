@@ -5,6 +5,7 @@ import { jwtVerify } from "jose";
 import { Product } from "@/models/Product";
 import { Inventory } from "@/models/Inventory";
 import { STOCK_STATUSES } from "@/types/inventory_types";
+import { COOKIE_NAMES } from "@/lib/getAuth";
 
 /**
  * POST /api/inventory/sync
@@ -22,7 +23,7 @@ export async function GET(req: NextRequest) {
     await connectDB();
 
     // Get cookie
-    const token = req.cookies.get("admin_token")?.value;
+    const token = req.cookies.get(COOKIE_NAMES.ADMIN_TOKEN)?.value;
 
     if (!token) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

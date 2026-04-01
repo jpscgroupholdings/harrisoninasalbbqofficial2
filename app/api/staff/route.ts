@@ -1,4 +1,4 @@
-import { getAuthAdmin } from "@/lib/getAuth";
+import { requireAdmin } from "@/lib/getAuth";
 import { connectDB } from "@/lib/mongodb";
 import { canAccess } from "@/lib/roleBasedAccessCtrl";
 import Staff from "@/models/Staff";
@@ -36,12 +36,13 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
 
-    const currentUser = await getAuthAdmin();
-    if(!currentUser){
+    const admin = await requireAdmin(request);
+    
+    if(!admin){
       return NextResponse.json({error: "Unauthorized"}, {status: 401})
     }
 
-    if(!canAccess(currentUser.role, "staff.create")){
+    if(!canAccess(admin.role, "staff.create")){
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

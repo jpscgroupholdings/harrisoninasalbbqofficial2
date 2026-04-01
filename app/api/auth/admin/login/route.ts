@@ -1,3 +1,4 @@
+import { COOKIE_NAMES } from "@/lib/getAuth";
 import { connectDB } from "@/lib/mongodb";
 import Staff from "@/models/Staff";
 import bcrypt from "bcryptjs";
@@ -72,7 +73,7 @@ export async function POST(request: NextRequest) {
     });
 
     // set HTTP only cookie
-    response.cookies.set("admin_token", token, {
+    response.cookies.set(COOKIE_NAMES.ADMIN_TOKEN, token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",

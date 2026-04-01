@@ -1,3 +1,4 @@
+import { COOKIE_NAMES } from "@/lib/getAuth";
 import { connectDB } from "@/lib/mongodb";
 import { Customer } from "@/models/Customer";
 import { jwtVerify } from "jose";
@@ -11,7 +12,7 @@ const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 
 export async function GET(request: NextRequest) {
   try {
-    const token = request.cookies.get("customer_token")?.value;
+    const token = request.cookies.get(COOKIE_NAMES.CUSTOMER_TOKEN)?.value;
 
     if (!token) {
       return NextResponse.json({ error: "Unauthorized!" }, { status: 401 });

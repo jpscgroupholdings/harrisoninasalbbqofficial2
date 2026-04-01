@@ -4,6 +4,7 @@ import { jwtVerify } from "jose";
 import { NextRequest, NextResponse } from "next/server";
 
 import "@/models/Branch"; // Ensure Branch model is registered for population
+import { COOKIE_NAMES } from "@/lib/getAuth";
 
 if (!process.env.JWT_SECRET) {
   throw new Error("JWT_SECRET is not defined in env variables!");
@@ -13,7 +14,7 @@ const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 
 export async function GET(request: NextRequest) {
   try {
-    const token = request.cookies.get("admin_token")?.value;
+    const token = request.cookies.get(COOKIE_NAMES.ADMIN_TOKEN)?.value;
 
     if (!token) {
       return NextResponse.json(

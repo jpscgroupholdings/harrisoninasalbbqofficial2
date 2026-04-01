@@ -1,9 +1,10 @@
+import { COOKIE_NAMES } from "@/lib/getAuth";
 import {NextResponse } from "next/server";
 
 export async function POST() {
   try {
     const response = NextResponse.json({ message: "Logout!" });
-    response.cookies.delete("customer_token");
+    response.cookies.delete(COOKIE_NAMES.CUSTOMER_TOKEN);
     return response;
   } catch (error) {
     return NextResponse.json(
