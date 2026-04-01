@@ -14,6 +14,7 @@ import {
   OrderStatus,
 } from "@/types/orderConstants";
 import { requireAdmin } from "@/lib/getAuth";
+import { STAFF_ROLES } from "@/types/staff";
 
 export async function GET(request: NextRequest) {
   try {
@@ -37,7 +38,10 @@ export async function GET(request: NextRequest) {
     const email = searchParams.get("email");
     const sortBy = searchParams.get("sortBy") || "priority"; // priority | date
     const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
-    const limit = Math.min(50, Math.max(1, parseInt(searchParams.get("limit") || "20")))
+    const limit = Math.min(
+      50,
+      Math.max(1, parseInt(searchParams.get("limit") || "20")),
+    );
 
     const skip = (page - 1) * limit;
 
@@ -45,7 +49,17 @@ export async function GET(request: NextRequest) {
     // BUILD FILTER
     // ============================================
 
-    const filter: any = { branchId };
+    const filter: any = {};
+
+    if (admin.role !== STAFF_ROLES.SUPERADMIN) {
+      if (!admin.branch) {
+        return NextResponse.json(
+          { error: "branchId is required" },
+          { status: 400 },
+        );
+      }
+      filter.branchId = admin.branch;
+    }
 
     if (status) {
       filter.status = status;
@@ -109,6 +123,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       data: formattedOrders,
+      branchId,
       pagination: {
         page,
         limit,
@@ -123,7 +138,6 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error: any) {
-
     if (error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
