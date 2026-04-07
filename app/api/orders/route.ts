@@ -138,7 +138,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error: any) {
-    if (error.message === "Unauthorized") {
+    if (error.message === "Unauthorized!") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
