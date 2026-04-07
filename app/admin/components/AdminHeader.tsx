@@ -1,16 +1,16 @@
-import { useAdminMe } from "@/hooks/api/useAuthMe";
+import { useStaffContext } from "@/contexts/StaffContext";
 import { Bell, CircleUser, Menu } from "lucide-react";
 import React from "react";
 
 const AdminHeader = ({ onMenuClick }: { onMenuClick: () => void }) => {
-  const currentData = new Date().toLocaleDateString("en-US", {
+  const currentDate = new Date().toLocaleDateString("en-US", {
     weekday: "long",
     year: "numeric",
     month: "long",
     day: "numeric",
   });
 
-  const {data: currentAdmin, isPending} = useAdminMe();
+  const admin = useStaffContext();
 
   return (
     <header className="h-20 bg-white border-b border-slate-200 flex item-center justify-between px-4 lg:px-8 sticky top-0 z-30">
@@ -26,9 +26,9 @@ const AdminHeader = ({ onMenuClick }: { onMenuClick: () => void }) => {
 
         <div>
           <h2 className="text-lg lg:text-2xl font-bold text-slate-800">
-          <span className="hidden lg:inline-block">Welcome to</span> <span className="text-brand-color-500 block lg:inline-block">{currentAdmin?.branch?.name}</span>
+          <span className="hidden lg:inline-block">Welcome to</span> <span className="text-brand-color-500 block lg:inline-block">{admin?.branch?.name}</span>
           </h2>
-          <p className="text-xs lg:text-sm text-slate-500 mt-1">{currentData}</p>
+          <p className="text-xs lg:text-sm text-slate-500 mt-1">{currentDate}</p>
         </div>
       </div>
 
@@ -42,8 +42,8 @@ const AdminHeader = ({ onMenuClick }: { onMenuClick: () => void }) => {
         {/** Profile */}
         <div className="flex items-center gap-2 lg:gap-3 pl-2 lg:pl-4 border-l border-slate-200">
           <div className="text-right hidden sm:block">
-            <p className="text-sm font-semibold text-slate-800">{`${currentAdmin?.firstName ?? "Admin"} ${currentAdmin?.lastName ?? ""}`} </p>
-            <p className="text-xs text-slate-500">{currentAdmin?.role ?? "Admin role"}</p>
+            <p className="text-sm font-semibold text-slate-800">{`${admin?.firstName ?? "Admin"} ${admin?.lastName ?? ""}`} </p>
+            <p className="text-xs text-slate-500">{admin?.role ?? "Admin role"}</p>
           </div>
 
           <CircleUser size={24}/>
