@@ -26,7 +26,7 @@ const AdminHeader = ({ onMenuClick }: { onMenuClick: () => void }) => {
 
         <div>
           <h2 className="text-lg lg:text-2xl font-bold text-slate-800">
-          Welcome to <span className="text-brand-color-500">{currentAdmin?.branch?.name}</span>
+          <span className="hidden lg:inline-block">Welcome to</span> <span className="text-brand-color-500 block lg:inline-block">{currentAdmin?.branch?.name}</span>
           </h2>
           <p className="text-xs lg:text-sm text-slate-500 mt-1">{currentData}</p>
         </div>
