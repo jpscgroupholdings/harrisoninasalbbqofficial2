@@ -2,6 +2,7 @@ import { connectDB } from "@/lib/mongodb";
 import { SubCategory } from "@/models/SubCategory";
 import { NextRequest, NextResponse } from "next/server";
 import "@/models/Category";
+import { requireSuperAdmin } from "@/lib/getAuth";
 
 // ─── GET — all subcategories (optionally filtered by ?category=<id>) ──────────
 
@@ -29,9 +30,10 @@ export async function GET(request: NextRequest) {
 
 // ─── POST — create subcategory ────────────────────────────────────────────────
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     await connectDB();
+    await requireSuperAdmin(request);
 
     const { name, category } = await request.json();
 

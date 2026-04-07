@@ -2,6 +2,7 @@ import { connectDB } from "@/lib/mongodb";
 import { SubCategory } from "@/models/SubCategory";
 import { Product } from "@/models/Product";
 import { NextRequest, NextResponse } from "next/server";
+import { requireSuperAdmin } from "@/lib/getAuth";
 
 // ─── PATCH — update subcategory name ─────────────────────────────────────────
 
@@ -11,6 +12,7 @@ export async function PATCH(
 ) {
   try {
     await connectDB();
+    await requireSuperAdmin(request)
 
     const { id } = await context.params;
     const body = await request.json();
@@ -64,6 +66,7 @@ export async function DELETE(
 ) {
   try {
     await connectDB();
+    await requireSuperAdmin(request)
 
     const { id } = await context.params;
 

@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
+import { requireSuperAdmin } from '@/lib/getAuth';
 
 // Configure Cloudinary
 cloudinary.config({
@@ -8,8 +9,9 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    await requireSuperAdmin(request)
     const formData = await request.formData();
     const file = formData.get('file') as File;
 
@@ -72,8 +74,9 @@ export async function POST(request: Request) {
 }
 
 // Optional: DELETE endpoint to remove images
-export async function DELETE(request: Request) {
+export async function DELETE(request: NextRequest) {
   try {
+    await requireSuperAdmin(request)
     const { searchParams } = new URL(request.url);
     const publicId = searchParams.get('publicId');
 

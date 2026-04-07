@@ -1,3 +1,4 @@
+import { requireSuperAdmin } from "@/lib/getAuth";
 import { connectDB } from "@/lib/mongodb";
 import Staff from "@/models/Staff";
 import bcrypt from "bcryptjs";
@@ -9,6 +10,8 @@ export async function PATCH(
 ) {
   try {
     await connectDB();
+    await requireSuperAdmin(request);
+
     const { id } = await context.params;
 
     if (!id) {
@@ -42,6 +45,8 @@ export async function PUT(
 ) {
   try {
     await connectDB();
+    await requireSuperAdmin(request)
+
     const { id } = await context.params;
     const body = await request.json();
 
