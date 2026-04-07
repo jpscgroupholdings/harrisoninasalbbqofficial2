@@ -1,45 +1,21 @@
 import { connectDB } from "@/lib/mongodb";
 import { NextRequest, NextResponse } from "next/server";
 import { syncInventoryForBranch } from "@/lib/inventory/syncInventory";
-import { jwtVerify } from "jose";
 import { Product } from "@/models/Product";
 import { Inventory } from "@/models/Inventory";
 import { STOCK_STATUSES } from "@/types/inventory_types";
-import { COOKIE_NAMES } from "@/lib/getAuth";
-import Staff from "@/models/Staff";
+import { requireAdmin } from "@/lib/getAuth";
 
 /**
  * POST /api/inventory/sync
  * Body: { branchId: string }
  */
 
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
-
-if (!JWT_SECRET) {
-  throw new Error("JWT_SECRET is not defined");
-}
-
 export async function GET(req: NextRequest) {
   try {
     await connectDB();
 
-    // Get cookie
-    const token = req.cookies.get(COOKIE_NAMES.ADMIN_TOKEN)?.value;
-
-    if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // verify + decode JWT
-    const { payload } = await jwtVerify(token, JWT_SECRET);
-
-    const staff = await Staff.findById(payload.id).select(
-      "branch role isActive",
-    );
-
-    if (!staff || !staff.isActive) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const staff = await requireAdmin(req)
 
     const branchId = staff.branch;
 
