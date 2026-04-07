@@ -7,10 +7,13 @@ import { Product } from "@/types/adminType";
 import { useProducts } from "@/hooks/api/useProducts";
 import SectionHeader from "@/app/admin/components/SectionHeader";
 import LoadingPage from "@/components/ui/LoadingPage";
+import { useStaffContext } from "@/contexts/StaffContext";
+import { canAccess } from "@/lib/roleBasedAccessCtrl";
 
 const ProductsPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const currentAdmin = useStaffContext()
 
   const {
     data: products = [],
@@ -49,7 +52,8 @@ const ProductsPage = () => {
           setSelectedProduct(null);
           setIsModalOpen(true);
         }}
-        btnTxt="+ Add New Product"
+        btnTxt="+ Add Product"
+        permission="products.create"
       />
 
       {/* Stats */}
@@ -64,18 +68,6 @@ const ProductsPage = () => {
             {products.filter((p) => p.isPopular).length}
           </p>
         </div>
-        {/* <div className="bg-white rounded-xl p-4 border border-stone-100">
-          <p className="text-sm text-stone-500 mb-1">Low Stock</p>
-          <p className="text-2xl font-bold text-amber-600">
-            {products.filter((p) => p.stock < 20).length}
-          </p>
-        </div>
-        <div className="bg-white rounded-xl p-4 border border-stone-100">
-          <p className="text-sm text-stone-500 mb-1">Out of Stock</p>
-          <p className="text-2xl font-bold text-red-600">
-            {products.filter((p) => p.stock === 0).length}
-          </p>
-        </div> */}
       </div>
 
       {/* Products Table */}
