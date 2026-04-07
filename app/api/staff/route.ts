@@ -1,7 +1,8 @@
-import { requireAdmin } from "@/lib/getAuth";
+import { requireAdmin, requireSuperAdmin } from "@/lib/getAuth";
 import { connectDB } from "@/lib/mongodb";
 import { canAccess } from "@/lib/roleBasedAccessCtrl";
 import Staff from "@/models/Staff";
+import { STAFF_ROLES } from "@/types/staff";
 import bcrypt from "bcryptjs";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -19,15 +20,20 @@ export const createStaffSchema = z.object({
   branch: z.string().min(1),
 });
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     await connectDB();
-    const data = await Staff.find({}).populate("branch", "name code").lean();
+
+    const staff = await requireAdmin(req)
+
+    const filter = staff.role === STAFF_ROLES.SUPERADMIN ? {} : {_id: staff._id}
+
+    const data = await Staff.find(filter).populate("branch", "name code").lean();
 
     return NextResponse.json(data, { status: 200 });
   } catch (error) {
     return NextResponse.json(
-      { error: "Failed to fetch staffs" },
+      { error: error instanceof Error ? error.message : "Failed to fetch staffs" },
       { status: 500 },
     );
   }
@@ -35,19 +41,9 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-
-    const admin = await requireAdmin(request);
-    
-    if(!admin){
-      return NextResponse.json({error: "Unauthorized"}, {status: 401})
-    }
-
-    if(!canAccess(admin.role, "staff.create")){
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
     await connectDB();
-
+    await requireSuperAdmin(request);
+    
     const body = await request.json();
     const parsed = createStaffSchema.safeParse(body);
 
