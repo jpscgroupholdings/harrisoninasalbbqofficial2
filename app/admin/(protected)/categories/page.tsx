@@ -13,6 +13,8 @@ import {
   ImagePlus,
 } from "lucide-react";
 import { toast } from "sonner";
+import PermissionGuard from "@/lib/PermissionGuard";
+import { canAccess } from "@/lib/roleBasedAccessCtrl";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Category {
@@ -300,27 +302,28 @@ const CategoryRow = ({
 
     {/* Actions (matches header flex-1) */}
     <div className="flex-2 flex justify-center items-center gap-1">
-      <button
-        onClick={onEdit}
-        disabled={isDeleting}
-        className="p-1.5 text-dark-green-500 hover:text-dark-green-600 hover:bg-dark-green-50 rounded-full transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-        aria-label="Edit"
-      >
-        <Pencil size={14} />
-      </button>
-
-      <button
-        onClick={onDelete}
-        disabled={isDeleting}
-        className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
-        aria-label="Delete"
-      >
-        {isDeleting ? (
-          <Loader2 size={14} className="animate-spin" />
-        ) : (
-          <Trash2 size={14} />
-        )}
-      </button>
+      <PermissionGuard permission="categories.update" fallback={<span className="text-xs text-gray-400">No access</span>}>
+        <button
+          onClick={onEdit}
+          disabled={isDeleting}
+          className="p-1.5 text-dark-green-500 hover:text-dark-green-600 hover:bg-dark-green-50 rounded-full transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          aria-label="Edit"
+        >
+          <Pencil size={14} />
+        </button>
+        <button
+          onClick={onDelete}
+          disabled={isDeleting}
+          className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+          aria-label="Delete"
+        >
+          {isDeleting ? (
+            <Loader2 size={14} className="animate-spin" />
+          ) : (
+            <Trash2 size={14} />
+          )}
+        </button>
+      </PermissionGuard>
     </div>
   </div>
 );
