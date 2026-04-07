@@ -2,7 +2,7 @@
 
 import { animationStyle } from '@/helper/animationStyle';
 import { useIntersectionAnimation, useIntersectionAnimationList } from '@/hooks/utils/useIntersectionAnimation';
-import { getLucideIcon } from '@/lib/iconUtils';
+import { getLucideIcon } from '@/helper/iconUtils';
 import React from 'react'
 
 const HowToFranchise = () => {

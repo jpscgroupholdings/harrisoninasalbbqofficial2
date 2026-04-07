@@ -1,7 +1,7 @@
 // hooks/useSubdomainUrl.ts
 'use client'
 import { useState, useEffect } from 'react'
-import { getSubdomainUrl, getSubdomainPath } from '@/lib/navigation'
+import { getSubdomainUrl, getSubdomainPath } from '@/helper/navigation'
 
 export function useSubdomainUrl(subdomain?: string) {
   const [url, setUrl] = useState('#')

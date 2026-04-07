@@ -9,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getLucideIcon } from "@/lib/iconUtils";
+import { getLucideIcon } from "@/helper/iconUtils";
 import { useBranches } from "@/hooks/api/useBranch";
 import {
   useStaff,

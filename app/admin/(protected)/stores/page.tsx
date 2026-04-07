@@ -12,7 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getLucideIcon } from "@/lib/iconUtils";
+import { getLucideIcon } from "@/helper/iconUtils";
 import { Branch, BranchFormData, BranchFormErrors } from "@/types/branch";
 import { Ban, Loader2, Search } from "lucide-react";
 import { useState } from "react";

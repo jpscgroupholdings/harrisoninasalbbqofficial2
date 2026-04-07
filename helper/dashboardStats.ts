@@ -1,5 +1,5 @@
 import { Order } from "@/models/Orders";
-import { connectDB } from "./mongodb";
+import { connectDB } from "../lib/mongodb";
 import { SalesData, TopProduct } from "@/types/adminType";
 
 export async function getDashboardStats() {

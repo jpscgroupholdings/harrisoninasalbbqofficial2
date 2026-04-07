@@ -1,6 +1,6 @@
 "use client";
 
-import { getLucideIcon } from "@/lib/iconUtils";
+import { getLucideIcon } from "@/helper/iconUtils";
 import React, { useState } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 

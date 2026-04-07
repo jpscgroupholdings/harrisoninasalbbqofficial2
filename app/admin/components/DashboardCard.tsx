@@ -1,4 +1,4 @@
-import { getLucideIcon } from '@/lib/iconUtils';
+import { getLucideIcon } from '@/helper/iconUtils';
 import { DashboardStats } from '@/types/adminType';
 import React from 'react';
 

@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import HeaderLogo from "../BrandLogo";
 import { LINKS } from "@/constant/links";
-import { getLucideIcon } from "@/lib/iconUtils";
+import { getLucideIcon } from "@/helper/iconUtils";
 
 const Footer = ({
   variant = "customer",

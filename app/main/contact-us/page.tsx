@@ -1,7 +1,7 @@
 "use client";
 
 import { LINKS } from "@/constant/links";
-import { getLucideIcon } from "@/lib/iconUtils";
+import { getLucideIcon } from "@/helper/iconUtils";
 import React from "react";
 
 const ContactUsPage = () => {

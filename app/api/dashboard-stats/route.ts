@@ -1,4 +1,4 @@
-import { getDashboardStats } from "@/lib/dashboardStats";
+import { getDashboardStats } from "@/helper/dashboardStats";
 import { NextResponse } from "next/server";
 
 export async function GET() {

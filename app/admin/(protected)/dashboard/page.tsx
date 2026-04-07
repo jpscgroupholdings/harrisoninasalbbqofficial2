@@ -2,7 +2,7 @@ import React from "react";
 import DashboardCards from "@/app/admin/components/DashboardCard";
 import SalesChart from "@/app/admin/components/SalesChart";
 import { mockSalesData, mockTopProducts } from "@/data/mockData";
-import { getDashboardStats } from "@/lib/dashboardStats";
+import { getDashboardStats } from "@/helper/dashboardStats";
 
 export default async function DashboardPage() {
   

@@ -1,5 +1,5 @@
 import { useOrders } from "@/hooks/api/useOrders";
-import { getLucideIcon } from "@/lib/iconUtils";
+import { getLucideIcon } from "@/helper/iconUtils";
 import { LogOut, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
