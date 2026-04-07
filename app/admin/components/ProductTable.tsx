@@ -8,10 +8,11 @@ import {
   TableHeader,
   TableRow,
 } from "../../../components/ui/table";
-import { PencilLine, Search, Trash2 } from "lucide-react";
+import { EyeIcon, PencilLine, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useDeleteProduct } from "@/hooks/api/useProducts";
 import Image from "next/image";
+import PermissionGuard from "@/lib/PermissionGuard";
 
 interface ProductTableProps {
   products: Product[];
@@ -106,7 +107,7 @@ export default function ProductTable({ products, onEdit }: ProductTableProps) {
                   {/* TYPE */}
                   <TableCell className="px-6 py-4 text-center">
                     <span className="text-xs font-medium px-2 py-1 rounded-full bg-slate-100 uppercase">
-                      {product.productType || "No Product Type"} 
+                      {product.productType || "No Product Type"}
                     </span>
                   </TableCell>
 
@@ -138,36 +139,28 @@ export default function ProductTable({ products, onEdit }: ProductTableProps) {
                     </span>
                   </TableCell>
 
-                  {/* STOCK */}
-                  {/* <TableCell className="px-6 py-4">
-                    <span
-                      className={`text-sm font-medium ${
-                        product.stock === 0
-                          ? "text-red-600"
-                          : product.stock < 20
-                            ? "text-amber-600"
-                            : "text-emerald-600"
-                      }`}
-                    >
-                      {product.stock} left
-                    </span>
-                  </TableCell> */}
-
                   {/* ACTIONS */}
                   <TableCell className="px-6 py-4">
                     <div className="flex items-center justify-center gap-2">
-                      <button
-                        onClick={() => onEdit(product)}
-                        className="p-2 text-emerald-600 hover:bg-blue-50 rounded-lg"
-                      >
-                        <PencilLine size={16} />
+                      <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
+                        <EyeIcon size={16} />
                       </button>
-                      <button
-                        onClick={() => handleDeleteItem(product._id)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      <PermissionGuard permission="products.update">
+                        <button
+                          onClick={() => onEdit(product)}
+                          className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg"
+                        >
+                          <PencilLine size={16} />
+                        </button>
+                      </PermissionGuard>
+                      <PermissionGuard permission="products.delete">
+                        <button
+                          onClick={() => handleDeleteItem(product._id)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </PermissionGuard>
                     </div>
                   </TableCell>
                 </TableRow>
