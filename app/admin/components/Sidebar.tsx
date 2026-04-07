@@ -1,5 +1,4 @@
 import { useOrders } from "@/hooks/api/useOrders";
-import { useProducts } from "@/hooks/api/useProducts";
 import { getLucideIcon } from "@/lib/iconUtils";
 import { LogOut, X } from "lucide-react";
 import Link from "next/link";
@@ -10,6 +9,7 @@ import { useLogoutAdmin } from "@/hooks/api/useLogout";
 import LogoutModal from "../../../components/ui/LogoutModal";
 import { useAdminMe } from "@/hooks/api/useAuthMe";
 import { canAccess } from "@/lib/roleBasedAccessCtrl";
+import { useStaffContext } from "@/contexts/StaffContext";
 
 interface SidebarProps {
   isMobileOpen: boolean;
@@ -32,11 +32,9 @@ const navItems = [
 
 const Sidebar = ({ isMobileOpen, onClose }: SidebarProps) => {
 
-  const {data: currentUser, isPending} = useAdminMe();
-
+  const currentUser = useStaffContext()
   const pathname = usePathname();
   const { data: placedOrders = [] } = useOrders();
-  const { data: products = [] } = useProducts();
   const logout = useLogoutAdmin();
 
   const pendingCount = placedOrders.filter(
