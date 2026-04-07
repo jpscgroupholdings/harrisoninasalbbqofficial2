@@ -1,7 +1,6 @@
-import { requireAdmin } from "@/lib/getAuth";
+import { requireSuperAdmin } from "@/lib/getAuth";
 import { connectDB } from "@/lib/mongodb";
 import { Branch } from "@/models/Branch";
-import { STAFF_ROLES } from "@/types/staff";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(
@@ -10,14 +9,7 @@ export async function PATCH(
 ) {
   try {
     await connectDB();
-    const superadmin = await requireAdmin(request);
-
-    if (superadmin.role !== STAFF_ROLES.SUPERADMIN) {
-      return NextResponse.json(
-        { error: "Access denied. Superadmin privileges required." },
-        { status: 403 },
-      );
-    }
+    await requireSuperAdmin(request);
 
     const { id } = await context.params;
 
@@ -61,15 +53,7 @@ export async function PUT(
 ) {
   try {
     await connectDB();
-
-    const superadmin = await requireAdmin(request);
-
-    if (superadmin.role !== STAFF_ROLES.SUPERADMIN) {
-      return NextResponse.json(
-        { error: "Access denied. Superadmin privileges required." },
-        { status: 403 },
-      );
-    }
+    await requireSuperAdmin(request)
 
     const { id } = await context.params;
     const body = await request.json();
@@ -154,15 +138,7 @@ export async function DELETE(
 ) {
   try {
     await connectDB();
-
-    const superadmin = await requireAdmin(request);
-
-    if (superadmin.role !== STAFF_ROLES.SUPERADMIN) {
-      return NextResponse.json(
-        { error: "Access denied. Superadmin privileges required." },
-        { status: 403 },
-      );
-    }
+    await requireSuperAdmin(request)
 
     const { id } = await context.params;
 
