@@ -25,10 +25,11 @@ import {
   STAFF_ROLES,
   ROLE_COLORS,
   ROLE_LABELS,
-} from "@/types/staff"
+} from "@/types/staff";
 import { Ban, Loader2, Search } from "lucide-react";
 import { ChangeEvent, useState } from "react";
 import SectionHeader from "../../components/SectionHeader";
+import { SelectField } from "@/components/ui/SelectField";
 
 const ROLES: { value: StaffRole; label: string }[] = [
   { value: STAFF_ROLES.SUPERADMIN, label: "Super Admin" },
@@ -412,7 +413,7 @@ export default function StaffManagement() {
                 <button
                   type="button"
                   onClick={() => setShowPassword((p) => !p)}
-                  className="absolute right-3 top-[34px] text-gray-400 hover:text-gray-600 text-xs"
+                  className="absolute right-3 top-8.5 text-gray-400 hover:text-gray-600 text-xs"
                 >
                   {showPassword ? "Hide" : "Show"}
                 </button>
@@ -425,62 +426,38 @@ export default function StaffManagement() {
             </p>
             <div className="grid grid-cols-2 gap-3 mb-6">
               {/* Role dropdown */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Role <span className="text-red-500">*</span>
-                </label>
-                <select
-                  name="role"
-                  value={form.role}
-                  onChange={handleChangeForm}
-                  className={`w-full px-3 py-2 rounded-lg border text-sm text-gray-800 bg-white outline-none focus:ring-2 focus:ring-brand-color-400 transition ${
-                    errors.role ? "border-red-400 bg-red-50" : "border-gray-300"
-                  }`}
-                >
-                  <option value="" disabled>
-                    Select a role
-                  </option>
-                  {ROLES.map((r) => (
-                    <option key={r.value} value={r.value}>
-                      {r.label}
-                    </option>
-                  ))}
-                </select>
-                {errors.role && (
-                  <p className="mt-1 text-xs text-red-500">{errors.role}</p>
-                )}
-              </div>
+
+              <SelectField
+                label="Role"
+                name="role"
+                value={form.role}
+                onChange={handleChangeForm}
+                options={[
+                  { value: "", label: "Select Role", disabled: true },
+                  ...ROLES.map((r) => ({ value: r.value, label: r.label })),
+                ]}
+                 errors={errors.role}
+                required
+              />
 
               {/* Branch dropdown */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Branch <span className="text-red-500">*</span>
-                </label>
-                <select
-                  name="branch"
-                  value={form.branch}
-                  onChange={handleChangeForm}
-                  className={`w-full px-3 py-2 rounded-lg border text-sm text-gray-800 bg-white outline-none focus:ring-2 focus:ring-brand-color-400 transition ${
-                    errors.branch
-                      ? "border-red-400 bg-red-50"
-                      : "border-gray-300"
-                  }`}
-                >
-                  <option value="" disabled>
-                    Select a branch
-                  </option>
-                  {branches
+              <SelectField
+                label="Branch"
+                name="branch"
+                options={[
+                  { value: "", label: "Select a branch", disabled: true },
+                  ...branches
                     .filter((b) => b.isActive)
-                    .map((b) => (
-                      <option key={b._id} value={b._id}>
-                        {b.name} ({b.code})
-                      </option>
-                    ))}
-                </select>
-                {errors.branch && (
-                  <p className="mt-1 text-xs text-red-500">{errors.branch}</p>
-                )}
-              </div>
+                    .map((b) => ({
+                      value: b._id,
+                      label: `${b.name} (${b.code})`,
+                    })),
+                ]}
+                value={form.branch}
+                onChange={handleChangeForm}
+                errors={errors.branch}
+                required
+              />
             </div>
 
             {/* Actions */}
