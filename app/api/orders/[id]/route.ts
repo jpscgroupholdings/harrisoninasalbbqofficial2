@@ -14,6 +14,8 @@ import {
   isValidOrderStatus,
   TIMELINE_FIELD_MAP,
 } from "@/types/orderConstants";
+import { requireAdmin } from "@/lib/getAuth";
+import { STAFF_ROLES } from "@/types/staff";
 
 // ============================================
 // GET /api/orders/[id]
@@ -29,6 +31,7 @@ export async function GET(
 ) {
   try {
     await connectDB();
+    const staff = await requireAdmin(request)
 
     const { id } = await context.params;
 
@@ -46,6 +49,17 @@ export async function GET(
       return NextResponse.json(
         { error: "Order not found" },
         { status: 404 }
+      );
+    }
+
+     // Check if staff is authorized for this order's branch
+    if (
+      staff.role !== STAFF_ROLES.SUPERADMIN &&
+      order.branchId?.toString() !== staff.branch?.toString()
+    ) {
+      return NextResponse.json(
+        { error: "Access denied. This order does not belong to your branch." },
+        { status: 403 },
       );
     }
 
