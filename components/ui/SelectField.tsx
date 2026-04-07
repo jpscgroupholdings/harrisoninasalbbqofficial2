@@ -6,17 +6,18 @@ import clsx from "clsx";
 interface SelectOption {
   value: string;
   label: string;
+  disabled?: boolean
 }
 
 interface SelectFieldProps extends SelectHTMLAttributes<HTMLSelectElement> {
   label?: string;
-  error?: string;
+  errors?: string;
   options: SelectOption[];
   leftIcon?: React.ReactNode;
 }
 
 export const SelectField = forwardRef<HTMLSelectElement, SelectFieldProps>(
-  ({ label, error, options, leftIcon, className, ...props }, ref) => {
+  ({ label, errors, options, leftIcon, className, ...props }, ref) => {
     return (
       <div className="w-full space-y-2">
         {label && (
@@ -43,12 +44,12 @@ export const SelectField = forwardRef<HTMLSelectElement, SelectFieldProps>(
               "w-full py-3 border border-gray-300 rounded-lg outline-none transition focus:ring-1 focus:ring-brand-color-500 focus:border-brand-color-500/80 bg-white appearance-none cursor-pointer",
               leftIcon ? "pl-10" : "pl-4",
               "pr-10", // space for chevron
-              error && "border-red-500 focus:ring-red-500",
+              errors && "border-red-500 focus:ring-red-500",
               className
             )}
           >
             {options.map((option) => (
-              <option key={option.value} value={option.value}>
+              <option key={option.value} value={option.value} disabled={option.disabled}>
                 {option.label}
               </option>
             ))}
@@ -72,7 +73,7 @@ export const SelectField = forwardRef<HTMLSelectElement, SelectFieldProps>(
           </div>
         </div>
 
-        {error && <p className="text-sm text-red-500">{error}</p>}
+        {errors && <p className="text-sm text-red-500">{errors}</p>}
       </div>
     );
   }
