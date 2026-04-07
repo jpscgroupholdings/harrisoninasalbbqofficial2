@@ -41,7 +41,7 @@ return (
   <button
     onClick={handleClick}
     disabled={isPending}
-    className={`text-xs rounded-full font-bold text-white py-2 px-4 cursor-pointer ${actionConfig.variant}`}
+    className={`text-xs rounded-full font-bold text-white py-2 px-4 cursor-pointer text-nowrap ${actionConfig.variant}`}
   >
     {isPending ? "Updating..." : actionConfig.label}
 
