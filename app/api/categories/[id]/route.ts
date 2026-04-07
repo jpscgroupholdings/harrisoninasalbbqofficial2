@@ -1,9 +1,9 @@
 import cloudinary from "@/lib/cloudinary";
+import { requireSuperAdmin } from "@/lib/getAuth";
 import { connectDB } from "@/lib/mongodb";
 import { Category } from "@/models/Category";
 import { Product } from "@/models/Product";
 import { NextRequest, NextResponse } from "next/server";
-import { success } from "zod";
 
 export async function PATCH(
   request: NextRequest,
@@ -13,6 +13,7 @@ export async function PATCH(
 
   try {
     await connectDB();
+    await requireSuperAdmin(request)
 
     const { id } = await context.params;
     const body = await request.json();
@@ -87,7 +88,7 @@ export async function PATCH(
     }
 
     return NextResponse.json(
-      { error: "Failed to edit category" },
+      { error: error instanceof Error ? error.message : "Failed to edit category" },
       { status: 500 },
     );
   }
@@ -99,6 +100,7 @@ export async function DELETE(
 ) {
   try {
     await connectDB();
+    await requireSuperAdmin(request);
 
     const { id } = await context.params;
 
@@ -129,7 +131,7 @@ export async function DELETE(
 
   } catch (error) {
     return NextResponse.json(
-      { error: "Failed to delete the category" },
+      { error: error instanceof Error ? error.message : "Failed to delete the category" },
       { status: 500 }
     );
   }

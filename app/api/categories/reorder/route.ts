@@ -1,3 +1,4 @@
+import { requireSuperAdmin } from "@/lib/getAuth";
 import { connectDB } from "@/lib/mongodb";
 import { Category } from "@/models/Category";
 import { NextRequest, NextResponse } from "next/server";
@@ -5,6 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
 export async function PATCH(request: NextRequest) {
   try {
     await connectDB();
+    await requireSuperAdmin(request);
 
     const { categories } = await request.json();
 
@@ -33,7 +35,7 @@ export async function PATCH(request: NextRequest) {
   } catch (error) {
     return NextResponse.json(
       {
-        error: "Failed to reorder the categories",
+        error: error instanceof Error ? error.message : "Failed to reorder categories",
       },
       { status: 500 },
     );

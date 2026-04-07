@@ -1,4 +1,5 @@
 import cloudinary from "@/lib/cloudinary";
+import {requireSuperAdmin } from "@/lib/getAuth";
 import { connectDB } from "@/lib/mongodb";
 import { Category } from "@/models/Category";
 import { NextRequest, NextResponse } from "next/server";
@@ -6,9 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET() {
   try {
     await connectDB();
-    const categories = await Category.find({})
-      .sort({ position: 1 })
-      .lean();
+    const categories = await Category.find({}).sort({ position: 1 }).lean();
 
     return NextResponse.json(categories);
   } catch (error) {
@@ -19,9 +18,10 @@ export async function GET() {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     await connectDB();
+    await requireSuperAdmin(request)
 
     const { name, imageFile } = await request.json();
 
@@ -30,11 +30,11 @@ export async function POST(request: Request) {
     if (!trimmedName) {
       return NextResponse.json(
         { error: "Category name is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    // ✅ Only upload if imageFile was actually provided
+    // Only upload if imageFile was actually provided
     let image = { url: "", public_id: "" };
     if (imageFile) {
       const uploaded = await cloudinary.uploader.upload(imageFile, {
@@ -50,20 +50,23 @@ export async function POST(request: Request) {
     const last = await Category.findOne({}).sort({ position: -1 });
     const position = last ? last.position + 1 : 1;
 
-    const category = await Category.create({ name: trimmedName, position, image });
+    const category = await Category.create({
+      name: trimmedName,
+      position,
+      image,
+    });
 
     return NextResponse.json(category, { status: 201 });
-
   } catch (error: any) {
     if (error.code === 11000) {
       return NextResponse.json(
         { error: "Category name already exists" },
-        { status: 409 }
+        { status: 409 },
       );
     }
     return NextResponse.json(
-      { error: "Failed to create category" },
-      { status: 500 }
+      { error: error instanceof Error ? error.message : "Failed to create category" },
+      { status: 500 },
     );
   }
 }
