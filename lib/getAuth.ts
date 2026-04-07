@@ -1,4 +1,4 @@
-import { StaffRole } from "@/types/staff";
+import { STAFF_ROLES, StaffRole } from "@/types/staff";
 import { jwtVerify } from "jose";
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "./mongodb";
@@ -68,4 +68,13 @@ export async function requireAdmin(request: NextRequest) {
   const staffRecord = await Staff.findById(admin.id).lean();
   if (!staffRecord || !staffRecord.isActive) throw new Error("Unauthorized");
   return staffRecord;
+}
+
+export async function requireSuperAdmin(request: NextRequest) {
+
+  const superadmin = await requireAdmin(request);
+  if (superadmin.role !== STAFF_ROLES.SUPERADMIN) {
+    throw new Error("Access denied. Superadmin privileges required.");
+  }
+  return superadmin;
 }
