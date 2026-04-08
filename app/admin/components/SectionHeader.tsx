@@ -35,12 +35,12 @@ const SectionHeader = ({
   return (
     <div className="flex items-center justify-between">
       <div>
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">
+        <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-800 mb-0 md:mb-2">
           {title}
         </h1>
 
         {subTitle && (
-          <p className="text-gray-500">{subTitle}</p>
+          <p className="text-sm lg:text-lg text-gray-500">{subTitle}</p>
         )}
       </div>
 

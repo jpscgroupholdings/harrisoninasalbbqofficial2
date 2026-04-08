@@ -9,6 +9,7 @@ import { canAccess } from "@/lib/roleBasedAccessCtrl";
 import { useStaffContext } from "@/contexts/StaffContext";
 import { Category } from "@/types/category";
 import { DynamicIcon } from "@/lib/DynamicIcon";
+import SectionHeader from "../../components/SectionHeader";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const toBase64 = (file: File): Promise<string> =>
@@ -61,7 +62,7 @@ const ImageUploadButton = ({
             className="w-full h-full object-cover"
           />
         ) : (
-          <DynamicIcon 
+          <DynamicIcon
             name="ImagePlus"
             size={size === "sm" ? 14 : 18}
             className="text-gray-300 group-hover:text-brand-color-500 transition-colors"
@@ -126,7 +127,11 @@ const EditRow = ({
 
   return (
     <div className="flex items-center gap-3 px-4 py-3 bg-brand-color-50 border border-brand-color-200">
-      <DynamicIcon name="GripVertical" className="text-gray-300 shrink-0" size={18} />
+      <DynamicIcon
+        name="GripVertical"
+        className="text-gray-300 shrink-0"
+        size={18}
+      />
       <span className="text-xs font-mono text-gray-500 w-6">
         {category.position}
       </span>
@@ -388,14 +393,10 @@ const Page = () => {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">
-          Product Categories
-        </h1>
-        <p className="text-gray-500">
-          Drag rows to reorder. Changes save automatically.
-        </p>
-      </div>
+      <SectionHeader
+        title="Product Categories"
+        subTitle="Drag rows to reorder. Changes save automatically."
+      />
 
       {/* Card */}
       <div className="flex items-center justify-center w-full">
@@ -444,10 +445,14 @@ const Page = () => {
               </p>
             </div>
           )}
-                    {/* Add new row */}
+          {/* Add new row */}
           {isAdding && (
             <div className="flex items-center gap-3 px-4 py-3 bg-brand-color-50 border-t border-brand-color-200">
-              <DynamicIcon name="GripVertical" className="text-gray-200 shrink-0" size={18} />
+              <DynamicIcon
+                name="GripVertical"
+                className="text-gray-200 shrink-0"
+                size={18}
+              />
               <span className="text-xs font-mono text-gray-300 w-6">
                 {categories.length + 1}
               </span>
@@ -477,7 +482,11 @@ const Page = () => {
                 className="p-1.5 bg-brand-color-500 text-white hover:bg-brand-color-600 disabled:opacity-50 transition-colors"
               >
                 {createMutation.isPending ? (
-                  <DynamicIcon name="Loader2" size={14} className="animate-spin" />
+                  <DynamicIcon
+                    name="Loader2"
+                    size={14}
+                    className="animate-spin"
+                  />
                 ) : (
                   <DynamicIcon name="Check" size={14} />
                 )}
