@@ -1,7 +1,6 @@
-import { requireAdmin } from "@/lib/getAuth";
+import { requireSuperAdmin } from "@/lib/getAuth";
 import { connectDB } from "@/lib/mongodb";
 import { Branch } from "@/models/Branch";
-import { STAFF_ROLES } from "@/types/staff";
 import { NextRequest, NextResponse } from "next/server";
 import z from "zod";
 
@@ -9,15 +8,7 @@ export async function GET(request: NextRequest) {
   try {
     await connectDB();
 
-    const staff = await requireAdmin(request);
-
-    // If superadmin can see all branch, else own branch only
-    const filter =
-      staff.role === STAFF_ROLES.SUPERADMIN
-        ? { isActive: true }
-        : { isActive: true, _id: staff.branch };
-
-    const data = await Branch.find(filter).sort({ createdAt: -1 }).lean();
+    const data = await Branch.find({isActive: true}).sort({ createdAt: -1 }).lean();
 
     return NextResponse.json(data, { status: 200 });
   } catch (error) {
@@ -47,14 +38,7 @@ const branchSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     await connectDB();
-
-    const superadmin = await requireAdmin(request);
-    if (superadmin.role !== STAFF_ROLES.SUPERADMIN) {
-      return NextResponse.json(
-        { error: "Access denied. Superadmin privileges required." },
-        { status: 403 },
-      );
-    }
+    await requireSuperAdmin(request)
 
     const body = await request.json();
     const parsed = branchSchema.safeParse(body);
