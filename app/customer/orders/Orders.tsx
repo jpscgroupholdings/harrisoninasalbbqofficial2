@@ -171,7 +171,7 @@ const Orders = () => {
               );
             })}
             <button
-              onClick={() => router.push("/menu")}
+              onClick={() => router.push("/")}
               className="px-6 py-2.5 rounded-full text-sm font-semibold transition-all whitespace-nowrap cursor-pointer bg-brand-color-500 text-white hover:bg-[#c13500]"
             >
               Add new order!
