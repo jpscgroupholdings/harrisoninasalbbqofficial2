@@ -5,12 +5,11 @@ import { useCreateProduct, useUpdateProduct } from "@/hooks/api/useProducts";
 import { toast } from "sonner";
 import { TextareaField } from "@/components/ui/TextAreaField";
 import { Category } from "@/types/category";
-import { IncludedItemUI, Product } from "@/types/products";
+import { IncludedItemUI, ITEM_TYPES, ProductType, Product } from "@/types/products";
 import { DynamicIcon } from "@/lib/DynamicIcon";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type ProductType = "solo" | "combo" | "set";
 type ImageTab = "upload" | "url" | "gallery";
 
 interface CloudinaryImage {
@@ -66,13 +65,13 @@ const PRODUCT_TYPE_OPTIONS: {
   icon: React.ReactNode;
 }[] = [
   {
-    value: "solo",
+    value: ITEM_TYPES.SOLO,
     label: "Solo",
     description: "Single ala-carte item",
     icon: <DynamicIcon name="Utensils" size={16} />,
   },
   {
-    value: "combo",
+    value: ITEM_TYPES.COMBO,
     label: "Combo",
     description: "Bundled meal with drink",
     icon: <DynamicIcon name="Package" size={16} />,
@@ -115,7 +114,7 @@ const ProductsModal = ({
     description: "",
     isSignature: false,
     isPopular: false,
-    productType: "solo",
+    productType: ITEM_TYPES.SOLO,
     paxCount: "",
     includedItems: [],
   });
@@ -160,7 +159,7 @@ const ProductsModal = ({
 
   const isLoading = createMutation.isPending || updateMutation.isPending;
   const isSuccess = createMutation.isSuccess || updateMutation.isSuccess;
-  const isComboOrSet = formData.productType !== "solo";
+  const isComboOrSet = formData.productType !== ITEM_TYPES.SOLO;
 
   // Active preview URL — whichever source is active
   const previewUrl = imageFile
@@ -182,7 +181,7 @@ const ProductsModal = ({
         description: editProduct.description || "",
         isSignature: editProduct.isSignature || false,
         isPopular: editProduct.isPopular || false,
-        productType: editProduct.productType || "solo",
+        productType: editProduct.productType || ITEM_TYPES.SOLO,
         paxCount: editProduct.paxCount?.toString() || "",
         includedItems:
           editProduct.includedItems?.map((item) => ({
@@ -348,8 +347,8 @@ const ProductsModal = ({
     setFormData((prev) => ({
       ...prev,
       productType: type,
-      includedItems: type === "solo" ? [] : prev.includedItems,
-      paxCount: type !== "set" ? "" : prev.paxCount,
+      includedItems: type === ITEM_TYPES.SOLO ? [] : prev.includedItems,
+      paxCount: type !== ITEM_TYPES.SET ? "" : prev.paxCount,
     }));
   };
 

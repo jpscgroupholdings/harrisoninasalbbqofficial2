@@ -7,6 +7,7 @@ import { ShoppingBag, AlertTriangle } from "lucide-react";
 import Image from "next/image";
 import ProductDetailModal from "./ProductDetailsModal";
 import { MODAL_TYPES, useModalQuery } from "@/hooks/utils/useModalQuery";
+import { ITEM_TYPES } from "@/types/products";
 
 interface ProductCardProps {
   item: BranchProduct;
@@ -50,9 +51,9 @@ const ProductCard: React.FC<ProductCardProps> = ({
     hasBranch &&
     (status === STOCK_STATUSES.OUT_OF_STOCK || (quantity ?? 1) <= 0);
   const isLowStock = hasBranch && status === STOCK_STATUSES.LOW_STOCK;
-  const isCombo = item.productType === "combo";
-  const isSet = item.productType === "set";
-  const isNonSolo = item.productType !== "solo";
+  const isCombo = item.productType === ITEM_TYPES.COMBO;
+  const isSet = item.productType === ITEM_TYPES.SET;
+  const isNonSolo = item.productType !== ITEM_TYPES.SOLO && item.productType != null;
   const includedItemsText = getIncludedItemsText(item.includedItems);
   const hasIncludedItems = isNonSolo && includedItemsText.length > 0;
 
