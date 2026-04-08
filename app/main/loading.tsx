@@ -1,9 +1,11 @@
-import MenuSectionSkeleton from '@/components/ui/MenuSectionSkeleton'
+import LoadingPage from '@/components/ui/LoadingPage'
 import React from 'react'
 
 const loading = () => {
   return (
-    <MenuSectionSkeleton />
+    <div className='relative h-screen'>
+      <LoadingPage />
+    </div>
   )
 }
 

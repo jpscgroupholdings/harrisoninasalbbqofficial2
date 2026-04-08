@@ -1,13 +1,13 @@
 import Header from "./components//Header";
 import Footer from "@/components/ui/Footer";
-import MenuSectionSkeleton from "@/components/ui/MenuSectionSkeleton";
 import React, { Suspense } from "react";
 import NewHeader from "./components/newdesign/NewHeader";
+import HeaderSkeleton from "../customer/components/HeaderSkeleton";
 
 export default function layout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <Suspense fallback={<MenuSectionSkeleton />}>
+      <Suspense fallback={<HeaderSkeleton />}>
         {/* <Header /> */}
         <NewHeader />
       </Suspense>
