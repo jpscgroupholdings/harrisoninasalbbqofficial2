@@ -49,7 +49,7 @@ const Header = () => {
 
   return (
     <header
-      className={`sticky top-0 z-40 bg-white transition-all duration-300 ${
+      className={`sticky top-0 z-40 pt-2 bg-white transition-all duration-300 ${
         isScrolled ? "shadow-xl" : ""
       }`}
     >
@@ -60,7 +60,7 @@ const Header = () => {
 
           <button
             onClick={() => handleOpenModal(MODAL_TYPES.MAP)}
-            className="flex items-center justify-center gap-2 bg-white hover:bg-brand-color-50 hover:text-brand-color-600 text-brand-color-500 px-4 py-2 text-sm font-bold rounded-full transition-colors cursor-pointer max-w-35 sm:max-w-none"
+            className="flex items-center justify-center gap-2 bg-brand-color-100 hover:bg-brand-color-50 hover:text-brand-color-600 text-brand-color-500 px-4 py-2 text-sm font-bold rounded-full transition-colors cursor-pointer max-w-35 sm:max-w-none"
           >
             <DynamicIcon name="MapPin" size={16} className="shrink-0" />
             <span className="truncate">
