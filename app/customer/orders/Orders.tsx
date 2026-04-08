@@ -2,23 +2,12 @@
 
 import { useCart } from "@/contexts/CartContext";
 import { StatusBadge } from "./StatusBadge";
-import {
-  ChevronDown,
-  ChevronUp,
-  Clock,
-  ExternalLink,
-  Eye,
-  MapPin,
-  Package,
-  ShoppingCart,
-  Star,
-  X,
-} from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import React, { useMemo, useState } from "react";
 import { useOrders, useUpdateOrder } from "@/hooks/api/useOrders";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/apiClient";
+import { DynamicIcon } from "@/lib/DynamicIcon";
 
 const TABS = [
   { key: "all", label: "All" },
@@ -128,14 +117,16 @@ const Orders = () => {
   };
 
   const handlePayOrder = async (id: string) => {
-    console.log(id)
+    console.log(id);
     try {
       const response = await apiClient.post<{ redirectUrl: string }>(
         `/paymaya/checkout/${id}`,
       );
-     localStorage.setItem("redirecturl", response.redirectUrl)
+
       window.location.href = response.redirectUrl;
+      
     } catch (error: any) {
+      console.error("Payment error:", error);
       toast.error("Payment Failed", {
         description: error.message,
       });
@@ -192,7 +183,7 @@ const Orders = () => {
         {filteredOrders?.length === 0 ? (
           <div className="text-center py-20">
             <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Package size={40} className="text-gray-400" />
+              <DynamicIcon name="Package" size={40} className="text-gray-400" />
             </div>
             <p className="text-gray-500 text-lg font-medium">
               No {activeTab !== "all" ? activeTab : ""} orders found.
@@ -230,7 +221,7 @@ const Orders = () => {
                         </p>
                         <div className="flex text-sm text-gray-600 items-center gap-4 py-2">
                           <p className="flex items-center gap-1">
-                            <Clock size={16} />
+                            <DynamicIcon name="Clock" size={16} />
                             {new Date(order.createdAt).toLocaleDateString(
                               "en-US",
                               {
@@ -244,7 +235,7 @@ const Orders = () => {
                           </p>
 
                           <p className="flex items-center gap-1">
-                            <MapPin size={16} />
+                            <DynamicIcon name="MapPin" size={16} />
                             Pickup
                           </p>
                         </div>
@@ -271,7 +262,11 @@ const Orders = () => {
                               />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center">
-                                <Package size={24} className="text-gray-400" />
+                                <DynamicIcon
+                                  name="Package"
+                                  size={24}
+                                  className="text-gray-400"
+                                />
                               </div>
                             )}
                           </div>
@@ -301,12 +296,13 @@ const Orders = () => {
                       >
                         {isExpanded ? (
                           <>
-                            <ChevronUp size={18} />
+                            <DynamicIcon name="ChevronUp" size={18} />
                             Show Less
                           </>
                         ) : (
                           <>
-                            <ChevronDown size={18} />+{hiddenItemsCount} More{" "}
+                            <DynamicIcon name="ChevronDown" size={18} />+
+                            {hiddenItemsCount} More{" "}
                             {hiddenItemsCount === 1 ? "Item" : "Items"}
                           </>
                         )}
@@ -349,13 +345,14 @@ const Orders = () => {
                             onClick={() => handlePayOrder(order._id)}
                             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500 border text-white text-sm font-semibold transition-all"
                           >
-                            <ExternalLink size={16} /> Pay Order!
+                            <DynamicIcon name="ExternalLink" size={16} /> Pay
+                            Order!
                           </button>
                           <button
                             onClick={() => handleCancelOrder(order._id)}
                             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-red-300 hover:bg-red-50 text-red-600 text-sm font-semibold transition-all"
                           >
-                            <X size={16} /> Cancel Order
+                            <DynamicIcon name="X" size={16} /> Cancel Order
                           </button>
                         </>
                       )}
@@ -364,7 +361,7 @@ const Orders = () => {
                         onClick={() => handleViewDetails(order._id)}
                         className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-gray-300 hover:border-gray-400 text-gray-700 text-sm font-semibold transition-all"
                       >
-                        <Eye size={16} /> View Details
+                        <DynamicIcon name="Eye" size={16} /> View Details
                       </button>
 
                       {/** Track Order - For paid and preparing order */}
@@ -374,7 +371,7 @@ const Orders = () => {
                           onClick={() => router.push("/support")}
                           className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-blue-300 hover:bg-blue-50 text-blue-600 text-sm font-semibold transition-all"
                         >
-                          <Package size={16} /> Track Order
+                          <DynamicIcon name="Package" size={16} /> Track Order
                         </button>
                       )}
 
@@ -386,17 +383,19 @@ const Orders = () => {
                           }
                           className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-color-500 hover:bg-[#c53600] text-white text-sm font-semibold transition-all shadow-md"
                         >
-                          <Star size={16} /> Leave Review
+                          <DynamicIcon name="Star" size={16} /> Leave Review
                         </button>
                       )}
 
                       {(order.status === "completed" ||
-                        order.status === "cancelled" || order.status === "failed") && (
+                        order.status === "cancelled" ||
+                        order.status === "failed") && (
                         <button
                           onClick={() => handleBuyAgain(order.items)}
                           className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-brand-color-500 hover:bg-orange-50 text-brand-color-500 text-sm font-semibold transition-all"
                         >
-                          <ShoppingCart size={16} /> Buy Again
+                          <DynamicIcon name="ShoppingCart" size={16} /> Buy
+                          Again
                         </button>
                       )}
                     </div>
