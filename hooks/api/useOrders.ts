@@ -6,7 +6,13 @@
  */
 
 import { apiClient } from "@/lib/apiClient";
-import { isValidOrderStatus, ORDER_ACTION_CONFIG, OrderStatus, STATUS_PRIORITY, STATUS_TRANSITIONS } from "@/types/orderConstants";
+import {
+  isValidOrderStatus,
+  ORDER_ACTION_CONFIG,
+  OrderStatus,
+  STATUS_PRIORITY,
+  STATUS_TRANSITIONS,
+} from "@/types/orderConstants";
 import {
   CreateOrderPayload,
   CreateOrderResponse,
@@ -18,12 +24,18 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-export const useOrders = () => {
+
+const ORDER_ENDPOINTS = {
+  admin: "/admin/orders",
+  customer: "/orders/my",
+} as const;
+
+export const useOrders = ({ type }: { type: keyof typeof ORDER_ENDPOINTS }) => {
   return useQuery<OrdersApiResponse, Error, OrderType[]>({
-    queryKey: ["orders"],
-    queryFn: () => apiClient.get("/orders"),
+    queryKey: ["orders", type],
+    queryFn: () => apiClient.get(ORDER_ENDPOINTS[type]),
     staleTime: 30000,
-    select: (response) =>
+     select: (response) =>
       [...response.data].sort((a, b) => {
         const priorityDiff =
           STATUS_PRIORITY[a.status as OrderStatus] -
@@ -31,7 +43,9 @@ export const useOrders = () => {
 
         if (priorityDiff !== 0) return priorityDiff;
 
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        return (
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
       }),
   });
 };
@@ -43,7 +57,7 @@ export const useOrders = () => {
 export const useOrder = (id: string) => {
   return useQuery<OrderType>({
     queryKey: ["orders", id],
-    queryFn: () => apiClient.get(`/orders/${id}`),
+    queryFn: () => apiClient.get(`/admin/orders/${id}`),
     staleTime: 30000,
 
     // Validate status on fetch
@@ -56,22 +70,6 @@ export const useOrder = (id: string) => {
   });
 };
 
-/**
- * Fetch orders for a specific customer
- */
-export const useCustomerOrders = (email: string) => {
-  return useQuery<OrderType[]>({
-    queryKey: ["orders", "customer", email],
-    queryFn: () => apiClient.get(`/orders/customer/${email}`),
-    staleTime: 30000,
-
-    select: (data) =>
-      [...data].sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-      ),
-  });
-};
 
 // ============================================
 // MUTATIONS (CREATE/UPDATE/DELETE data)
@@ -154,11 +152,11 @@ export const useUpdateOrder = () => {
     },
   });
 };
- 
+
 // ============================================
 // HELPER HOOKS
 // ============================================
- 
+
 /**
  * Get the action config for a specific order status
  * Returns button label and styling, or null if no action
@@ -169,7 +167,7 @@ export const useOrderActionConfig = (status: string) => {
   }
   return ORDER_ACTION_CONFIG[status];
 };
- 
+
 /**
  * Check if an order can transition to a new status
  */
@@ -179,13 +177,13 @@ export const useCanTransition = (currentStatus: string) => {
   }
   return STATUS_TRANSITIONS[currentStatus];
 };
- 
+
 /**
  * Get priority score for sorting
  */
 export const useStatusPriority = (status: string) => {
   if (!isValidOrderStatus(status)) {
-    return Infinity;  // Low priority for invalid statuses
+    return Infinity; // Low priority for invalid statuses
   }
   return STATUS_PRIORITY[status];
 };
