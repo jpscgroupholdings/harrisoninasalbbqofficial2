@@ -32,7 +32,6 @@ export async function GET(request: NextRequest) {
       page: parseInt(searchParams.get("page") || "1"),
       limit: parseInt(searchParams.get("limit") || "20"),
       sortBy: (searchParams.get("sortBy") as "priority" | "date") || "priority",
-      fields: "admin",
     });
 
     return NextResponse.json(result);
