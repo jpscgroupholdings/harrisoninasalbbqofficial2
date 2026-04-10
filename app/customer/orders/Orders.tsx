@@ -8,6 +8,9 @@ import { useOrders, useUpdateOrder } from "@/hooks/api/useOrders";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/apiClient";
 import { DynamicIcon } from "@/lib/DynamicIcon";
+import { useCustomerMe } from "@/hooks/api/useAuthMe";
+import { GuestOrderLookup } from "./GuestPage/page";
+import LoadingPage from "@/components/ui/LoadingPage";
 
 const TABS = [
   { key: "all", label: "All" },
@@ -19,7 +22,10 @@ const TABS = [
 ];
 
 const Orders = () => {
-  const { data: placedOrders = [] } = useOrders({type: "customer"});
+  const { data: currentUser, isPending, fetchStatus } = useCustomerMe();
+  const { data: placedOrders = [], isPending: isOrdersPending } = useOrders({
+    type: "customer",
+  });
   const updateOrder = useUpdateOrder();
 
   const { addToCart, setIsCartOpen } = useCart();
@@ -124,7 +130,6 @@ const Orders = () => {
       );
 
       window.location.href = response.redirectUrl;
-      
     } catch (error: any) {
       console.error("Payment error:", error);
       toast.error("Payment Failed", {
@@ -132,6 +137,20 @@ const Orders = () => {
       });
     }
   };
+
+  // Early returns AFTER all hooks
+  if ((isPending || isOrdersPending) && fetchStatus !== "idle") {
+    return (
+      <div className="relative h-screen">
+        <LoadingPage />
+      </div>
+    );
+  }
+
+  // Not logged in — show guest lookup
+  if (!currentUser) {
+    return <GuestOrderLookup />;
+  }
 
   return (
     <div className="min-h-screen bg-linear-to-b from-gray-50 to-gray-100">
