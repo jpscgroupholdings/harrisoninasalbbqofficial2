@@ -80,6 +80,11 @@ const OrderSchema = new Schema(
       required: true,
       index: true,
     },
+    customerId: {
+      type: Schema.Types.ObjectId,
+      ref: "Customer",
+      index: true
+    },
     branchSnapshot: {
       name: String, // captured at order time
       code: String, // e.g. OR-001
