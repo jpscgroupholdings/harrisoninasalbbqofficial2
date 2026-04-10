@@ -3,6 +3,7 @@ import { jwtVerify } from "jose";
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "./mongodb";
 import Staff from "@/models/Staff";
+import { Customer } from "@/models/Customer";
 
 if (!process.env.JWT_SECRET) {
   throw new Error("JWT_SECRET is not defined in env variables!");
@@ -50,16 +51,6 @@ export async function getAdminAuth(request: NextRequest) {
   };
 }
 
-export async function getCustomerAuth(request: NextRequest) {
-  const payload = await getAuth(request, COOKIE_NAMES.CUSTOMER_TOKEN);
-  if (!payload) return null;
-
-  return {
-    id: payload.id as string,
-    isActive: payload.isActive as boolean,
-  };
-}
-
 export async function requireAdmin(request: NextRequest) {
   const admin = await getAdminAuth(request);
   if (!admin) throw new Error("Unauthorized!");
@@ -77,4 +68,25 @@ export async function requireSuperAdmin(request: NextRequest) {
     throw new Error("Access denied. Superadmin privileges required.");
   }
   return superadmin;
+}
+
+
+export async function getCustomerAuth(request: NextRequest) {
+  const payload = await getAuth(request, COOKIE_NAMES.CUSTOMER_TOKEN);
+  if (!payload) return null;
+
+  return {
+    id: payload.id as string,
+    isActive: payload.isActive as boolean,
+  };
+}
+
+export async function requireCustomerAuth(request: NextRequest) {
+  const customer = await getCustomerAuth(request);
+  if (!customer) throw new Error("Unauthorized!");
+
+  await connectDB();
+  const customerRecord = await Customer.findById(customer.id).lean();
+  if (!customerRecord || !customerRecord.isActive) throw new Error("Unauthorized");
+  return customerRecord;
 }
