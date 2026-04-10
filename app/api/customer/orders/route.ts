@@ -17,7 +17,6 @@ export async function GET(request: NextRequest) {
       page: parseInt(searchParams.get("page") || "1"),
       limit: parseInt(searchParams.get("limit") || "20"),
       sortBy: "date",
-      fields: "customer",
     });
 
     return NextResponse.json(result);
