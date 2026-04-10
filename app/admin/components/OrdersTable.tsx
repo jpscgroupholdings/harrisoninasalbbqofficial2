@@ -259,7 +259,7 @@ export default function OrdersTable({ orders }: { orders: OrderType[] }) {
                     <div className="flex justify-between">
                       <span className="text-gray-400">Method</span>
                       <span className="capitalize font-medium">
-                        {orderToView.paymentInfo?.method ?? "—"}
+                        {orderToView.paymentInfo?.method.type ?? "—"}
                       </span>
                     </div>
                     <div className="flex justify-between">
