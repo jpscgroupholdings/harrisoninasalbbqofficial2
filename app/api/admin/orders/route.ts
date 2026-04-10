@@ -6,13 +6,7 @@
  */
 
 import { connectDB } from "@/lib/mongodb";
-import { Order } from "@/models/Orders";
 import { NextRequest, NextResponse } from "next/server";
-import {
-  STATUS_PRIORITY,
-  ORDER_ACTION_CONFIG,
-  OrderStatus,
-} from "@/types/orderConstants";
 import { requireAdmin } from "@/lib/getAuth";
 import { STAFF_ROLES } from "@/types/staff";
 import { queryOrders } from "@/lib/orders/orderService";

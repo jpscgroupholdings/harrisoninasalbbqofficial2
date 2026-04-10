@@ -1,6 +1,5 @@
 import { requireAdmin, requireSuperAdmin } from "@/lib/getAuth";
 import { connectDB } from "@/lib/mongodb";
-import { canAccess } from "@/lib/roleBasedAccessCtrl";
 import Staff from "@/models/Staff";
 import { STAFF_ROLES } from "@/types/staff";
 import bcrypt from "bcryptjs";
