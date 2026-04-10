@@ -27,6 +27,7 @@ export const useCustomerLogin = () => {
         mutationFn: (data: Omit<CustomerCreateInput, "phone" | "fullname">) => apiClient.post("/auth/customer/login", data),
         onSuccess: () => {
             queryClient.invalidateQueries({queryKey: ["customers"]});
+             queryClient.invalidateQueries({queryKey: ["orders"]});
             toast.success("Login Successfully!")
         },
         onError: (error: any) =>{
