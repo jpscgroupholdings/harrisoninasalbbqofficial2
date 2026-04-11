@@ -17,11 +17,15 @@ import { MODAL_TYPES, useModalQuery } from "@/hooks/utils/useModalQuery";
 import { DynamicIcon } from "@/lib/DynamicIcon";
 
 const Header = () => {
-  const { data: currentUser, isPending, fetchStatus  } = useCustomerMe();
+  const { data: currentUser, isPending, fetchStatus } = useCustomerMe();
   const userLogout = useLogoutCustomer();
   const { selectedBranch } = useBranch();
 
-  const {modal: modalType, openModal: handleOpenModal, closeModal: handleCloseModal } = useModalQuery();
+  const {
+    modal: modalType,
+    openModal: handleOpenModal,
+    closeModal: handleCloseModal,
+  } = useModalQuery();
 
   const [mounted, setMounted] = useState(false);
 
@@ -30,12 +34,12 @@ const Header = () => {
   }, []);
 
   const { totalItems, setIsCartOpen } = useCart();
-  const { data: placedOrders } = useOrders({type: "customer"});
+  const { data: placedOrders = [] } = useOrders({ type: "customer" });
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const activeOrdersCount =
-    placedOrders?.filter(
+    placedOrders.filter(
       (order) =>
         order.status !== "cancelled" &&
         (order.status !== "completed" || !order.isReviewed),
@@ -85,40 +89,41 @@ const Header = () => {
 
           {/* Right Actions */}
           <div className="flex items-center gap-2 sm:gap-4">
-            <Link
-              href="/orders"
-              className="relative p-2 sm:p-3 bg-gray-100 hover:bg-gray-200 rounded-full transition-all duration-300 group cursor-pointer"
-            >
-              <DynamicIcon
-                name="BaggageClaim"
-                size={20}
-                className="group-hover:scale-110 transition-transform darkText"
-              />
-              {activeOrdersCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-brand-color-500 text-white text-xs font-bold rounded-full flex items-center justify-center animate-bounce">
-                  {activeOrdersCount}
-                </span>
-              )}
-            </Link>
-
-            <button
-              onClick={() => setIsCartOpen(true)}
-              className="relative p-2 sm:p-3 bg-gray-100 hover:bg-gray-200 rounded-full transition-all duration-300 group cursor-pointer"
-            >
-              <DynamicIcon
-                name="ShoppingBag"
-                size={20}
-                className="group-hover:scale-110 transition-transform darkText"
-              />
-              {mounted && totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-brand-color-500 text-white text-xs font-bold rounded-full flex items-center justify-center animate-bounce">
-                  {totalItems}
-                </span>
-              )}
-            </button>
+            <div className="hidden md:flex items-center gap-2 sm:gap-4">
+              <Link
+                href="/orders"
+                className="relative p-2 sm:p-3 bg-gray-100 hover:bg-gray-200 rounded-full transition-all duration-300 group cursor-pointer"
+              >
+                <DynamicIcon
+                  name="BaggageClaim"
+                  size={20}
+                  className="group-hover:scale-110 transition-transform darkText"
+                />
+                {activeOrdersCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-brand-color-500 text-white text-xs font-bold rounded-full flex items-center justify-center animate-bounce">
+                    {activeOrdersCount}
+                  </span>
+                )}
+              </Link>
+              <button
+                onClick={() => setIsCartOpen(true)}
+                className="relative p-2 sm:p-3 bg-gray-100 hover:bg-gray-200 rounded-full transition-all duration-300 group cursor-pointer"
+              >
+                <DynamicIcon
+                  name="ShoppingBag"
+                  size={20}
+                  className="group-hover:scale-110 transition-transform darkText"
+                />
+                {mounted && totalItems > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-brand-color-500 text-white text-xs font-bold rounded-full flex items-center justify-center animate-bounce">
+                    {totalItems}
+                  </span>
+                )}
+              </button>
+            </div>
 
             {/* Desktop Auth */}
-            <div className="hidden lg:flex items-center gap-2">
+            <div className="hidden xl:flex items-center gap-2">
               {isPending && fetchStatus !== "idle" ? (
                 <div className="flex items-center gap-3 animate-pulse">
                   {/* avatar skeleton */}
@@ -149,7 +154,11 @@ const Header = () => {
                     className="flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-red-500 px-3 py-2 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
                   >
                     {userLogout.isPending ? (
-                      <DynamicIcon name="Loader2" size={15} className="animate-spin" />
+                      <DynamicIcon
+                        name="Loader2"
+                        size={15}
+                        className="animate-spin"
+                      />
                     ) : (
                       <DynamicIcon name="LogOut" size={15} />
                     )}
@@ -169,7 +178,11 @@ const Header = () => {
                     onClick={() => handleOpenModal(MODAL_TYPES.SIGNUP)}
                     className={`${syne.className} flex bg-brand-color-500 text-white items-center justify-center text-sm hover:bg-brand-color-600 font-bold py-2 px-4 rounded-full`}
                   >
-                    <DynamicIcon name="User" className="inline-block mr-2" size={18} />
+                    <DynamicIcon
+                      name="User"
+                      className="inline-block mr-2"
+                      size={18}
+                    />
                     Sign Up
                   </button>
                 </>
@@ -179,10 +192,14 @@ const Header = () => {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden p-2 darkText hover:bg-white/10 rounded-lg transition-colors"
+              className="xl:hidden p-2 darkText hover:bg-white/10 rounded-lg transition-colors"
               aria-label={isMobileMenuOpen ? "Close menu" : "Menu button"}
             >
-              {isMobileMenuOpen ? <DynamicIcon name="X" size={24} /> : <DynamicIcon name="Menu" size={24} />}
+              {isMobileMenuOpen ? (
+                <DynamicIcon name="X" size={24} />
+              ) : (
+                <DynamicIcon name="Menu" size={24} />
+              )}
             </button>
           </div>
         </div>
@@ -190,24 +207,30 @@ const Header = () => {
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden bg-[#1a1a1a] border-t border-white/10">
+        <div className="xl:hidden bg-[#1a1a1a] border-t border-white/10">
           <div className="max-w-7xl mx-auto px-4 py-4 space-y-2">
             <div className="gap-4 flex flex-col lg:hidden">
               <Link
-                href={"/menu"}
-                className="text-white hover:text-brand-color-500"
+                href={"/orders"}
+                className="text-white md:hidden hover:bg-brand-color-500 p-2 rounded transition-colors "
               >
-                Menu
+                Orders
               </Link>
-              <Link
-                href={"/events"}
-                className="text-white hover:text-brand-color-500"
+              <button
+                onClick={() => {setIsCartOpen(true)}}
+                className="text-left text-white md:hidden hover:bg-brand-color-500 p-2 rounded transition-colors"
               >
-                Events
+                Cart
+              </button>
+              <Link
+                href={"/catering"}
+                className="text-white hover:bg-brand-color-500 p-2 rounded transition-colors"
+              >
+                Catering
               </Link>
               <Link
                 href={"/contact"}
-                className="text-white hover:text-brand-color-500"
+                className="text-white hover:bg-brand-color-500 p-2 rounded transition-colors"
               >
                 Contact Us
               </Link>
@@ -238,7 +261,11 @@ const Header = () => {
                   className="flex items-center justify-center gap-2 text-white bg-red-500/80 hover:bg-red-600 px-4 py-3 rounded-lg transition-colors disabled:opacity-50"
                 >
                   {userLogout.isPending ? (
-                    <DynamicIcon name="Loader2" size={16} className="animate-spin" />
+                    <DynamicIcon
+                      name="Loader2"
+                      size={16}
+                      className="animate-spin"
+                    />
                   ) : (
                     <DynamicIcon name="LogOut" size={16} />
                   )}
@@ -275,9 +302,13 @@ const Header = () => {
       )}
 
       <AuthModal
-        isOpen={modalType === MODAL_TYPES.LOGIN || modalType === MODAL_TYPES.SIGNUP}
+        isOpen={
+          modalType === MODAL_TYPES.LOGIN || modalType === MODAL_TYPES.SIGNUP
+        }
         onClose={handleCloseModal}
-        initialMode={(modalType as typeof MODAL_TYPES.LOGIN || typeof MODAL_TYPES.SIGNUP)}
+        initialMode={
+          (modalType as typeof MODAL_TYPES.LOGIN) || typeof MODAL_TYPES.SIGNUP
+        }
       />
 
       {modalType === MODAL_TYPES.LOGOUT && (
@@ -289,7 +320,12 @@ const Header = () => {
       )}
 
       {modalType === MODAL_TYPES.MAP && (
-        <Modal onClose={handleCloseModal} title="Select Harrison's Branch" subTitle="Explore the map to find the nearest branch" className={`${syne.className}`}>
+        <Modal
+          onClose={handleCloseModal}
+          title="Select Harrison's Branch"
+          subTitle="Explore the map to find the nearest branch"
+          className={`${syne.className}`}
+        >
           <MapPage />
         </Modal>
       )}
