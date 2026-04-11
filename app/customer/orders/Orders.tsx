@@ -1,16 +1,14 @@
 "use client";
 
-import { useCart } from "@/contexts/CartContext";
 import { StatusBadge } from "./StatusBadge";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import React, { useMemo, useState } from "react";
-import { useOrders, useUpdateOrder } from "@/hooks/api/useOrders";
-import { toast } from "sonner";
-import { apiClient } from "@/lib/apiClient";
+import { useOrders } from "@/hooks/api/useOrders";
 import { DynamicIcon } from "@/lib/DynamicIcon";
 import { useCustomerMe } from "@/hooks/api/useAuthMe";
 import { GuestOrderLookup } from "./GuestPage";
 import LoadingPage from "@/components/ui/LoadingPage";
+import { useOrderActions } from "@/hooks/useOrderActions";
 
 const TABS = [
   { key: "all", label: "All" },
@@ -26,9 +24,8 @@ const Orders = () => {
   const { data: placedOrders = [], isPending: isOrdersPending } = useOrders({
     type: "customer",
   });
-  const updateOrder = useUpdateOrder();
+  const { handlePayOrder, handleCancelOrder, handleBuyAgain } = useOrderActions();
 
-  const { addToCart, setIsCartOpen } = useCart();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -80,34 +77,7 @@ const Orders = () => {
     router.push(newUrl);
   };
 
-  const handleCancelOrder = (orderId: string) => {
-    if (confirm(`Are you sure you want to cancel order ${orderId} ? `)) {
-      updateOrder.mutate(
-        {
-          id: orderId,
-          data: { status: "cancelled" },
-        },
-        {
-          onSuccess: () => toast.success("Order cancelled!"),
-        },
-      );
-    }
-  };
 
-  const handleBuyAgain = (orderItems: any[]) => {
-    orderItems.forEach((item) => {
-      addToCart({
-        _id: item.id,
-        name: item.name,
-        price: item.price,
-        image: item.image,
-        description: item.description,
-        category: item.category,
-      });
-    });
-
-    setIsCartOpen(true);
-  };
 
   const toggleOrderExpansion = (orderId: string) => {
     setExpandedOrders((prev) => {
@@ -122,21 +92,6 @@ const Orders = () => {
     });
   };
 
-  const handlePayOrder = async (id: string) => {
-    console.log(id);
-    try {
-      const response = await apiClient.post<{ redirectUrl: string }>(
-        `/paymaya/checkout/${id}`,
-      );
-
-      window.location.href = response.redirectUrl;
-    } catch (error: any) {
-      console.error("Payment error:", error);
-      toast.error("Payment Failed", {
-        description: error.message,
-      });
-    }
-  };
 
   // Early returns AFTER all hooks
   if ((isPending || isOrdersPending) && fetchStatus !== "idle") {
