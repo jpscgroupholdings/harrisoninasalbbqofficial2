@@ -6,14 +6,16 @@ import { DynamicIcon } from "@/lib/DynamicIcon";
 import { OrdersApiResponse } from "@/types/OrderTypes";
 import { useState } from "react";
 import { toast } from "sonner";
-import OrderDetails from "./OrderDetails";
 import { OrderDetailsModal } from "./GuestOrderModal";
 import Modal from "@/components/ui/Modal";
+import { useOrderActions } from "@/hooks/useOrderActions";
 
 export const GuestOrderLookup = () => {
   const { openModal: handleOpenModal } = useModalQuery();
   const [referenceNumber, setReferenceNumber] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+  const { handlePayOrder, handleCancelOrder, handleBuyAgain } =
+    useOrderActions();
 
   const [foundOrder, setFoundOrder] = useState<
     OrdersApiResponse["data"][number] | null
@@ -49,11 +51,11 @@ export const GuestOrderLookup = () => {
       <div className="w-full max-w-md">
         {/* Illustration / Icon */}
         <div className="flex flex-col items-center mb-8 text-center">
-          <div className="w-20 h-20 rounded-2xl bg-brand-color-100 flex items-center justify-center mb-4 shadow-inner">
+          <div className="w-20 h-20 rounded-full bg-slate-200 flex items-center justify-center mb-4 shadow-inner">
             <DynamicIcon
               name="ShoppingBag"
               size={38}
-              className="text-brand-color-500"
+              className="text-slate-500"
             />
           </div>
           <h1 className="text-2xl font-bold text-slate-800 mb-2">
@@ -83,7 +85,7 @@ export const GuestOrderLookup = () => {
               type="text"
               value={referenceNumber}
               onChange={(e) => setReferenceNumber(e.target.value)}
-              placeholder="e.g. ORD-20240410-XXXX"
+              placeholder="e.g. ORDER-20240410XXXX"
             />
             <p className="text-xs text-slate-400 mt-1.5">
               You can find this in your order confirmation email.
@@ -107,14 +109,13 @@ export const GuestOrderLookup = () => {
             </button>
           </form>
 
-          <div className="mt-5 pt-5 border-t border-slate-100 flex flex-col items-center gap-3">
+          <div className="mt-5 pt-5 border-t border-slate-100 flex items-center justify-center gap-1">
             <p className="text-sm text-slate-500">Have an account?</p>
             <button
               onClick={() => handleOpenModal(MODAL_TYPES.LOGIN)}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-slate-300 hover:border-brand-color-500 hover:text-brand-color-500 text-slate-700 font-semibold text-sm transition-all"
+              className="text-sm flex underline cursor-pointer text-brand-color-500 font-medium hover:text-[#c13500] transition-colors"
             >
-              <DynamicIcon name="LogIn" size={16} />
-              Sign In to View All Orders
+              Login
             </button>
           </div>
         </div>
@@ -127,7 +128,12 @@ export const GuestOrderLookup = () => {
           subTitle="Your order details"
           contentClassName="p-4"
         >
-          <OrderDetailsModal order={foundOrder} />
+          <OrderDetailsModal
+            order={foundOrder}
+            onPayOrder={() => handlePayOrder(foundOrder._id)}
+            onCancelOrder={() => handleCancelOrder(foundOrder._id)}
+            onBuyAgain={handleBuyAgain}
+          />
         </Modal>
       )}
     </div>
