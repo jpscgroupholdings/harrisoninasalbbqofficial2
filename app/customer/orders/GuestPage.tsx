@@ -14,7 +14,7 @@ export const GuestOrderLookup = () => {
   const { openModal: handleOpenModal } = useModalQuery();
   const [referenceNumber, setReferenceNumber] = useState("");
   const [isSearching, setIsSearching] = useState(false);
-  const { handlePayOrder, handleCancelOrder, handleBuyAgain } =
+  const { handlePayOrder, handleCancelOrder, handleBuyAgain, isLoading } =
     useOrderActions();
 
   const [foundOrder, setFoundOrder] = useState<
@@ -133,6 +133,7 @@ export const GuestOrderLookup = () => {
             onPayOrder={() => handlePayOrder(foundOrder._id)}
             onCancelOrder={() => handleCancelOrder(foundOrder._id)}
             onBuyAgain={handleBuyAgain}
+            isLoading={isLoading}
           />
         </Modal>
       )}

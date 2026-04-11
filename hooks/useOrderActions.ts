@@ -3,13 +3,16 @@ import { useCart } from "@/contexts/CartContext";
 import { useUpdateOrder } from "./api/useOrders";
 import { apiClient } from "@/lib/apiClient";
 import { toast } from "sonner";
+import { useState } from "react";
 
 export function useOrderActions() {
   const updateOrder = useUpdateOrder();
   const { addToCart, setIsCartOpen } = useCart();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handlePayOrder = async (id: string) => {
     try {
+      setIsLoading(true);
       const response = await apiClient.post<{ redirectUrl: string }>(
         `/paymaya/checkout/${id}`,
       );
@@ -17,16 +20,21 @@ export function useOrderActions() {
     } catch (error: any) {
       console.error("Payment error:", error);
       toast.error("Payment Failed", { description: error.message });
+      setIsLoading(false); // only reset on error - onsucess will redirect anyway
     }
   };
 
   const handleCancelOrder = (orderId: string) => {
-    if (confirm(`Are you sure you want to cancel order ${orderId}?`)) {
-      updateOrder.mutate(
-        { id: orderId, data: { status: "cancelled" } },
-        { onSuccess: () => toast.success("Order cancelled!") },
-      );
-    }
+    if (!confirm(`Are you sure you want to cancel order ${orderId}?`)) return;
+
+    setIsLoading(true);
+    updateOrder.mutate(
+      { id: orderId, data: { status: "cancelled" } },
+      {
+        onSuccess: () => toast.success("Order cancelled!"),
+        onSettled: () => setIsLoading(false),
+      },
+    );
   };
 
   const handleBuyAgain = (orderItems: any[]) => {
@@ -41,8 +49,13 @@ export function useOrderActions() {
       });
     });
     setIsCartOpen(true);
-    console.log(orderItems)
+    console.log(orderItems);
   };
 
-  return { handlePayOrder, handleCancelOrder, handleBuyAgain };
+  return {
+    handlePayOrder,
+    handleCancelOrder,
+    handleBuyAgain,
+    isLoading,
+  };
 }

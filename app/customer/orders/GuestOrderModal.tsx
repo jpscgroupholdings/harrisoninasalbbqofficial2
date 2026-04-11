@@ -9,6 +9,7 @@ interface OrderDetailsModalProps {
   onPayOrder: (id: string) => void;
   onCancelOrder: (id: string) => void;
   onBuyAgain: (items: any[]) => void;
+  isLoading: boolean;
 }
 
 const STATUS_STYLES: Record<OrderStatus, { bg: string; text: string }> = {
@@ -28,18 +29,22 @@ function OrderActions({
   onPayOrder,
   onCancelOrder,
   onBuyAgain,
+  isLoading,
 }: {
   order: OrderDetailsModalProps["order"];
   onPayOrder: (id: string) => void;
   onCancelOrder: (id: string) => void;
   onBuyAgain: (items: any[]) => void;
+  isLoading: boolean;
 }) {
   if (!order) return null;
 
   const status = order.status as OrderStatus;
 
-  const canPay = status === "pending" || status === "failed" || status === "expired";
-  const canCancel = status === "pending" || status === "paid" || status === "preparing";
+  const canPay =
+    status === "pending" || status === "failed" || status === "expired";
+  const canCancel =
+    status === "pending" || status === "paid" || status === "preparing";
   const canBuyAgain = status === "completed" || status === "cancelled";
 
   if (!canPay && !canCancel && !canBuyAgain) return null;
@@ -49,10 +54,20 @@ function OrderActions({
       {canPay && (
         <button
           onClick={() => onPayOrder(order._id)}
-          className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors"
+          disabled={isLoading}
+          className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold py-2.5 rounded-xl transition-colors"
         >
-          <DynamicIcon name="CreditCard" size={15} />
-          Pay now
+          {isLoading ? (
+            <>
+              <DynamicIcon name="Loader" size={15} className="animate-spin" />
+              Loading...
+            </>
+          ) : (
+            <>
+              <DynamicIcon name="CreditCard" size={15} />
+              Pay now
+            </>
+          )}
         </button>
       )}
 
@@ -69,10 +84,20 @@ function OrderActions({
       {canCancel && (
         <button
           onClick={() => onCancelOrder(order._id)}
-          className="w-full flex items-center justify-center gap-2 bg-white hover:bg-red-50 active:bg-red-100 text-red-600 text-sm font-semibold py-2.5 rounded-xl border border-red-200 transition-colors"
+          disabled={isLoading}
+          className="w-full flex items-center justify-center gap-2 bg-white hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed text-red-600 text-sm font-semibold py-2.5 rounded-xl border border-red-200 transition-colors"
         >
-          <DynamicIcon name="X" size={15} />
-          Cancel order
+          {isLoading ? (
+            <>
+              <DynamicIcon name="Loader" size={15} className="animate-spin" />
+              Loading...
+            </>
+          ) : (
+            <>
+              <DynamicIcon name="X" size={15} />
+              Cancel order
+            </>
+          )}
         </button>
       )}
     </div>
@@ -84,6 +109,7 @@ export const OrderDetailsModal = ({
   onPayOrder,
   onCancelOrder,
   onBuyAgain,
+  isLoading,
 }: OrderDetailsModalProps) => {
   if (!order) return null;
 
@@ -129,11 +155,17 @@ export const OrderDetailsModal = ({
                   />
                 ) : (
                   <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
-                    <DynamicIcon name="Package" size={16} className="text-slate-400" />
+                    <DynamicIcon
+                      name="Package"
+                      size={16}
+                      className="text-slate-400"
+                    />
                   </div>
                 )}
                 <div>
-                  <p className="text-sm font-medium text-slate-800">{item.name}</p>
+                  <p className="text-sm font-medium text-slate-800">
+                    {item.name}
+                  </p>
                 </div>
               </div>
               <div className="text-right shrink-0">
@@ -174,7 +206,11 @@ export const OrderDetailsModal = ({
         </p>
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-md border border-slate-200 bg-slate-50 flex items-center justify-center">
-            <DynamicIcon name="CreditCard" size={14} className="text-slate-500" />
+            <DynamicIcon
+              name="CreditCard"
+              size={14}
+              className="text-slate-500"
+            />
           </div>
           <span className="text-sm text-slate-700">
             {order.paymentInfo?.method?.type ?? "—"}
@@ -191,6 +227,7 @@ export const OrderDetailsModal = ({
         onPayOrder={onPayOrder}
         onCancelOrder={onCancelOrder}
         onBuyAgain={onBuyAgain}
+        isLoading={isLoading}
       />
     </div>
   );
