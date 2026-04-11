@@ -30,11 +30,12 @@ const ORDER_ENDPOINTS = {
   customer: "/customer/orders/",
 } as const;
 
-export const useOrders = ({ type }: { type: keyof typeof ORDER_ENDPOINTS }) => {
+export const useOrders = ({ type}: { type: keyof typeof ORDER_ENDPOINTS }) => {
   return useQuery<OrdersApiResponse, Error, OrderType[]>({
     queryKey: ["orders", type],
     queryFn: () => apiClient.get(ORDER_ENDPOINTS[type]),
-    staleTime: 30000
+    staleTime: 30000,
+    select: (response) => [...response.data]
   });
 };
 
