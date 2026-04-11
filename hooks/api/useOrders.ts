@@ -131,7 +131,7 @@ export const useUpdateOrder = () => {
     { id: string; data: UpdateOrderPayLoad }
   >({
     mutationFn: ({ id, data }: { id: string; data: UpdateOrderPayLoad }) =>
-      apiClient.patch(`/orders/${id}`, data),
+      apiClient.patch(`/admin/orders/${id}`, data),
 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
