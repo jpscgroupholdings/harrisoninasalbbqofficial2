@@ -1,7 +1,7 @@
 import { syne } from "@/app/font";
 import { DynamicIcon } from "@/lib/DynamicIcon";
 import { OrdersApiResponse } from "@/types/OrderTypes";
-import { OrderStatus } from "@/types/orderConstants";
+import { ORDER_STATUSES, OrderStatus } from "@/types/orderConstants";
 import { format } from "date-fns";
 
 interface OrderDetailsModalProps {
@@ -42,10 +42,15 @@ function OrderActions({
   const status = order.status as OrderStatus;
 
   const canPay =
-    status === "pending" || status === "failed" || status === "expired";
+    status === ORDER_STATUSES.PENDING ||
+    status === ORDER_STATUSES.FAILED ||
+    status === ORDER_STATUSES.EXPIRED;
   const canCancel =
-    status === "pending" || status === "paid" || status === "preparing";
-  const canBuyAgain = status === "completed" || status === "cancelled";
+    status === ORDER_STATUSES.PENDING ||
+    status === ORDER_STATUSES.FAILED ||
+    status === ORDER_STATUSES.EXPIRED;
+  const canBuyAgain =
+    status === ORDER_STATUSES.COMPLETED || status === ORDER_STATUSES.CANCELLED;
 
   if (!canPay && !canCancel && !canBuyAgain) return null;
 
