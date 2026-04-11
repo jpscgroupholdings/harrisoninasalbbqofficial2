@@ -1,11 +1,14 @@
 import { syne } from "@/app/font";
 import { DynamicIcon } from "@/lib/DynamicIcon";
 import { OrdersApiResponse } from "@/types/OrderTypes";
-import { ORDER_ACTION_CONFIG, OrderStatus } from "@/types/orderConstants";
+import { OrderStatus } from "@/types/orderConstants";
 import { format } from "date-fns";
 
 interface OrderDetailsModalProps {
   order: OrdersApiResponse["data"][number] | null;
+  onPayOrder: (id: string) => void;
+  onCancelOrder: (id: string) => void;
+  onBuyAgain: (items: any[]) => void;
 }
 
 const STATUS_STYLES: Record<OrderStatus, { bg: string; text: string }> = {
@@ -20,7 +23,68 @@ const STATUS_STYLES: Record<OrderStatus, { bg: string; text: string }> = {
   expired: { bg: "bg-red-100", text: "text-red-700" },
 };
 
-export const OrderDetailsModal = ({ order }: OrderDetailsModalProps) => {
+function OrderActions({
+  order,
+  onPayOrder,
+  onCancelOrder,
+  onBuyAgain,
+}: {
+  order: OrderDetailsModalProps["order"];
+  onPayOrder: (id: string) => void;
+  onCancelOrder: (id: string) => void;
+  onBuyAgain: (items: any[]) => void;
+}) {
+  if (!order) return null;
+
+  const status = order.status as OrderStatus;
+
+  const canPay = status === "pending" || status === "failed" || status === "expired";
+  const canCancel = status === "pending" || status === "paid" || status === "preparing";
+  const canBuyAgain = status === "completed" || status === "cancelled";
+
+  if (!canPay && !canCancel && !canBuyAgain) return null;
+
+  return (
+    <div className="border-t border-slate-100 px-5 py-4 flex flex-col gap-2">
+      {canPay && (
+        <button
+          onClick={() => onPayOrder(order._id)}
+          className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors"
+        >
+          <DynamicIcon name="CreditCard" size={15} />
+          Pay now
+        </button>
+      )}
+
+      {canBuyAgain && (
+        <button
+          onClick={() => onBuyAgain(order.items)}
+          className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors"
+        >
+          <DynamicIcon name="RotateCcw" size={15} />
+          Order again
+        </button>
+      )}
+
+      {canCancel && (
+        <button
+          onClick={() => onCancelOrder(order._id)}
+          className="w-full flex items-center justify-center gap-2 bg-white hover:bg-red-50 active:bg-red-100 text-red-600 text-sm font-semibold py-2.5 rounded-xl border border-red-200 transition-colors"
+        >
+          <DynamicIcon name="X" size={15} />
+          Cancel order
+        </button>
+      )}
+    </div>
+  );
+}
+
+export const OrderDetailsModal = ({
+  order,
+  onPayOrder,
+  onCancelOrder,
+  onBuyAgain,
+}: OrderDetailsModalProps) => {
   if (!order) return null;
 
   const statusStyle = STATUS_STYLES[order.status as OrderStatus] ?? {
@@ -35,9 +99,7 @@ export const OrderDetailsModal = ({ order }: OrderDetailsModalProps) => {
   const deliveryFee = order.total.total - subtotal;
 
   return (
-    <div
-      className={`${syne.className}`}
-    >
+    <div className={`${syne.className}`}>
       {/* Status + Date */}
       <div className="flex items-center gap-2 px-5 pb-4">
         <span
@@ -63,27 +125,18 @@ export const OrderDetailsModal = ({ order }: OrderDetailsModalProps) => {
                   <img
                     src={item.image}
                     alt={item.name}
-                    className="w-10 h-10 rounded-lg object-cover border border-slate-100 flex-shrink-0"
+                    className="w-10 h-10 rounded-lg object-cover border border-slate-100 shrink-0"
                   />
                 ) : (
-                  <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
-                    <DynamicIcon
-                      name="Package"
-                      size={16}
-                      className="text-slate-400"
-                    />
+                  <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
+                    <DynamicIcon name="Package" size={16} className="text-slate-400" />
                   </div>
                 )}
                 <div>
-                  <p className="text-sm font-medium text-slate-800">
-                    {item.name}
-                  </p>
-                  {/* {item.notes && (
-                      <p className="text-xs text-slate-400">{item.notes}</p>
-                    )} */}
+                  <p className="text-sm font-medium text-slate-800">{item.name}</p>
                 </div>
               </div>
-              <div className="text-right flex-shrink-0">
+              <div className="text-right shrink-0">
                 <p className="text-sm font-semibold text-slate-800">
                   ₱{(item.price * item.quantity).toLocaleString()}
                 </p>
@@ -121,20 +174,24 @@ export const OrderDetailsModal = ({ order }: OrderDetailsModalProps) => {
         </p>
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-md border border-slate-200 bg-slate-50 flex items-center justify-center">
-            <DynamicIcon
-              name="CreditCard"
-              size={14}
-              className="text-slate-500"
-            />
+            <DynamicIcon name="CreditCard" size={14} className="text-slate-500" />
           </div>
           <span className="text-sm text-slate-700">
-            {order.paymentInfo?.method.type ?? "—"}
+            {order.paymentInfo?.method?.type ?? "—"}
           </span>
           <span className="ml-auto text-xs font-semibold px-2.5 py-1 rounded-full bg-green-100 text-green-700">
             {order?.status ?? "Paid"}
           </span>
         </div>
       </div>
+
+      {/* Actions */}
+      <OrderActions
+        order={order}
+        onPayOrder={onPayOrder}
+        onCancelOrder={onCancelOrder}
+        onBuyAgain={onBuyAgain}
+      />
     </div>
   );
 };
