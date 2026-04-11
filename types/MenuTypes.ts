@@ -14,6 +14,7 @@ export interface MenuItem {
     _id: string,
     name: string
   };
+  note?: string;
   isBestSeller?: boolean;
   image: string;
 }
