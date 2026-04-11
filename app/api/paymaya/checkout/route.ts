@@ -18,16 +18,10 @@ export async function POST(request: NextRequest) {
     await connectDB();
     const customer = await getCustomerAuth(request);
 
-    let customer_id = null;
+    let customerId = null;
 
     if (customer) {
-      customer_id = customer.id;
-    }
-
-    const customerId = await Customer.findById(customer_id)
-
-    if(!customerId){
-       return NextResponse.json({ error: "User id not found!" }, { status: 400 });
+      customerId = customer.id;
     }
 
     const body = await request.json();
@@ -228,6 +222,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       {
+        referenceNumber,
         checkoutId: data.checkoutId,
         redirectUrl: data.redirectUrl,
       },
