@@ -26,8 +26,8 @@ export async function POST(request: NextRequest) {
 
     if (!userFound) {
       return NextResponse.json(
-        { error: "Invalid credentials" },
-        { status: 401 },
+        { error: "Account not found!" },
+        { status: 404 },
       );
     }
 

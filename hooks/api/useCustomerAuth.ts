@@ -31,7 +31,7 @@ export const useCustomerLogin = () => {
             toast.success("Login Successfully!")
         },
         onError: (error: any) =>{
-            toast.error(error.error ?? "Failed to login!")
+            toast.error(error.message ?? "Failed to login!")
         }
     }) 
 }
