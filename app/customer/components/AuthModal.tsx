@@ -6,11 +6,13 @@ import {
   useCustomerLogin,
   useCustomerSignup,
 } from "@/hooks/api/useCustomerAuth";
+import { MODAL_TYPES, ModalType } from "@/hooks/utils/useModalQuery";
+import { syne } from "@/app/font";
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  initialMode: "login" | "signup";
+  initialMode: ModalType;
 }
 
 const AuthModal: React.FC<AuthModalProps> = ({
@@ -21,7 +23,11 @@ const AuthModal: React.FC<AuthModalProps> = ({
   const createAccount = useCustomerSignup();
   const loginAccount = useCustomerLogin();
 
-  const [mode, setMode] = useState<"login" | "signup">(initialMode);
+  const [mode, setMode] = useState<ModalType>(initialMode);
+
+  const isLogin = mode === MODAL_TYPES.LOGIN;
+  const isSignup = mode === MODAL_TYPES.SIGNUP
+
   const [showPassword, setShowPassword] = useState({
     password: false,
     confirmPassword: false,
@@ -44,7 +50,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (mode === "signup" && !formData.fullname.trim()) {
+    if (isSignup && !formData.fullname.trim()) {
       newErrors.fullname = "Fullname is required";
     }
 
@@ -60,7 +66,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
       newErrors.password = "Password must be at least 8 characters";
     }
 
-    if (mode === "signup" && formData.password !== formData.confirmPassword) {
+    if (isSignup && formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = "Passwords do not match";
     }
 
@@ -73,7 +79,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
 
     if (!validateForm()) return;
 
-    if (mode === "signup") {
+    if (isSignup) {
       createAccount.mutate(formData, {
         onSuccess: () => {
           onClose();
@@ -86,7 +92,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
           });
         },
       });
-    } else if (mode === "login") {
+    } else if (isLogin) {
       loginAccount.mutate(
         {
           email: formData.email,
@@ -150,7 +156,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
       />
 
       {/* Modal */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className={`${syne.className} fixed inset-0 z-50 flex items-center justify-center p-4`}>
         <div
           className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-scale-in max-h-[90vh] overflow-y-auto"
           onClick={(e) => e.stopPropagation()}
@@ -169,10 +175,10 @@ const AuthModal: React.FC<AuthModalProps> = ({
             </div>
             <div>
               <h2 className="text-xl font-bold text-white">
-                {mode === "login" ? "Welcome Back!" : "Start your story today!"}
+                {isLogin ? "Welcome Back!" : "Start your story today!"}
               </h2>
               <p className="text-gray-400 text-sm">
-                {mode === "login"
+                {isLogin
                   ? "Sign in to continue ordering"
                   : "Create an account to start your story"}
               </p>
@@ -181,7 +187,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
-            {mode === "signup" && (
+            {isSignup && (
               <InputField
                 label="Full Name"
                 leftIcon={<User size={18} />}
@@ -205,7 +211,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
               error={errors.email}
             />
 
-            {mode === "signup" && (
+            {isSignup && (
               <InputField
                 label="Phone Number"
                 leftIcon={<Phone size={18} />}
@@ -236,7 +242,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
               }
             />
 
-            {mode === "signup" && (
+            {isSignup && (
               <InputField
                 id="confirm_password"
                 label="Confirm Password"
@@ -256,7 +262,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
               />
             )}
 
-            {mode === "login" && (
+            {isLogin && (
               <div className="flex justify-end">
                 <button
                   type="button"
@@ -275,9 +281,9 @@ const AuthModal: React.FC<AuthModalProps> = ({
               {createAccount.isPending ? (
                 <>
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  {mode === "login" ? "Signing in..." : "Creating account..."}
+                  {isLogin ? "Signing in..." : "Creating account..."}
                 </>
-              ) : mode === "login" ? (
+              ) : isLogin ? (
                 "Sign In"
               ) : (
                 "Create Account"
@@ -288,15 +294,15 @@ const AuthModal: React.FC<AuthModalProps> = ({
           {/* Footer */}
           <div className="px-6 pb-6 text-center">
             <p className="text-gray-500 text-sm">
-              {mode === "login"
+              {isLogin
                 ? "Don't have an account? "
                 : "Already have an account? "}
               <button
                 type="button"
-                onClick={() => setMode(mode === "login" ? "signup" : "login")}
+                onClick={() => setMode(isLogin ? MODAL_TYPES.SIGNUP : MODAL_TYPES.LOGIN)}
                 className="text-brand-color-500 font-semibold hover:underline"
               >
-                {mode === "login" ? "Sign up" : "Sign in"}
+                {isLogin ? "Sign up" : "Sign in"}
               </button>
             </p>
           </div>
