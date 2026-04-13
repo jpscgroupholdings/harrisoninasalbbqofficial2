@@ -8,6 +8,9 @@ import {
 } from "@/hooks/api/useCustomerAuth";
 import { MODAL_TYPES, ModalType } from "@/hooks/utils/useModalQuery";
 import { syne } from "@/app/font";
+import Modal from "@/components/ui/Modal";
+import { DynamicIcon } from "@/lib/DynamicIcon";
+import { maskEmail } from "@/lib/maskEmail";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -24,9 +27,10 @@ const AuthModal: React.FC<AuthModalProps> = ({
   const loginAccount = useCustomerLogin();
 
   const [mode, setMode] = useState<ModalType>(initialMode);
+  const [verificationSent, setVerificationSent] = useState(false);
 
   const isLogin = mode === MODAL_TYPES.LOGIN;
-  const isSignup = mode === MODAL_TYPES.SIGNUP
+  const isSignup = mode === MODAL_TYPES.SIGNUP;
 
   const [showPassword, setShowPassword] = useState({
     password: false,
@@ -82,9 +86,9 @@ const AuthModal: React.FC<AuthModalProps> = ({
     if (isSignup) {
       createAccount.mutate(formData, {
         onSuccess: () => {
-          onClose();
+          setVerificationSent(true);
           setFormData({
-            fullname: "",
+            fullname: formData.email,
             email: "",
             phone: "",
             password: "",
@@ -147,6 +151,47 @@ const AuthModal: React.FC<AuthModalProps> = ({
     }));
   };
 
+  if (verificationSent) {
+    return (
+      <Modal
+        title="Email Verification"
+        onClose={onClose}
+        className={`${syne.className}`}
+      >
+        <div className="flex flex-col items-center text-center gap-4 py-4">
+          {/* Animated Check Icon */}
+          <div className="relative flex items-center justify-center w-20 h-20 rounded-full bg-green-50 ring-8 ring-green-50/50">
+            <div className="absolute inset-0 rounded-full bg-green-200 animate-ping opacity-50" />
+            <DynamicIcon
+              name="MailCheck"
+              size={88}
+              className="text-green-500 relative z-10"
+            />
+          </div>
+
+          {/* Title */}
+          <h2 className="text-lg font-semibold">
+            Account Created Successfully 🎉
+          </h2>
+
+          {/* Message */}
+          <p className="text-sm text-gray-600 max-w-xs">
+            We’ve sent a verification link to{" "}
+            <span className="font-medium text-brand-color-500">
+              {maskEmail(formData.email)}
+            </span>
+            . Please check your inbox and verify your account to continue.
+          </p>
+
+          {/* Hint */}
+          <p className="text-xs text-gray-400">
+            Didn’t receive the email? <span className="text-black">Check your spam folder</span>.
+          </p>
+        </div>
+      </Modal>
+    );
+  }
+
   return (
     <>
       {/* Backdrop */}
@@ -156,7 +201,9 @@ const AuthModal: React.FC<AuthModalProps> = ({
       />
 
       {/* Modal */}
-      <div className={`${syne.className} fixed inset-0 z-50 flex items-center justify-center p-4`}>
+      <div
+        className={`${syne.className} fixed inset-0 z-50 flex items-center justify-center p-4`}
+      >
         <div
           className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-scale-in max-h-[90vh] overflow-y-auto"
           onClick={(e) => e.stopPropagation()}
@@ -299,7 +346,9 @@ const AuthModal: React.FC<AuthModalProps> = ({
                 : "Already have an account? "}
               <button
                 type="button"
-                onClick={() => setMode(isLogin ? MODAL_TYPES.SIGNUP : MODAL_TYPES.LOGIN)}
+                onClick={() =>
+                  setMode(isLogin ? MODAL_TYPES.SIGNUP : MODAL_TYPES.LOGIN)
+                }
                 className="text-brand-color-500 font-semibold hover:underline"
               >
                 {isLogin ? "Sign up" : "Sign in"}
