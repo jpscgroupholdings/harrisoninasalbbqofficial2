@@ -9,7 +9,10 @@ const CustomerSchema = new Schema(
     },
     email: {
       type: String,
-      match: [/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, 'Please fill a valid email address'],
+      match: [
+        /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+        "Please fill a valid email address",
+      ],
       required: [true, "Email is required!"],
       lowercase: true,
     },
@@ -25,8 +28,13 @@ const CustomerSchema = new Schema(
       select: false,
     },
     isActive: { type: Boolean, default: true },
+
+    // ── Email Verification ──────────────────────────────────────────
+    isEmailVerified: { type: Boolean, default: false },
+    verificationToken: { type: String, select: false },
+    verificationTokenExpiry: { type: Date, select: false },
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
 CustomerSchema.index({ email: 1 }, { unique: true });
