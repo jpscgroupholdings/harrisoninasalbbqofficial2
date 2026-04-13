@@ -30,13 +30,11 @@ const productBaseSchema = z.object({
   // ✅ NEW: Creative content fields
   info: z
     .string()
-    .min(10, "Info must be at least 10 characters")
     .max(200, "Info must be less than 200 characters")
     .optional()
     .default("Product info is not available"),
   description: z
     .string()
-    .min(20, "Description must be at least 20 characters")
     .max(2000, "Description must be less than 2000 characters")
     .optional()
     .default("Product description is not available"),
@@ -247,22 +245,8 @@ export async function POST(request: NextRequest) {
       await cloudinary.uploader.destroy(uploadResult.public_id);
     }
 
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { success: false, error: "Validation failed", details: error.issues },
-        { status: 400 },
-      );
-    }
-
-    if (error?.code === 11000) {
-      return NextResponse.json(
-        { success: false, error: "Product already exists" },
-        { status: 409 },
-      );
-    }
-
     return NextResponse.json(
-      { error: error.message || "Failed to create product" },
+      { error: error instanceof Error ? error.message : "Failed to create product" },
       { status: 500 },
     );
   }
