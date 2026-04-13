@@ -8,8 +8,10 @@ import ProductTable from "@/app/admin/components/ProductTable";
 import ProductsModal from "./ProductsModal";
 import SectionHeader from "@/app/admin/components/SectionHeader";
 import LoadingPage from "@/components/ui/LoadingPage";
+import { useRouter } from "next/navigation";
 
 const ProductsPage = () => {
+  const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
@@ -46,10 +48,7 @@ const ProductsPage = () => {
       <SectionHeader
         title={"Products Management"}
         subTitle="Manage your resturant's products"
-        onClick={() => {
-          setSelectedProduct(null);
-          setIsModalOpen(true);
-        }}
+        onClick={() => router.push("/products/new")}
         btnTxt="+ Add Product"
         permission="products.create"
       />
@@ -71,19 +70,15 @@ const ProductsPage = () => {
       {/* Products Table */}
       <ProductTable
         products={sortedProducts}
-        onEdit={(product) => {
-          setSelectedProduct(product);
-          setIsModalOpen(true);
-        }}
       />
 
       {/* Add Product Modal */}
-      {isModalOpen && (
+      {/* {isModalOpen && (
         <ProductsModal
           setIsModalOpen={setIsModalOpen}
           editProduct={selectedProduct}
         />
-      )}
+      )} */}
     </section>
   );
 };
