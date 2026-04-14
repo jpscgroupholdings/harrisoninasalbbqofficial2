@@ -135,7 +135,7 @@ const SectionCard = ({
   className?: string;
 }) => (
   <div
-    className={`bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden ${className}`}
+    className={`bg-white rounded-2xl border border-gray-200 shadow-sm ${className}`}
   >
     <div className="flex items-center gap-2.5 px-6 py-4 border-b border-gray-100 bg-gray-50/70">
       <span className="text-brand-color-500">
@@ -291,13 +291,18 @@ const ProductFormPage = ({ editProduct = null }: ProductFormPageProps) => {
 
   useEffect(() => {
     if (editProduct) {
+      console.log("Edit Product: ", editProduct);
       const imageUrl = editProduct.image.url || "";
       setFormData({
         name: editProduct.name || "",
         price: editProduct.price?.toString() || "",
         image: imageUrl,
-        category: editProduct.category._id || "",
-        subcategory: editProduct.subcategory?._id || "",
+        category:
+          typeof editProduct.category === "string"
+            ? editProduct.category
+            : editProduct.category?._id || "",
+
+        subcategory: typeof editProduct.subcategory === "string" ? editProduct.subcategory : editProduct.subcategory?._id  || "",
         info: editProduct.info || "",
         description: editProduct.description || "",
         isSignature: editProduct.isSignature || false,
@@ -622,9 +627,11 @@ const ProductFormPage = ({ editProduct = null }: ProductFormPageProps) => {
           data: payload,
         });
         toast.success("Updated successfully!");
+        router.back();
       } else {
         await createMutation.mutateAsync(payload);
         toast.success("Created successfully!");
+        router.back();
       }
     } catch (error) {}
   };
@@ -934,7 +941,7 @@ const ProductFormPage = ({ editProduct = null }: ProductFormPageProps) => {
 
                       {/* Dropdown */}
                       {showItemDropdown && itemSearch && (
-                        <div className="absolute z-20 top-full mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                        <div className="absolute top-full mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
                           {filteredProducts.length === 0 ? (
                             <p className="px-4 py-3 text-sm text-gray-400">
                               No matching products found
@@ -1121,30 +1128,30 @@ const ProductFormPage = ({ editProduct = null }: ProductFormPageProps) => {
 
                     {cloudinaryImages.length > 0 && (
                       <div className="mb-4">
-                          <InputField
-                            type="text"
-                            placeholder="Search by filename..."
-                            value={gallerySearch}
-                            onChange={(e) => setGallerySearch(e.target.value)}
-                            leftIcon={
-                              <DynamicIcon
-                                name="Search"
-                                size={14}
-                                className="text-gray-400 shrink-0"
-                              />
-                            }
-                            rightElement={
-                              gallerySearch && (
-                                <button
-                                  type="button"
-                                  onClick={() => setGallerySearch("")}
-                                  className="text-gray-400 hover:text-gray-600"
-                                >
-                                  <DynamicIcon name="X" size={12} />
-                                </button>
-                              )
-                            }
-                          />
+                        <InputField
+                          type="text"
+                          placeholder="Search by filename..."
+                          value={gallerySearch}
+                          onChange={(e) => setGallerySearch(e.target.value)}
+                          leftIcon={
+                            <DynamicIcon
+                              name="Search"
+                              size={14}
+                              className="text-gray-400 shrink-0"
+                            />
+                          }
+                          rightElement={
+                            gallerySearch && (
+                              <button
+                                type="button"
+                                onClick={() => setGallerySearch("")}
+                                className="text-gray-400 hover:text-gray-600"
+                              >
+                                <DynamicIcon name="X" size={12} />
+                              </button>
+                            )
+                          }
+                        />
                       </div>
                     )}
 
