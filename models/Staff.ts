@@ -34,18 +34,22 @@ const staffSchema = new mongoose.Schema<IStaff>(
       required: [true, "Email is required"],
       lowercase: true,
       trim: true,
-      match: [/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, 'Please fill a valid email address'],
+      match: [
+        /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+        "Please fill a valid email address",
+      ],
+      unique: true,
     },
     password: {
       type: String,
       required: [true, "Password is required"],
       minlength: [8, "Password must be at least 8 characters"],
-      select: false
+      select: false,
     },
     phone: {
       type: String,
       trim: true,
-      match: [/^\+?[0-9]{10,15}$/, "Invalid phone number!"]
+      match: [/^\+?[0-9]{10,15}$/, "Invalid phone number!"],
     },
     role: {
       type: String,
@@ -65,7 +69,7 @@ const staffSchema = new mongoose.Schema<IStaff>(
   { timestamps: true },
 );
 
-staffSchema.index({email: 1}, {unique: true})
+staffSchema.index({ email: 1 }, { unique: true });
 
 const Staff =
   mongoose.models.Staff || mongoose.model<IStaff>("Staff", staffSchema);
