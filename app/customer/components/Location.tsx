@@ -24,7 +24,7 @@ const LocationsSection = () => {
       hours: "10:00 AM - 10:00 PM",
       foodType: "Grill Fried Up",
       city: "Makati City",
-      address: "Pio Del Pillar, Makati City",
+      address: "King’s Court Building",
       fullAddress:
         "5/F King's Court Building 2, 2129 Chino Roces Avenue, Brgy Pio del Pilar, Makati City, Metro Manila",
       phone: "+63 2 8765 4321",
