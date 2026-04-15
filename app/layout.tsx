@@ -3,6 +3,8 @@ import "./globals.css";
 import { Toaster } from "sonner";
 import { QueryProvider } from "@/provider/QueryProvider";
 import { larken, syne } from "./font";
+import { Suspense } from "react";
+import LoadingPage from "@/components/ui/LoadingPage";
 
 export const metadata: Metadata = {
   title: "Home | Harrison House of Inasal & BBQ",
@@ -72,7 +74,7 @@ export default function RootLayout({
       <body className={`${larken.className} antialiased`}>
         <QueryProvider>
           <Toaster richColors position="top-right" closeButton />
-          {children}
+          <Suspense fallback={<LoadingPage />}>{children}</Suspense>
           {modal}
         </QueryProvider>
       </body>
