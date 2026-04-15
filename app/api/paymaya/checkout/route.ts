@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Branch not found!" }, { status: 400 });
     }
 
-    let recalculatedSubTotal = 0;
+    let totalPrice = 0
 
     // Separate Maya payload items from Order snapshot items
     const orderItems = [];
@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
         { session },
       );
 
-      recalculatedSubTotal += product.price * cartItem.quantity;
+      totalPrice += product.price * cartItem.quantity
 
       // Only fields that exist in your OrderItemSchema
       orderItems.push({
@@ -138,13 +138,13 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    if (recalculatedSubTotal < MINIMUM_AMOUNT) {
+    if (totalPrice < MINIMUM_AMOUNT) {
       throw new Error(`Minimum order amount is ₱${MINIMUM_AMOUNT}`);
     }
 
-    const tax = parseFloat((recalculatedSubTotal * TAX_RATE).toFixed(2));
-    const grandTotal = parseFloat((recalculatedSubTotal + tax).toFixed(2));
-
+    const vatableSales = parseFloat((totalPrice / (1 + TAX_RATE)).toFixed(2));
+    const vatAmount = parseFloat((totalPrice - vatableSales).toFixed(2));
+  
     if (!process.env.MAYA_PUBLIC_KEY) {
       throw new Error("Maya key not configured");
     }
@@ -153,12 +153,12 @@ export async function POST(request: NextRequest) {
 
     const payload = {
       totalAmount: {
-        value: grandTotal,
+        value: totalPrice,
         currency: "PHP",
         details: {
           discount: 0,
-          tax,
-          subTotal: recalculatedSubTotal,
+          vatAmount,
+          vatableSales,
         },
       },
       items: mayaItems,
@@ -209,7 +209,7 @@ export async function POST(request: NextRequest) {
             customerEmail, // optional
             customerPhone,
           },
-          total: { subTotal: recalculatedSubTotal, tax, total: grandTotal },
+          total: { vatableSales, vatAmount, totalAmount: totalPrice },
           note, // optional
           //  No timeline.createdAt — timestamps:true already gives you createdAt
         },
