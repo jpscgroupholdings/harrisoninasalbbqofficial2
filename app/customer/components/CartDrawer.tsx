@@ -4,21 +4,23 @@ import React from "react";
 import { useCart } from "@/contexts/CartContext";
 import { ArrowRight, Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import OrderNowButton from "./ui/OrderNowButton";
+import OrderNowButton from "@/components/ui/OrderNowButton";
 
 const CartDrawer = () => {
   const router = useRouter();
   const {
-  cartItems,
-  isCartOpen,
-  setIsCartOpen,
-  updateQuantity,
-  removeFromCart,
-  vatableSales,
-  vatAmount,
-  totalPrice,
-  clearCart,
-} = useCart();
+    cartItems,
+    isCartOpen,
+    setIsCartOpen,
+    updateQuantity,
+    removeFromCart,
+    totalProducts,
+    totalItems,
+    vatableSales,
+    vatAmount,
+    totalPrice,
+    clearCart,
+  } = useCart();
 
   const handleCheckout = () => {
     setIsCartOpen(false);
@@ -39,21 +41,27 @@ const CartDrawer = () => {
         {/** Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
           <div className="flex items-center gap-3">
-            <ShoppingBag className="text-brand-color-500" size={24} />
-            <h2 className="text-xl font-bold text-gray-900">Your order</h2>
-
-            {cartItems.length > 0 && (
-              <span className="bg-brand-color-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                {cartItems.reduce((sum, item) => sum + item.quantity, 0)}
-              </span>
-            )}
+            <ShoppingBag className="text-brand-color-500" size={20} />
+            <h2 className="text-xl font-bold text-gray-900">My order</h2>
           </div>
-          <button
-            onClick={() => setIsCartOpen(false)}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-          >
-            <X size={24} className="text-gray-500" />
-          </button>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 bg-orange-50 rounded-full px-3 py-1">
+              <span className="text-xs font-semibold text-brand-color-600">
+                {totalProducts} products
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 bg-orange-50 rounded-full px-3 py-1">
+              <span className="text-xs font-semibold text-brand-color-600">
+                {totalItems} items
+              </span>
+            </div>
+            <button
+              onClick={() => setIsCartOpen(false)}
+              className="p-2 hover:bg-gray-100 rounded-full"
+            >
+              <X size={20} className="text-gray-500" />
+            </button>
+          </div>
         </div>
 
         {/** Cart Items */}
@@ -87,7 +95,9 @@ const CartDrawer = () => {
                     <h4 className="font-semibold text-gray-900 mb-1">
                       {item.name}
                     </h4>
-                    <p className="text-brand-color-500 font-bold">₱{item.price}</p>
+                    <p className="text-brand-color-500 font-bold">
+                      ₱{item.price}
+                    </p>
 
                     <div className="flex items-center justify-between mt-2">
                       <div className="flex items-center gap-2 bg-white rounded-full border border-gray-200">
@@ -139,7 +149,9 @@ const CartDrawer = () => {
                 <span>₱{vatAmount.toFixed(2)}</span>
               </div>
               <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                <span className="font-semibold text-gray-900">Total (VAT Inc)</span>
+                <span className="font-semibold text-gray-900">
+                  Total (VAT Inc)
+                </span>
                 <span className="font-bold text-xl text-brand-color-500">
                   ₱{totalPrice.toFixed(2)}
                 </span>

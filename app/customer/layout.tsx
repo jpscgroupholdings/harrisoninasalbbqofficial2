@@ -1,4 +1,4 @@
-import CartDrawer from "@/components/CartDrawer";
+import CartDrawer from "./components/CartDrawer";
 import Footer from "@/components/ui/Footer";
 import Header from "@/app/customer/components/Header";
 import { CartProvider } from "@/contexts/CartContext";
