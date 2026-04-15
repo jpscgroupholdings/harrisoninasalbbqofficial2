@@ -37,42 +37,46 @@ export async function POST(request: NextRequest) {
         { status: 403 },
       );
     }
-    
+
     const isPasswordValid = await bcrypt.compare(password, userFound.password);
 
-    if(!isPasswordValid){
-        return NextResponse.json({error: "Invalid credentials!"}, {status: 401})
+    if (!isPasswordValid) {
+      return NextResponse.json(
+        { error: "Invalid credentials!" },
+        { status: 401 },
+      );
     }
 
     // sign JWT - this becomes payload
     const token = await new SignJWT({
-        id: userFound._id.toString(),
-        email: userFound.email,
-        fullname: userFound.fullname || "Name not found!"
-    }).setProtectedHeader({alg: "HS256"}).setExpirationTime('8h').sign(JWT_SECRET)
-
-    
-    const response = NextResponse.json({
-        message: "Login Successfully!",
-        user: {
-            id: userFound._id,
-            fullname: userFound.fullname,
-            email: userFound.email,
-            phone: userFound.phone || "",
-        }
+      id: userFound._id.toString(),
+      email: userFound.email,
+      fullname: userFound.fullname || "Name not found!",
     })
+      .setProtectedHeader({ alg: "HS256" })
+      .setExpirationTime("8h")
+      .sign(JWT_SECRET);
 
-    // set HTTP only cookies
-    response.cookies.set(COOKIE_NAMES.CUSTOMER_TOKEN,token,  {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 8,
-        path: "/"
+    const response = NextResponse.json({
+      message: "Login Successfully!",
+      user: {
+        id: userFound._id,
+        fullname: userFound.fullname,
+        email: userFound.email,
+        phone: userFound.phone || "",
+      },
     });
 
-    return response
+    // set HTTP only cookies
+    response.cookies.set(COOKIE_NAMES.CUSTOMER_TOKEN, token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 8,
+      path: "/",
+    });
 
+    return response;
   } catch (error: any) {
     return NextResponse.json(
       {

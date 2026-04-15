@@ -36,11 +36,11 @@ export default function EventForm() {
     return (
       <div className="max-w-xl mx-auto bg-white border border-brand-color-100 p-10 rounded-2xl shadow-sm text-center">
         <div className="text-5xl mb-4">🎉</div>
-        <h3 className="text-2xl font-bold text-gray-900 mb-2">
-          Inquiry Sent!
-        </h3>
+        <h3 className="text-2xl font-bold text-gray-900 mb-2">Inquiry Sent!</h3>
         <p className="text-gray-500">
-          Thanks, <span className="font-semibold text-gray-700">{form.name}</span>! Our team will get back to you shortly to confirm your booking.
+          Thanks,{" "}
+          <span className="font-semibold text-gray-700">{form.name}</span>! Our
+          team will get back to you shortly to confirm your booking.
         </p>
         <button
           onClick={() => setSubmitted(false)}
@@ -54,7 +54,6 @@ export default function EventForm() {
 
   return (
     <div className="max-w-xl mx-auto bg-white p-8 rounded-2xl shadow-sm">
-
       <div className="space-y-4">
         {/* Row: Name + Phone */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -129,8 +128,18 @@ export default function EventForm() {
             </select>
             {/* Custom chevron */}
             <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-400">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M19 9l-7 7-7-7"
+                />
               </svg>
             </div>
           </div>
@@ -163,17 +172,19 @@ export default function EventForm() {
       {/* Divider */}
       <div className="flex items-center my-6">
         <div className="grow border-t border-gray-200" />
-        <span className="mx-4 text-gray-400 text-xs font-semibold tracking-widest uppercase">or</span>
+        <span className="mx-4 text-gray-400 text-xs font-semibold tracking-widest uppercase">
+          or
+        </span>
         <div className="grow border-t border-gray-200" />
       </div>
 
       {/* Viber Button */}
-       <a
+      <a
         href="viber://chat?number=%2B639603349533"
         className="flex items-center justify-center gap-2 w-full bg-[#7360F2] hover:bg-[#5d4be0] text-white font-semibold py-3 rounded-xl transition-all shadow hover:shadow-md"
       >
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M11.4 0C5.5.2.8 5 .8 10.9c0 2.4.8 4.6 2 6.4L.8 24l7-2c1.7.9 3.6 1.4 5.6 1.4 5.9 0 10.7-4.8 10.7-10.7S17.3 0 11.4 0zm5.7 15.5c-.3.8-1.5 1.5-2.1 1.6-.5.1-1.2.1-1.9-.1-.4-.1-1-.3-1.7-.6-3-1.3-5-4.3-5.1-4.5-.1-.2-1.1-1.5-1.1-2.8 0-1.3.7-1.9 1-2.2.3-.3.6-.3.8-.3h.6c.2 0 .4 0 .6.5.2.5.7 1.8.8 1.9.1.1.1.3 0 .5-.1.2-.2.3-.3.4-.1.1-.3.3-.4.4-.1.1-.2.2-.1.4.5.8 1.1 1.5 1.7 2.1.7.7 1.5 1.2 2.4 1.5.2.1.4.1.5-.1.1-.2.6-.7.8-.9.2-.2.4-.2.6-.1.2.1 1.4.7 1.7.8.2.1.4.2.5.3 0 .2 0 .8-.3 1.6z"/>
+          <path d="M11.4 0C5.5.2.8 5 .8 10.9c0 2.4.8 4.6 2 6.4L.8 24l7-2c1.7.9 3.6 1.4 5.6 1.4 5.9 0 10.7-4.8 10.7-10.7S17.3 0 11.4 0zm5.7 15.5c-.3.8-1.5 1.5-2.1 1.6-.5.1-1.2.1-1.9-.1-.4-.1-1-.3-1.7-.6-3-1.3-5-4.3-5.1-4.5-.1-.2-1.1-1.5-1.1-2.8 0-1.3.7-1.9 1-2.2.3-.3.6-.3.8-.3h.6c.2 0 .4 0 .6.5.2.5.7 1.8.8 1.9.1.1.1.3 0 .5-.1.2-.2.3-.3.4-.1.1-.3.3-.4.4-.1.1-.2.2-.1.4.5.8 1.1 1.5 1.7 2.1.7.7 1.5 1.2 2.4 1.5.2.1.4.1.5-.1.1-.2.6-.7.8-.9.2-.2.4-.2.6-.1.2.1 1.4.7 1.7.8.2.1.4.2.5.3 0 .2 0 .8-.3 1.6z" />
         </svg>
         Message us on Viber
       </a>

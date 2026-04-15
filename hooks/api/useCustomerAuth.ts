@@ -13,25 +13,24 @@ export const useCustomerSignup = () => {
       toast.success("Account created successfully!");
     },
     onError: (error) => {
-      toast.error(
-        error.message ?? "Failed to create an account!",
-      );
+      toast.error(error.message ?? "Failed to create an account!");
     },
   });
 };
 
 export const useCustomerLogin = () => {
-    const queryClient = useQueryClient();
+  const queryClient = useQueryClient();
 
-    return useMutation({
-        mutationFn: (data: Omit<CustomerCreateInput, "phone" | "fullname">) => apiClient.post("/auth/customer/login", data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({queryKey: ["customers"]});
-             queryClient.invalidateQueries({queryKey: ["orders"]});
-            toast.success("Login Successfully!")
-        },
-        onError: (error: any) =>{
-            toast.error(error.message ?? "Failed to login!")
-        }
-    }) 
-}
+  return useMutation({
+    mutationFn: (data: Omit<CustomerCreateInput, "phone" | "fullname">) =>
+      apiClient.post("/auth/customer/login", data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      toast.success("Login Successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(error.message ?? "Failed to login!");
+    },
+  });
+};

@@ -6,8 +6,8 @@ import Link from "next/link";
 import { useOrders } from "@/hooks/api/useOrders";
 import BrandLogo from "@/components/BrandLogo";
 import AuthModal from "./AuthModal";
-import { useCustomerMe } from "@/hooks/api/useAuthMe";
-import { useLogoutCustomer } from "@/hooks/api/useLogout";
+// --- BETTER AUTH IMPORTS ---
+import { authClient } from "@/lib/auth-client";
 import LogoutModal from "@/components/ui/LogoutModal";
 import Modal from "@/components/ui/Modal";
 import MapPage from "@/app/customer/map/page";
@@ -15,10 +15,11 @@ import { useBranch } from "@/contexts/BranchContext";
 import { syne } from "@/app/font";
 import { MODAL_TYPES, useModalQuery } from "@/hooks/utils/useModalQuery";
 import { DynamicIcon } from "@/lib/DynamicIcon";
+import { toast } from "sonner";
 
 const Header = () => {
-  const { data: currentUser, isPending, fetchStatus } = useCustomerMe();
-  const userLogout = useLogoutCustomer();
+  // --- USE BETTER AUTH SESSION ---
+  const { data: session, isPending: sessionPending } = authClient.useSession();
   const { selectedBranch } = useBranch();
 
   const {
@@ -28,6 +29,7 @@ const Header = () => {
   } = useModalQuery();
 
   const [mounted, setMounted] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -37,6 +39,20 @@ const Header = () => {
   const { data: placedOrders = [] } = useOrders({ type: "customer" });
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Better-Auth Logout function
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    await authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          handleCloseModal();
+          toast.success("Logged out successfully");
+          setIsLoggingOut(false);
+        },
+      },
+    });
+  };
 
   const activeOrdersCount =
     placedOrders.filter(
@@ -59,7 +75,6 @@ const Header = () => {
     >
       <div className="max-w-400 mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between lg:justify-around h-18 lg:h-20">
-          {/* Logo */}
           <BrandLogo />
 
           <button
@@ -72,8 +87,7 @@ const Header = () => {
                 ? selectedBranch
                   ? selectedBranch.name
                   : "Select Branch"
-                : "Select Branch"}{" "}
-              {/* matches server render */}
+                : "Select Branch"}
             </span>
             <DynamicIcon name="ChevronDown" size={16} className="shrink-0" />
           </button>
@@ -87,7 +101,6 @@ const Header = () => {
             </Link>
           </div>
 
-          {/* Right Actions */}
           <div className="flex items-center gap-2 sm:gap-4">
             <div className="hidden md:flex items-center gap-2 sm:gap-4">
               <Link
@@ -122,38 +135,30 @@ const Header = () => {
               </button>
             </div>
 
-            {/* Desktop Auth */}
+            {/* Desktop Auth Section */}
             <div className="hidden xl:flex items-center gap-2">
-              {isPending && fetchStatus !== "idle" ? (
+              {sessionPending ? (
                 <div className="flex items-center gap-3 animate-pulse">
-                  {/* avatar skeleton */}
                   <div className="w-6 h-6 rounded-full bg-gray-300"></div>
-
-                  {/* name skeleton */}
                   <div className="h-4 w-24 rounded bg-gray-300"></div>
-
-                  {/* logout skeleton */}
-                  <div className="h-4 w-16 rounded bg-gray-300 ml-2"></div>
                 </div>
-              ) : currentUser ? (
+              ) : session?.user ? (
                 <div className="flex items-center gap-3">
-                  {/* Username */}
                   <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100">
                     <div className="w-6 h-6 rounded-full bg-brand-color-500 flex items-center justify-center text-white text-xs font-bold">
-                      {currentUser.fullname?.[0]?.toUpperCase() || "N"}
+                      {session.user.name?.[0]?.toUpperCase() || "U"}
                     </div>
                     <span className="text-sm font-medium text-slate-700">
-                      {currentUser.fullname || "Name not found"}
+                      {session.user.name}
                     </span>
                   </div>
 
-                  {/* Logout */}
                   <button
                     onClick={() => handleOpenModal(MODAL_TYPES.LOGOUT)}
-                    disabled={userLogout.isPending}
+                    disabled={isLoggingOut}
                     className="flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-red-500 px-3 py-2 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
                   >
-                    {userLogout.isPending ? (
+                    {isLoggingOut ? (
                       <DynamicIcon
                         name="Loader2"
                         size={15}
@@ -162,7 +167,7 @@ const Header = () => {
                     ) : (
                       <DynamicIcon name="LogOut" size={15} />
                     )}
-                    {userLogout.isPending ? "Logging out..." : "Logout"}
+                    {isLoggingOut ? "Logging out..." : "Logout"}
                   </button>
                 </div>
               ) : (
@@ -189,11 +194,9 @@ const Header = () => {
               )}
             </div>
 
-            {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="xl:hidden p-2 darkText hover:bg-white/10 rounded-lg transition-colors"
-              aria-label={isMobileMenuOpen ? "Close menu" : "Menu button"}
             >
               {isMobileMenuOpen ? (
                 <DynamicIcon name="X" size={24} />
@@ -212,12 +215,12 @@ const Header = () => {
             <div className="gap-4 flex flex-col lg:hidden">
               <Link
                 href={"/orders"}
-                className="text-white md:hidden hover:bg-brand-color-500 p-2 rounded transition-colors "
+                className="text-white md:hidden hover:bg-brand-color-500 p-2 rounded transition-colors"
               >
                 Orders
               </Link>
               <button
-                onClick={() => {setIsCartOpen(true)}}
+                onClick={() => setIsCartOpen(true)}
                 className="text-left text-white md:hidden hover:bg-brand-color-500 p-2 rounded transition-colors"
               >
                 Cart
@@ -236,23 +239,21 @@ const Header = () => {
               </Link>
             </div>
 
-            {currentUser ? (
-              // logged in mobile menu
+            {session?.user ? (
               <div className="flex flex-col gap-2 pt-2">
-                {/* User info */}
                 <div className="flex items-center gap-3 px-4 py-3 bg-white/10 rounded-lg">
                   <div className="w-8 h-8 rounded-full bg-brand-color-500 flex items-center justify-center text-white text-sm font-bold">
-                    {currentUser.fullname?.[0]?.toUpperCase()}
+                    {session.user.name?.[0]?.toUpperCase()}
                   </div>
                   <div>
                     <p className="text-white text-sm font-semibold">
-                      {currentUser.fullname}
+                      {session.user.name}
                     </p>
-                    <p className="text-gray-400 text-xs">{currentUser.email}</p>
+                    <p className="text-gray-400 text-xs">
+                      {session.user.email}
+                    </p>
                   </div>
                 </div>
-
-                {/* Mobile logout */}
                 <button
                   onClick={() => {
                     setIsMobileMenuOpen(false);
@@ -260,7 +261,7 @@ const Header = () => {
                   }}
                   className="flex items-center justify-center gap-2 text-white bg-red-500/80 hover:bg-red-600 px-4 py-3 rounded-lg transition-colors disabled:opacity-50"
                 >
-                  {userLogout.isPending ? (
+                  {isLoggingOut ? (
                     <DynamicIcon
                       name="Loader2"
                       size={16}
@@ -269,11 +270,10 @@ const Header = () => {
                   ) : (
                     <DynamicIcon name="LogOut" size={16} />
                   )}
-                  {userLogout.isPending ? "Logging out..." : "Logout"}
+                  Logout
                 </button>
               </div>
             ) : (
-              // guest mobile menu
               <div className="flex gap-2 pt-2">
                 <button
                   onClick={() => {
@@ -306,16 +306,14 @@ const Header = () => {
           modalType === MODAL_TYPES.LOGIN || modalType === MODAL_TYPES.SIGNUP
         }
         onClose={handleCloseModal}
-        initialMode={
-          (modalType as typeof MODAL_TYPES.LOGIN) || typeof MODAL_TYPES.SIGNUP
-        }
+        initialMode={modalType as any}
       />
 
       {modalType === MODAL_TYPES.LOGOUT && (
         <LogoutModal
-          onConfirm={() => userLogout.mutate()}
+          onConfirm={handleLogout}
           onClose={handleCloseModal}
-          isLoading={userLogout.isPending}
+          isLoading={isLoggingOut}
         />
       )}
 
@@ -324,7 +322,7 @@ const Header = () => {
           onClose={handleCloseModal}
           title="Select Harrison's Branch"
           subTitle="Explore the map to find the nearest branch"
-          className={`${syne.className}`}
+          className={syne.className}
         >
           <MapPage />
         </Modal>
