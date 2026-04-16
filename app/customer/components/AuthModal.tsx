@@ -72,11 +72,11 @@ const AuthModal: React.FC<AuthModalProps> = ({
     await authClient.signIn.social(
       {
         provider: "google",
-        callbackURL: "https://food.harrisoninasalbbq.com.ph/",
+        callbackURL: "https://food.harrisoninasalbbq.com.ph",
       },
       {
         onError: (ctx) => {
-          console.error(ctx)
+          console.error(ctx);
           toast.error(ctx.error.message || "Google sign in failed");
           setIsSocialLoading(false);
         },
