@@ -21,6 +21,7 @@ export const auth = betterAuth({
   plugins: [nextCookies()],
   trustedOrigins: ["https://food.harrisoninasalbbq.com.ph/?modal=login"],
   advanced: {
+    useSecureCookies: true,
     defaultCookieAttributes: {
       sameSite: "none",
       secure: true,
