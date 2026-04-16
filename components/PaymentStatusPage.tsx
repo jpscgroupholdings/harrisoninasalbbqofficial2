@@ -76,8 +76,7 @@ export default function PaymentStatusPage({ type }: PaymentStatusPageProps) {
   const searchParams = useSearchParams();
   const [visible, setVisible] = useState(false);
 
-  const checkoutId = searchParams.get("id") || searchParams.get("checkoutId");
-  const referenceNumber = searchParams.get("requestReferenceNumber");
+  const referenceNumber = searchParams.get("referenceNumber");
 
   const config = statusConfig[type];
 
@@ -115,24 +114,10 @@ export default function PaymentStatusPage({ type }: PaymentStatusPageProps) {
         </p>
 
         {/* Details (only for success/failed) */}
-        {(checkoutId || referenceNumber) && type !== "cancel" && (
+        {referenceNumber && type !== "cancel" && (
           <div className="mb-7 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-left">
-            {checkoutId && (
-              <div className="flex items-center justify-between gap-4 py-1">
-                <span className="whitespace-nowrap text-xs text-gray-400">
-                  Checkout ID
-                </span>
-                <span className="break-all text-right font-mono text-xs font-medium text-gray-700">
-                  {checkoutId}
-                </span>
-              </div>
-            )}
             {referenceNumber && (
-              <div
-                className={`flex items-center justify-between gap-4 py-1 ${
-                  checkoutId ? "border-t border-gray-200" : ""
-                }`}
-              >
+              <div className={`flex items-center justify-between gap-4 py-1`}>
                 <span className="whitespace-nowrap text-xs text-gray-400">
                   Reference No.
                 </span>
@@ -152,7 +137,7 @@ export default function PaymentStatusPage({ type }: PaymentStatusPageProps) {
           >
             {config.primaryButton.label}
           </Link>
-          <Link 
+          <Link
             href={"/"}
             className={`rounded-xl px-6 py-3 text-sm transition-all duration-200 text-gray-400 hover:text-gray-700`}
           >
