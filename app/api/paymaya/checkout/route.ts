@@ -164,6 +164,12 @@ export async function POST(request: NextRequest) {
         },
       },
       items: mayaItems,
+      buyer: {
+        contact: {
+          email: customerEmail,
+          phone: customerPhone
+        }
+      },
       redirectUrl: {
         success: `${process.env.NEXT_PUBLIC_URL}/payment/success`,
         failure: `${process.env.NEXT_PUBLIC_URL}/payment/failed`,

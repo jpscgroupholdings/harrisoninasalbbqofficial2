@@ -23,12 +23,13 @@ export async function POST(
       );
     }
 
+ 
     const payload = {
       totalAmount: {
         value: order.total.totalAmount,
         currency: "PHP",
         details: {
-          discount: "0",
+          discount: 0,
           vatAmount: order.total.vatAmount,
           vatableSales: order.total.vatableSales,
         },
@@ -37,12 +38,19 @@ export async function POST(
         name: item.name,
         quantity: item.quantity,
         amount: {
-          value: item.price,
+          value: parseFloat(item.price),
         },
         totalAmount: {
-          value: item.price * item.quantity, // calculate the value
+          value: parseFloat((item.price * item.quantity).toFixed(2)), // calculate the value
+          currency: "PHP",
         },
       })),
+      buyer: {
+        contact: {
+          email: order.paymentInfo.customerEmail,
+          phone: order.paymentInfo.customerPhone
+        }
+      },
       redirectUrl: {
         success: `${process.env.NEXT_PUBLIC_URL}/payment/success`,
         failure: `${process.env.NEXT_PUBLIC_URL}/payment/failed`,
