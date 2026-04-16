@@ -26,53 +26,25 @@ const formatCurrency = (amount: number) =>
 /* ── Status-aware copy ── */
 function getStatusCopy(status: OrderStatus) {
   switch (status) {
-    case "pending":
-      return {
-        preview: "Order placed successfully",
-        heading: "Payment Needed",
-        message: "You're almost done! Please complete your payment to confirm your order!",
-      };
     case "paid":
       return {
         preview: "Payment received — your order is confirmed!",
         heading: "Payment confirmed",
-        message: "Your payment has been received and your order is confirmed. We will begin processing it shortly.",
+        message:
+          "Your payment has been received and your order is confirmed. We will begin processing it shortly.",
       };
-    case "preparing":
+    case "completed":
       return {
-        preview: "Your order is now being prepared.",
-        heading: "Your order is being prepared",
-        message: "Your order is currently being prepared. We will notify you once it is ready.",
-      };
-    case "ready":
-      return {
-        preview: "Your order is ready.",
-        heading: "Your order is ready",
-        message: "Your order has been completed and is ready. Please expect it to be served or delivered shortly.",
-      };
-    case "cancelled":
-      return {
-        preview: "Your order has been cancelled.",
-        heading: "Order cancelled",
-        message: "Your order has been cancelled. If you did not request this or have any concerns, please do not hesitate to contact us.",
-      };
-    case "failed":
-      return {
-        preview: "Your order could not be completed.",
-        heading: "Order unsuccessful",
-        message: "We were unable to process your order. Please try again or contact us if the issue continues.",
-      };
-    case "expired":
-      return {
-        preview: "Your order has expired.",
-        heading: "Order expired",
-        message: "Your order was not completed within the allotted time and has expired. You may place a new order at any time.",
+        preview: "Your order is completed.",
+        heading: "Enjoy your meal!",
+        message: "Thank you for dining in at Harrison House of Inasal & BBQ",
       };
     default:
       return {
         preview: "An update regarding your order.",
         heading: "Order update",
-        message: "There has been an update to your order. Please contact us if you have any questions or concerns.",
+        message:
+          "There has been an update to your order. Please contact us if you have any questions or concerns.",
       };
   }
 }
@@ -91,13 +63,24 @@ const mockOrder: OrderType = {
   estimatedTime: "25–35 minutes",
   notes: "Please make the sisig extra spicy. No sawsawan needed.",
   items: [
-    { _id: "p001", name: "Grilled Pork Sisig", price: 215, quantity: 2, image: "" },
+    {
+      _id: "p001",
+      name: "Grilled Pork Sisig",
+      price: 215,
+      quantity: 2,
+      image: "",
+    },
     { _id: "p002", name: "Crispy Pata", price: 680, quantity: 1, image: "" },
     { _id: "p003", name: "Java Rice ×3", price: 45, quantity: 3, image: "" },
     { _id: "p004", name: "Mango Shake", price: 110, quantity: 2, image: "" },
   ],
   paymentInfo: {
-    method: { type: "paymaya", description: "***** ***0900", scheme: "Visa", last4: "4242" },
+    method: {
+      type: "paymaya",
+      description: "***** ***0900",
+      scheme: "Visa",
+      last4: "4242",
+    },
     referenceNumber: "TXN-20260415-0081",
     paymentStatus: "paid",
     paidAt: new Date("2026-04-15T10:31:45.000Z"),
@@ -148,8 +131,7 @@ const OrderSummaryEmail = ({ order = mockOrder }: OrderSummaryEmailProps) => {
                 {statusCopy.heading}
               </Text>
               <Text className="text-sm text-gray-600 m-0">
-                Hi{" "}
-                <span className="font-medium text-black">{firstName}</span>
+                Hi <span className="font-medium text-black">{firstName}</span>
                 {" — "}
                 {statusCopy.message}
               </Text>
@@ -241,13 +223,19 @@ const OrderSummaryEmail = ({ order = mockOrder }: OrderSummaryEmailProps) => {
               </Text>
               <Row className="border-b border-gray-100 pb-1.5">
                 <Column>
-                  <Text className="text-xs text-gray-600 font-medium m-0">Item</Text>
+                  <Text className="text-xs text-gray-600 font-medium m-0">
+                    Item
+                  </Text>
                 </Column>
                 <Column className="w-12.5 text-center">
-                  <Text className="text-xs text-gray-600 font-medium m-0">Qty</Text>
+                  <Text className="text-xs text-gray-600 font-medium m-0">
+                    Qty
+                  </Text>
                 </Column>
                 <Column className="w-22.5 text-right">
-                  <Text className="text-xs text-gray-600 font-medium m-0">Price</Text>
+                  <Text className="text-xs text-gray-600 font-medium m-0">
+                    Price
+                  </Text>
                 </Column>
               </Row>
 
@@ -257,7 +245,9 @@ const OrderSummaryEmail = ({ order = mockOrder }: OrderSummaryEmailProps) => {
                     <Text className="text-sm text-black m-0">{item.name}</Text>
                   </Column>
                   <Column className="w-12.5 text-center">
-                    <Text className="text-sm text-gray-500 m-0">{item.quantity}</Text>
+                    <Text className="text-sm text-gray-500 m-0">
+                      {item.quantity}
+                    </Text>
                   </Column>
                   <Column className="w-22.5 text-right">
                     <Text className="text-sm text-black m-0">
@@ -283,7 +273,9 @@ const OrderSummaryEmail = ({ order = mockOrder }: OrderSummaryEmailProps) => {
               {total.vatAmount != null && (
                 <Row className="mb-2">
                   <Column>
-                    <Text className="text-sm text-gray-500 m-0">Tax (12% VAT)</Text>
+                    <Text className="text-sm text-gray-500 m-0">
+                      Tax (12% VAT)
+                    </Text>
                   </Column>
                   <Column className="text-right">
                     <Text className="text-sm text-gray-500 m-0">
@@ -295,7 +287,9 @@ const OrderSummaryEmail = ({ order = mockOrder }: OrderSummaryEmailProps) => {
               <Hr className="border-gray-100 my-2" />
               <Row>
                 <Column>
-                  <Text className="text-[15px] font-medium text-black m-0">Total</Text>
+                  <Text className="text-[15px] font-medium text-black m-0">
+                    Total
+                  </Text>
                 </Column>
                 <Column className="text-right">
                   <Text className="text-[15px] font-medium text-black m-0">
@@ -306,7 +300,9 @@ const OrderSummaryEmail = ({ order = mockOrder }: OrderSummaryEmailProps) => {
 
               {notes && (
                 <Section className="my-6 py-2 px-4 bg-gray-100 rounded-lg">
-                  <Text className="text-[11px] uppercase text-gray-600">Notes</Text>
+                  <Text className="text-[11px] uppercase text-gray-600">
+                    Notes
+                  </Text>
                   <Text className="text-sm text-black">{notes}</Text>
                 </Section>
               )}
