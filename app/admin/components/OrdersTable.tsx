@@ -40,6 +40,9 @@ export default function OrdersTable({ orders }: { orders: OrderType[] }) {
     "Actions",
   ];
 
+  const vatableSales = orderToView?.total?.vatableSales ?? 0
+  const totalAmount = orderToView?.total?.totalAmount ?? 0;
+
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden">
       <div className="p-6 border-b border-stone-200">
@@ -94,7 +97,7 @@ export default function OrdersTable({ orders }: { orders: OrderType[] }) {
                   </TableCell>
                   <TableCell className="px-6 py-4">
                     <span className="text-sm font-semibold text-stone-800">
-                      ₱{order.total.totalAmount.toFixed(2)}
+                      ₱{order.total.totalAmount?.toFixed(2)}
                     </span>
                   </TableCell>
                   <TableCell className="px-6 py-4">
@@ -164,7 +167,7 @@ export default function OrdersTable({ orders }: { orders: OrderType[] }) {
                       {orderToView._id}
                     </p>
                   </div>
-                  <StatusBadge status={orderToView.status} />
+                  <StatusBadge status={orderToView.status ?? ""} />
                 </div>
 
                 <hr className="border-stone-100" />
@@ -227,7 +230,7 @@ export default function OrdersTable({ orders }: { orders: OrderType[] }) {
                           </div>
                         </div>
                         <p className="text-sm font-medium text-gray-700">
-                          ₱{(item.price * item.quantity).toLocaleString()}
+                          ₱{(item.price * item.quantity).toLocaleString() ?? "-"}
                         </p>
                       </div>
                     ))}
@@ -240,11 +243,11 @@ export default function OrdersTable({ orders }: { orders: OrderType[] }) {
                 <div className="flex flex-col gap-1.5">
                   <div className="flex justify-between text-sm text-gray-500">
                     <span>VATable Sales</span>
-                    <span>₱{orderToView.total.vatableSales.toLocaleString()}</span>
+                    <span>₱{vatableSales?.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-sm font-semibold text-gray-900">
                     <span>Total</span>
-                    <span>₱{orderToView.total.totalAmount.toLocaleString()}</span>
+                    <span>₱{totalAmount.toLocaleString()}</span>
                   </div>
                 </div>
 

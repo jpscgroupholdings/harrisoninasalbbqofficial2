@@ -85,7 +85,7 @@ const OrderSummaryEmail = ({ order = mockOrder }: OrderSummaryEmailProps) => {
       <Html>
         <Head />
         <Preview>
-          Order #{_id.slice(-6).toUpperCase()} confirmed — we're on it!
+          Order #{paymentInfo?.referenceNumber ?? ""} confirmed — we're on it!
         </Preview>
 
         {/* Page bg */}

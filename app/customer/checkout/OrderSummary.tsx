@@ -143,13 +143,8 @@ const OrderSummaryStep = () => {
   } = useCart();
 
   const { mutateAsync: createOrder, isPending } = useCreateOrder();
-  const router = useRouter();
 
   const { openModal } = useModalQuery();
-
-  const [checkoutUrl, setCheckoutUrl] = useState<string>("");
-  const [referenceNumber, setReferenceNumber] = useState("");
-  const [placedTotalPrice, setPlaceTotalPrice] = useState(0);
 
   const [errors, setErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -219,7 +214,7 @@ const OrderSummaryStep = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  if (cartItems.length === 0 && !checkoutUrl) {
+  if (cartItems.length === 0) {
     return (
       <div className="bg-brand-color-50 text-center min-h-[70vh] flex flex-col items-center justify-center gap-4">
         <div className="bg-white p-12 rounded-xl shadow">
@@ -273,20 +268,14 @@ const OrderSummaryStep = () => {
         );
       }
 
-      setCheckoutUrl(data.redirectUrl);
-      setPlaceTotalPrice(totalPrice);
-      setReferenceNumber(data.referenceNumber);
+      window.location.href = data.redirectUrl;
+      
       clearCart();
     } catch (error: any) {
       toast.error("Order Failed", {
         description: error.message,
       });
     }
-  };
-
-  const handleModalClose = () => {
-    setCheckoutUrl("");
-    router.push("/orders");
   };
 
   return (
@@ -469,76 +458,6 @@ const OrderSummaryStep = () => {
               </Link>
             </div>
           </div>
-
-          {checkoutUrl && (
-            <Modal title="" onClose={handleModalClose}>
-              <div className="flex flex-col items-center text-center gap-5 py-4">
-                {/* Animated check */}
-                <div className="relative flex items-center justify-center w-20 h-20 rounded-full bg-green-50 ring-8 ring-green-50/50">
-                  <div className="absolute inset-0 rounded-full bg-green-200 animate-ping opacity-50" />
-                  <DynamicIcon
-                    name="CheckCircle2"
-                    size={88}
-                    className="text-green-500 relative z-10"
-                  />
-                </div>
-                {/* Text */}
-                <div className="space-y-1.5">
-                  <h3 className="text-xl font-bold text-slate-900">
-                    Order Placed!
-                  </h3>
-                  {referenceNumber && (
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(referenceNumber);
-                        toast.success("Copied!", {
-                          description: referenceNumber,
-                        });
-                      }}
-                      className="flex items-center gap-1.5 place-self-center text-brand-color-500 hover:text-brand-color-600 transition-colors group cursor-pointer"
-                    >
-                      <span className="text-sm font-semibold">
-                        {referenceNumber}
-                      </span>
-                      <DynamicIcon
-                        name="Copy"
-                        size={13}
-                        className="text-brand-color-400 group-hover:text-brand-color-500 transition-colors"
-                      />
-                    </button>
-                  )}
-                  <p className="text-sm text-slate-400 max-w-220px leading-relaxed">
-                    Complete your payment to confirm and prepare your order.
-                  </p>
-                </div>
-                {/* Total pill */}
-                <div className="bg-stone-50 border border-stone-100 rounded-full px-5 py-2 flex items-center gap-2">
-                  <span className="text-xs text-stone-600 font-medium">
-                    Amount due
-                  </span>
-                  <span className="text-base font-bold text-brand-color-500">
-                    ₱{placedTotalPrice.toFixed(2)}
-                  </span>
-                </div>
-                {/* Actions */}
-                <div className="flex flex-col gap-3 w-full pt-1">
-                  <a
-                    href={checkoutUrl}
-                    rel="noopener noreferrer"
-                    className="w-full flex items-center justify-center gap-2 bg-brand-color-500 hover:bg-[#c13500] active:scale-[0.98] text-white py-4 rounded-xl font-bold text-base shadow-md shadow-brand-color-500/30 transition-all"
-                  >
-                    Pay Now <DynamicIcon name="ExternalLink" size={15} />
-                  </a>
-                  <button
-                    onClick={handleModalClose}
-                    className="mx-auto text-xs text-slate-400 hover:text-slate-600 transition-colors cursor-pointer py-1"
-                  >
-                    I'll pay later
-                  </button>
-                </div>
-              </div>
-            </Modal>
-          )}
         </div>
       </div>
     </div>

@@ -1,6 +1,8 @@
+import OrderSummaryEmail from "@/app/emails/OrderSummaryEmail";
 import { getCustomerAuth } from "@/lib/getAuth";
 import { getAuthHeader } from "@/lib/getAuthHeader";
 import { connectDB } from "@/lib/mongodb";
+import { EMAIL_FROM, resend } from "@/lib/resend";
 import { Branch } from "@/models/Branch";
 import { Customer } from "@/models/Customer";
 import { Inventory } from "@/models/Inventory";
@@ -16,7 +18,6 @@ export async function POST(request: NextRequest) {
   session.startTransaction();
 
   try {
-    
     const customer = await getCustomerAuth(request);
 
     let customerId = null;
@@ -36,7 +37,7 @@ export async function POST(request: NextRequest) {
       customerName,
       customerEmail,
       customerPhone,
-      note,
+      notes,
     } = body;
 
     if (!branchId) {
@@ -62,7 +63,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Branch not found!" }, { status: 400 });
     }
 
-    let totalPrice = 0
+    let totalPrice = 0;
 
     // Separate Maya payload items from Order snapshot items
     const orderItems = [];
@@ -109,7 +110,7 @@ export async function POST(request: NextRequest) {
         { session },
       );
 
-      totalPrice += product.price * cartItem.quantity
+      totalPrice += product.price * cartItem.quantity;
 
       // Only fields that exist in your OrderItemSchema
       orderItems.push({
@@ -145,7 +146,7 @@ export async function POST(request: NextRequest) {
 
     const vatableSales = parseFloat((totalPrice / (1 + TAX_RATE)).toFixed(2));
     const vatAmount = parseFloat((totalPrice - vatableSales).toFixed(2));
-  
+
     if (!process.env.MAYA_PUBLIC_KEY) {
       throw new Error("Maya key not configured");
     }
@@ -190,7 +191,7 @@ export async function POST(request: NextRequest) {
       throw new Error(data.message ?? "Maya checkout failed");
     }
 
-    await Order.create(
+    const order = await Order.create(
       [
         {
           branchId,
@@ -198,7 +199,7 @@ export async function POST(request: NextRequest) {
           branchSnapshot: {
             name: branch.name,
             code: branch.code,
-            addres: branch.address,
+            address: branch.address,
             contactNumber: branch.contactNumber,
           },
           status: ORDER_STATUSES.PENDING,
@@ -211,12 +212,26 @@ export async function POST(request: NextRequest) {
             customerPhone,
           },
           total: { vatableSales, vatAmount, totalAmount: totalPrice },
-          note, // optional
+          notes, // optional
           //  No timeline.createdAt — timestamps:true already gives you createdAt
         },
       ],
       { session },
     );
+
+    const { error: emailError } = await resend.emails.send({
+      from: EMAIL_FROM,
+      to: order[0].paymentInfo.customerEmail,
+      subject: `Order Placed Successfully!`,
+      react: OrderSummaryEmail({ order: order[0] }),
+    });
+
+    if (emailError) {
+      return NextResponse.json(
+        { error: "Failed to send order summary email. Please try again." },
+        { status: 500 },
+      );
+    }
 
     await session.commitTransaction();
     session.endSession();

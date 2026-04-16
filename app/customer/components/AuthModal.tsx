@@ -76,6 +76,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
       },
       {
         onError: (ctx) => {
+          console.error(ctx)
           toast.error(ctx.error.message || "Google sign in failed");
           setIsSocialLoading(false);
         },

@@ -25,12 +25,12 @@ export async function POST(
 
     const payload = {
       totalAmount: {
-        value: order.total.total,
+        value: order.total.totalAmount,
         currency: "PHP",
         details: {
           discount: "0",
-          tax: order.total.tax,
-          subTotal: order.total.subTotal,
+          vatAmount: order.total.vatAmount,
+          vatableSales: order.total.vatableSales,
         },
       },
       items: order.items.map((item: any) => ({
@@ -57,6 +57,7 @@ export async function POST(
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Accept: "application/json",
           Authorization: getAuthHeader(),
         },
         body: JSON.stringify(payload),
