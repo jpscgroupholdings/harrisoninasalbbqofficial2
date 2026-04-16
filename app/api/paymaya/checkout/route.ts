@@ -228,7 +228,7 @@ export async function POST(request: NextRequest) {
     const { error: emailError } = await resend.emails.send({
       from: EMAIL_FROM,
       to: order[0].paymentInfo.customerEmail,
-      subject: `Order Placed Successfully!`,
+      subject: `Payment Needed!`,
       react: OrderSummaryEmail({ order: order[0] }),
     });
 
