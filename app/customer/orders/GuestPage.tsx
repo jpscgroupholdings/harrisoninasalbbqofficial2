@@ -4,13 +4,17 @@ import { MODAL_TYPES, useModalQuery } from "@/hooks/utils/useModalQuery";
 import { apiClient } from "@/lib/apiClient";
 import { DynamicIcon } from "@/lib/DynamicIcon";
 import { OrdersApiResponse } from "@/types/OrderTypes";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { GuestOrderModal } from "./GuestOrderModal";
 import Modal from "@/components/ui/Modal";
 import { useOrderActions } from "@/hooks/useOrderActions";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export const GuestOrderLookup = () => {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const reference = searchParams.get("referenceNumber") || "";
   const { openModal: handleOpenModal } = useModalQuery();
   const [referenceNumber, setReferenceNumber] = useState("");
   const [isSearching, setIsSearching] = useState(false);
@@ -21,9 +25,8 @@ export const GuestOrderLookup = () => {
     OrdersApiResponse["data"][number] | null
   >(null);
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = referenceNumber.trim();
+  const searchOrder = async (ref: string) => {
+    const trimmed = ref.trim();
     if (!trimmed) return;
 
     setIsSearching(true);
@@ -43,6 +46,18 @@ export const GuestOrderLookup = () => {
       setIsSearching(false);
     }
   };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    searchOrder(referenceNumber);
+  };
+
+  useEffect(() => {
+    if (reference) {
+      setReferenceNumber(reference);
+      searchOrder(reference);
+    }
+  }, [reference]);
 
   return (
     <div
@@ -131,7 +146,10 @@ export const GuestOrderLookup = () => {
           <GuestOrderModal
             order={foundOrder}
             onPayOrder={() => handlePayOrder(foundOrder._id)}
-            onCancelOrder={() => {handleCancelOrder(foundOrder._id); setFoundOrder(null)}}
+            onCancelOrder={() => {
+              handleCancelOrder(foundOrder._id);
+              setFoundOrder(null);
+            }}
             onBuyAgain={handleBuyAgain}
             isLoading={isLoading}
           />
