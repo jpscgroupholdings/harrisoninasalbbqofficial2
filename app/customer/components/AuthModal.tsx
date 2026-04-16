@@ -72,7 +72,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
     await authClient.signIn.social(
       {
         provider: "google",
-        callbackURL: "/", // Where to redirect after success
+        callbackURL: "https://food.harrisoninasalbbq.com.ph/",
       },
       {
         onError: (ctx) => {
