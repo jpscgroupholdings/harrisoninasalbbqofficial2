@@ -6,8 +6,8 @@ import { format } from "date-fns";
 
 interface GuestOrderModalProps {
   order: OrdersApiResponse["data"][number] | null;
-  onPayOrder: (id: string) => void;
-  onCancelOrder: (id: string) => void;
+  onPayOrder: () => void;
+  onCancelOrder: () => void;
   onBuyAgain: (items: any[]) => void;
   isLoading: boolean;
 }
@@ -32,8 +32,8 @@ function OrderActions({
   isLoading,
 }: {
   order: GuestOrderModalProps["order"];
-  onPayOrder: (id: string) => void;
-  onCancelOrder: (id: string) => void;
+  onPayOrder: () => void;
+  onCancelOrder: () => void;
   onBuyAgain: (items: any[]) => void;
   isLoading: boolean;
 }) {
@@ -58,7 +58,7 @@ function OrderActions({
     <div className="border-t border-slate-100 px-5 py-4 flex flex-col gap-2">
       {canPay && (
         <button
-          onClick={() => onPayOrder(order._id)}
+          onClick={onPayOrder}
           disabled={isLoading}
           className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold py-2.5 rounded-xl transition-colors"
         >
@@ -88,7 +88,7 @@ function OrderActions({
 
       {canCancel && (
         <button
-          onClick={() => onCancelOrder(order._id)}
+          onClick={onCancelOrder}
           disabled={isLoading}
           className="w-full flex items-center justify-center gap-2 bg-white hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed text-red-600 text-sm font-semibold py-2.5 rounded-xl border border-red-200 transition-colors"
         >
