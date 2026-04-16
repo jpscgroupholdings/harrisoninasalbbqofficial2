@@ -1,6 +1,6 @@
 /**
  * ORDER API ROUTE - /api/orders/[id]
- * 
+ *
  * Handles GET (fetch single order) and PATCH (update order status)
  * Uses orderConstants.ts for validation and status transitions
  */
@@ -13,9 +13,13 @@ import {
   STATUS_TRANSITIONS,
   isValidOrderStatus,
   TIMELINE_FIELD_MAP,
+  ORDER_STATUSES,
 } from "@/types/orderConstants";
 import { requireAdmin } from "@/lib/getAuth";
 import { STAFF_ROLES } from "@/types/staff";
+import { EMAIL_FROM, resend } from "@/lib/resend";
+import { getStatusSubject } from "@/app/api/paymaya/webhook/route";
+import OrderSummaryEmail from "@/app/emails/OrderSummaryEmail";
 
 // ============================================
 // GET /api/orders/[id]
@@ -31,7 +35,7 @@ export async function GET(
 ) {
   try {
     await connectDB();
-    const staff = await requireAdmin(request)
+    const staff = await requireAdmin(request);
 
     const { id } = await context.params;
 
@@ -39,20 +43,17 @@ export async function GET(
     if (!id || id.length !== 24) {
       return NextResponse.json(
         { error: "Invalid order ID format" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const order = await Order.findById(id);
 
     if (!order) {
-      return NextResponse.json(
-        { error: "Order not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-     // Check if staff is authorized for this order's branch
+    // Check if staff is authorized for this order's branch
     if (
       staff.role !== STAFF_ROLES.SUPERADMIN &&
       order.branchId?.toString() !== staff.branch?.toString()
@@ -93,8 +94,10 @@ export async function GET(
   } catch (error: any) {
     console.error("GET /api/orders/[id] error:", error);
     return NextResponse.json(
-      { error:  error instanceof Error ? error.message : "Failed to fetch order" },
-      { status: 500 }
+      {
+        error: error instanceof Error ? error.message : "Failed to fetch order",
+      },
+      { status: 500 },
     );
   }
 }
@@ -121,7 +124,7 @@ export async function PATCH(
     if (!id || id.length !== 24) {
       return NextResponse.json(
         { error: "Invalid order ID format" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -136,7 +139,7 @@ export async function PATCH(
           error: "Status is required",
           example: { status: "preparing" },
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -145,9 +148,11 @@ export async function PATCH(
       return NextResponse.json(
         {
           error: `Invalid status: "${newStatus}"`,
-          validStatuses: Object.values(STATUS_TRANSITIONS).flat().filter(Boolean),
+          validStatuses: Object.values(STATUS_TRANSITIONS)
+            .flat()
+            .filter(Boolean),
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -155,10 +160,7 @@ export async function PATCH(
     const order = await Order.findById(id);
 
     if (!order) {
-      return NextResponse.json(
-        { error: "Order not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
     // ============================================
@@ -166,7 +168,8 @@ export async function PATCH(
     // ============================================
 
     const currentStatus = order.status as OrderStatus;
-    const allowedNextStatus = STATUS_TRANSITIONS[currentStatus as keyof typeof STATUS_TRANSITIONS];
+    const allowedNextStatus =
+      STATUS_TRANSITIONS[currentStatus as keyof typeof STATUS_TRANSITIONS];
 
     // Check if transition is valid
     if (allowedNextStatus !== newStatus) {
@@ -175,7 +178,7 @@ export async function PATCH(
           acc[status] = nextStatus;
           return acc;
         },
-        {} as Record<string, string | null>
+        {} as Record<string, string | null>,
       );
 
       return NextResponse.json(
@@ -185,7 +188,7 @@ export async function PATCH(
           allowedNextStatus: allowedNextStatus || "no transitions allowed",
           allTransitions: transitionMap,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -201,7 +204,8 @@ export async function PATCH(
     // ============================================
 
     // Auto-update timeline when status changes
-    const timelineField = TIMELINE_FIELD_MAP[newStatus as keyof typeof TIMELINE_FIELD_MAP];
+    const timelineField =
+      TIMELINE_FIELD_MAP[newStatus as keyof typeof TIMELINE_FIELD_MAP];
 
     if (timelineField && timelineField !== null) {
       if (!order.timeline) {
@@ -212,6 +216,22 @@ export async function PATCH(
 
     // Save order
     await order.save();
+
+    if (order.status === ORDER_STATUSES.COMPLETED) {
+      const { error: emailError } = await resend.emails.send({
+        from: EMAIL_FROM,
+        to: order.paymentInfo.customerEmail,
+        subject: getStatusSubject(
+          order.status,
+          order.paymentInfo.referenceNumber,
+        ),
+        react: OrderSummaryEmail({ order: order }),
+      });
+
+      if (emailError) {
+        console.error("[Maya Webhook] Email failed:", emailError);
+      }
+    }
 
     // ============================================
     // RETURN RESPONSE
@@ -232,7 +252,7 @@ export async function PATCH(
     if (error.name === "ValidationError") {
       return NextResponse.json(
         { error: "Invalid order data", details: error.message },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -240,13 +260,16 @@ export async function PATCH(
     if (error.name === "CastError") {
       return NextResponse.json(
         { error: "Invalid order ID format" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to update order" },
-      { status: 500 }
+      {
+        error:
+          error instanceof Error ? error.message : "Failed to update order",
+      },
+      { status: 500 },
     );
   }
 }
