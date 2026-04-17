@@ -31,7 +31,7 @@ export default function ForgotPasswordButton({
     if (error) {
       toast.error(error.message || "Failed to send reset link.");
     } else {
-      toast.success("If that email exists, a reset link has been sent!");
+      toast.success("A reset link has been sent your email!");
     }
   };
 

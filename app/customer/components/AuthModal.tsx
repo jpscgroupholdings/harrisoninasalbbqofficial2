@@ -142,7 +142,17 @@ const AuthModal: React.FC<AuthModalProps> = ({
     return (
       <Modal
         title="Email Verification"
-        onClose={onClose}
+        onClose={() => {
+          onClose();
+          setVerificationSent(false);
+          setFormData({
+            fullname: "",
+            email: "",
+            phone: "",
+            password: "",
+            confirmPassword: "",
+          });
+        }}
         className={syne.className}
       >
         <div className="flex flex-col items-center text-center gap-4 py-4">
