@@ -33,12 +33,12 @@ const Sidebar = ({ isMobileOpen, onClose }: SidebarProps) => {
 
   const currentUser = useStaffContext()
   const pathname = usePathname();
-  const { data: placedOrders = [] } = useOrders({type: "admin"});
+  const { data: placedOrders} = useOrders({type: "admin"});
   const logout = useLogoutAdmin();
 
-  const pendingCount = placedOrders.filter(
+  const pendingCount = placedOrders?.data.filter(
     (order) => order.status === "pending",
-  ).length;
+  ).length ?? 0;
   // const lowProductStock = products.filter((order) => order.stock <= 10).length;
 
   const [logoutModal, setLogoutModal] = useState(false);
