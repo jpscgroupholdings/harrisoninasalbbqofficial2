@@ -28,6 +28,24 @@ export const ORDER_STATUSES = {
  */
 export type OrderStatus = (typeof ORDER_STATUSES)[keyof typeof ORDER_STATUSES];
 
+// =================== USED for select options =====================
+export const ORDER_STATUS_FILTER_LIST = [
+  ORDER_STATUSES.PENDING,
+  ORDER_STATUSES.PAID,
+  ORDER_STATUSES.PREPARING,
+  ORDER_STATUSES.READY,
+  ORDER_STATUSES.DISPATCHED,
+  ORDER_STATUSES.COMPLETED,
+  ORDER_STATUSES.CANCELLED,
+  ORDER_STATUSES.FAILED,
+  ORDER_STATUSES.EXPIRED,
+] as const satisfies readonly OrderStatus[];
+
+export const ORDER_STATUS_OPTIONS = ORDER_STATUS_FILTER_LIST.map((status) => ({
+  value: status,
+  label: status.charAt(0).toUpperCase() + status.slice(1),
+}));
+
 // ============================================
 // STATUS PRIORITY (for sorting)
 // ============================================
