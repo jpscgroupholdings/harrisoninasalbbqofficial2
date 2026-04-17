@@ -9,6 +9,8 @@ import { DynamicIcon } from "@/lib/DynamicIcon";
 import { maskEmail } from "@/lib/maskEmail";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
+import { ForgotPasswordEmail } from "@/app/emails/ForgotPasswordEmail";
+import ForgotPasswordButton from "@/components/ui/ForgotPasswordButton";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -282,16 +284,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
                   }
                 />
               )}
-              {isLogin && (
-                <div className="flex justify-end">
-                  <button
-                    type="button"
-                    className="text-sm text-brand-color-500 hover:underline"
-                  >
-                    Forgot password?
-                  </button>
-                </div>
-              )}
+              {isLogin && <ForgotPasswordButton email={formData.email} />}
               <button
                 type="submit"
                 disabled={isLoading || isSocialLoading}
