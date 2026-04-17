@@ -4,38 +4,51 @@ import {
   OrderStatus,
   STATUS_PRIORITY,
 } from "@/types/orderConstants";
+import { buildPaginationMeta } from "../query-helpers";
 
 export type OrderQueryOptions = {
   filter: Record<string, any>;
   page?: number;
   limit?: number;
-  sortBy?: "priority" | "date";
+  skip?: number;
+  sort?: Record<string, 1 | -1>;
 };
 
 export async function queryOrders(options: OrderQueryOptions) {
-  const { filter, page = 1, limit = 20, sortBy = "priority" } = options;
+  const { filter, page = 1, limit = 20, skip = 0 } = options;
 
-  const safePage = Math.max(1, page);
-  const safeLimit = Math.min(50, Math.max(1, limit));
-  const skip = (safePage - 1) * safeLimit;
+  // Map STATUS_PRIORITY into a MongoDB $switch expression
+  const priorityBranches = Object.entries(STATUS_PRIORITY).map(
+    ([status, priority]) => ({
+      case: { $eq: ["$status", status] },
+      then: priority,
+    }),
+  );
 
-  const [orders, total] = await Promise.all([
-    Order.find(filter)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(safeLimit)
-      .lean(),
-    Order.countDocuments(filter),
+  const [result] = await Order.aggregate([
+    { $match: filter },
+    {
+      // Add a numeric priority field for sorting
+      $addFields: {
+        statusPriority: {
+          $switch: {
+            branches: priorityBranches,
+            default: 99,
+          },
+        },
+      },
+    },
+    { $sort: { statusPriority: 1, createdAt: -1 } }, // sort BEFORE pagination
+    {
+      $facet: {
+        data: [{ $skip: skip }, { $limit: limit }],
+        total: [{ $count: "count" }],
+      },
+    },
   ]);
 
-  const sorted =
-    sortBy === "priority"
-      ? [...orders].sort(
-          (a, b) =>
-            STATUS_PRIORITY[a.status as OrderStatus] -
-            STATUS_PRIORITY[b.status as OrderStatus],
-        )
-      : orders;
+  const orders = result.data;
+  const total = result.total[0]?.count ?? 0;
 
   const formatter = (order: any) => ({
     _id: order._id,
@@ -52,13 +65,7 @@ export async function queryOrders(options: OrderQueryOptions) {
   });
 
   return {
-    data: sorted.map(formatter),
-    pagination: {
-      page: safePage,
-      limit: safeLimit,
-      total,
-      totalPages: Math.ceil(total / safeLimit),
-      hasMore: safePage < Math.ceil(total / safeLimit),
-    },
+    data: orders.map(formatter),
+    pagination: buildPaginationMeta(total, page, limit),
   };
 }
