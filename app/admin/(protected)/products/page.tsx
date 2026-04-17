@@ -7,15 +7,19 @@ import LoadingPage from "@/components/ui/LoadingPage";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Pagination from "@/components/ui/Pagination";
+import { SearchBar } from "@/components/ui/SearchBar";
 
 const ProductsPage = () => {
   const router = useRouter();
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [appliedSearch, setAppliedSearch] = useState("");
 
   const { data, isLoading, isError, error, refetch } = useProducts({
     page,
     limit,
+    search: appliedSearch,
   });
 
   const totalProducts = data?.pagination?.total ?? 0;
@@ -26,6 +30,11 @@ const ProductsPage = () => {
 
   const handleLimitChange = (newLimit: number) => {
     setLimit(newLimit);
+    setPage(1);
+  };
+
+  const handleSearch = () => {
+    setAppliedSearch(searchQuery);
     setPage(1);
   };
 
@@ -53,6 +62,14 @@ const ProductsPage = () => {
         onClick={() => router.push("/products/new")}
         btnTxt="+ Add Product"
         permission="products.create"
+      />
+
+      {/** Filters */}
+      <SearchBar
+        value={searchQuery}
+        onChange={setSearchQuery}
+        onSearch={handleSearch}
+        placeholder="Search product by name, price, type"
       />
 
       {/* Stats */}

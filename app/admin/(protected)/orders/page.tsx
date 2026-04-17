@@ -5,6 +5,13 @@ import OrdersTable from "@/app/admin/components/OrdersTable";
 import React, { useState } from "react";
 import { useOrders } from "@/hooks/api/useOrders";
 import Pagination from "@/components/ui/Pagination";
+import {
+  ORDER_STATUS_OPTIONS,
+  ORDER_STATUSES,
+  OrderStatus,
+} from "@/types/orderConstants";
+import { Search } from "lucide-react";
+import { SearchBar } from "@/components/ui/SearchBar";
 
 const OrdersPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -49,46 +56,12 @@ const OrdersPage = () => {
       </div>
 
       {/** Filters */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="w-full flex gap-4">
-            <InputField
-              type="text"
-              placeholder="Search order by ID or customer name..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            />
-            <button
-              onClick={handleSearch}
-              className="border rounded-xl px-4 cursor-pointer bg-brand-color-500 text-white"
-            >
-              Search
-            </button>
-          </div>
-          <select
-            value={statusFilter}
-            onChange={handleStatus}
-            className="px-6 py-3 rounded-xl border border-gray-200 bg-white font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-color-500"
-          >
-            <option value="all">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="preparing">Preparing</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
-        </div>
-
-        {/* Stats — now from server totals */}
-        <div className="mt-6 flex gap-6 text-sm">
-          <div>
-            <span className="text-gray-500">Total Orders:</span>
-            <span className="ml-2 font-semibold text-stone-800">
-              {pagination?.total ?? 0}
-            </span>
-          </div>
-        </div>
-      </div>
+      <SearchBar 
+      value={searchQuery}
+      onChange={setSearchQuery}
+      onSearch={handleSearch}
+      placeholder="Search for customer, email, status, reference"
+      />
 
       <OrdersTable orders={orders} />
 
