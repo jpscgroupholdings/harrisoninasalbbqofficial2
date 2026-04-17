@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
 
     const { page, limit, skip, sort, match } = parseRequestQuery(request, {
       exactFields: ["productType", "status"],
-      searchFields: ["name", "description"],
+      searchFields: ["name", "description", "productType",  "price"],
       defaultSort: { "category.position": 1, createdAt: -1 },
     });
 
