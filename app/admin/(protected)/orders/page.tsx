@@ -4,68 +4,38 @@ import { InputField } from "@/components/ui/InputField";
 import OrdersTable from "@/app/admin/components/OrdersTable";
 import React, { useState } from "react";
 import { useOrders } from "@/hooks/api/useOrders";
+import Pagination from "@/components/ui/Pagination";
 
 const OrdersPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [appliedSearch, setAppliedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const ordersPerPage = 10;
+  const [limit, setLimit] = useState(10);
 
-  const { data: placedOrders = [] } = useOrders({type: "admin"});
-
-  const filteredOrders = placedOrders.filter((order) => {
-    const searchableFields = [
-      order._id,
-      order.status,
-      order.paymentInfo?.customerName,
-      order.paymentInfo?.customerEmail,
-      order.paymentInfo?.customerPhone,
-      order.paymentInfo?.referenceNumber,
-      order.paymentInfo?.method?.type,
-    ].map((field) => field?.toLowerCase() ?? "");
-
-    const lowerQuery = searchQuery.toLowerCase();
-
-    const matchesSearch = searchableFields.some((field) =>
-      field.includes(lowerQuery),
-    );
-    const matchesStatus =
-      statusFilter === "all" || order.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
-
-  // Pagination
-  const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
-  const startIndex = (currentPage - 1) * ordersPerPage;
-  const paginatedOrders = filteredOrders.slice(
-    startIndex,
-    startIndex + ordersPerPage,
+  // ✅ pass all filters to the server
+  const { data } = useOrders(
+    { type: "admin" },
+    {
+      page: currentPage,
+      limit,
+      search: appliedSearch,
+      status: statusFilter === "all" ? undefined : statusFilter,
+    },
   );
 
-  const getPaginationRange = (currentPage: number, totalPages: number) => {
-    if (totalPages <= 7)
-      return Array.from({ length: totalPages }, (_, i) => i + 1);
+  const orders = data?.data ?? [];
+  const pagination = data?.pagination;
 
-    if (currentPage <= 4) return [1, 2, 3, 4, 5, "...", totalPages];
-    if (currentPage >= totalPages - 3)
-      return [
-        1,
-        "...",
-        totalPages - 4,
-        totalPages - 3,
-        totalPages - 2,
-        totalPages - 1,
-        totalPages,
-      ];
-    return [
-      1,
-      "...",
-      currentPage - 1,
-      currentPage,
-      currentPage + 1,
-      "...",
-      totalPages,
-    ];
+  // reset to page 1 when filters change
+  const handleSearch = () => {
+    setAppliedSearch(searchQuery);
+    setCurrentPage(1);
+  };
+
+  const handleStatus = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setStatusFilter(e.target.value);
+    setCurrentPage(1);
   };
 
   return (
@@ -81,19 +51,24 @@ const OrdersPage = () => {
       {/** Filters */}
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
         <div className="flex flex-col md:flex-row gap-4">
-          {/**Search */}
-          <div className="flex-1">
+          <div className="w-full flex gap-4">
             <InputField
               type="text"
               placeholder="Search order by ID or customer name..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
             />
+            <button
+              onClick={handleSearch}
+              className="border rounded-xl px-4 cursor-pointer bg-brand-color-500 text-white"
+            >
+              Search
+            </button>
           </div>
-          {/** Status Filter */}
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={handleStatus}
             className="px-6 py-3 rounded-xl border border-gray-200 bg-white font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-color-500"
           >
             <option value="all">All Status</option>
@@ -104,82 +79,31 @@ const OrdersPage = () => {
           </select>
         </div>
 
-        {/* Stats */}
+        {/* Stats — now from server totals */}
         <div className="mt-6 flex gap-6 text-sm">
           <div>
             <span className="text-gray-500">Total Orders:</span>
             <span className="ml-2 font-semibold text-stone-800">
-              {filteredOrders.length}
-            </span>
-          </div>
-          <div>
-            <span className="text-gray-500">Pending: </span>
-            <span className="ml-2 font-semibold text-amber-600">
-              {filteredOrders.filter((o) => o.status === "pending").length}
-            </span>
-          </div>
-          <div>
-            <span className="text-gray-500">Preparing: </span>
-            <span className="ml-2 font-semibold text-blue-600">
-              {filteredOrders.filter((o) => o.status === "preparing").length}
-            </span>
-          </div>
-          <div>
-            <span className="text-gray-500">Completed: </span>
-            <span className="ml-2 font-semibold text-emerald-600">
-              {filteredOrders.filter((o) => o.status === "completed").length}
+              {pagination?.total ?? 0}
             </span>
           </div>
         </div>
       </div>
 
-      {/** Orders Table */}
-      <OrdersTable orders={paginatedOrders} />
+      <OrdersTable orders={orders} />
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex justify-center gap-2">
-          <button
-            onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-            disabled={currentPage === 1}
-            className="px-4 py-2 rounded-lg border border-stone-200 text-stone-600 hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            Previous
-          </button>
-
-          {getPaginationRange(currentPage, totalPages).map((page, index) =>
-            page === "..." ? (
-              <span
-                key={`ellipsis-${index}`}
-                className="px-2 py-2 text-stone-400 select-none"
-              >
-                ...
-              </span>
-            ) : (
-              <button
-                key={page}
-                onClick={() => setCurrentPage(page as number)}
-                className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                  currentPage === page
-                    ? "bg-brand-color-500 text-white"
-                    : "border border-stone-200 text-stone-600 hover:bg-stone-100 cursor-pointer"
-                }`}
-              >
-                {page}
-              </button>
-            ),
-          )}
-
-          <button
-            onClick={() =>
-              setCurrentPage((prev) => Math.min(totalPages, prev + 1))
-            }
-            disabled={currentPage === totalPages}
-            className="px-4 py-2 rounded-lg border border-stone-200 text-stone-600 hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            Next
-          </button>
-        </div>
+      {pagination && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={pagination.totalPages}
+          total={pagination.total}
+          limit={limit}
+          onPageChange={setCurrentPage}
+          onLimitChange={(newLimit) => {
+            setLimit(newLimit);
+            setCurrentPage(1);
+          }}
+        />
       )}
     </section>
   );
