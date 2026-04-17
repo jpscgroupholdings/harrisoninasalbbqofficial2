@@ -7,6 +7,7 @@ import "@/models/Category";
 import "@/models/SubCategory";
 import { extractPublicId } from "@/helper/extractImagePublicId";
 import { requireAdmin, requireSuperAdmin } from "@/lib/getAuth";
+import { buildPaginationMeta, parseRequestQuery } from "@/lib/query-helpers";
 
 // ─── Zod Schemas ──────────────────────────────────────────────────────────────
 
@@ -26,7 +27,7 @@ const productBaseSchema = z.object({
   subcategory: z.string().nullable().optional(),
   image: z.string().optional(),
   imageFile: z.string().optional(),
-  
+
   // ✅ NEW: Creative content fields
   info: z
     .string()
@@ -38,7 +39,7 @@ const productBaseSchema = z.object({
     .max(2000, "Description must be less than 2000 characters")
     .optional()
     .default("Product description is not available"),
-  
+
   isSignature: z.boolean().optional().default(false),
   isPopular: z.boolean().optional().default(false),
   productType: z.enum(["solo", "combo", "set"]).default("solo"),
@@ -69,24 +70,25 @@ const productCreateSchema = productBaseSchema
 /**
  * GET /api/products
  * Fetch products with optional filtering and population
- * 
+ *
  * Query params:
  * - type: Filter by productType (solo, combo, set)
  * - limit: Limit results (0 = no limit)
  */
+
 export async function GET(request: NextRequest) {
   try {
     await connectDB();
 
-    const { searchParams } = new URL(request.url);
-    const typeFilter = searchParams.get("type");
-    const limit = parseInt(searchParams.get("limit") ?? "0");
+    const { page, limit, skip, sort, match } = parseRequestQuery(request, {
+      exactFields: ["productType", "status"],
+      searchFields: ["name", "description"],
+      defaultSort: { "category.position": 1, createdAt: -1 },
+    });
 
-    const matchStage: Record<string, any> = {};
-    if (typeFilter) matchStage.productType = typeFilter;
-
-    const products = await Product.aggregate([
-      ...(Object.keys(matchStage).length ? [{ $match: matchStage }] : []),
+    const basePipeline: any[] = [
+      // Use the merged match from parseRequestQuery
+      ...(Object.keys(match).length ? [{ $match: match }] : []),
       {
         $lookup: {
           from: "categories",
@@ -140,11 +142,28 @@ export async function GET(request: NextRequest) {
         },
       },
       { $unset: "_includedProducts" },
-      { $sort: { "category.position": 1, createdAt: -1 } },
-      ...(limit > 0 ? [{ $limit: limit }] : []),
+    ];
+
+    // Run count + paginated data in parallel
+    const [countResult, products] = await Promise.all([
+      Product.aggregate([...basePipeline, { $count: "total" }]),
+      Product.aggregate([
+        ...basePipeline,
+        { $sort: sort }, // dyanamic sort from parseRequestQuery
+        ...(limit > 0 ? [{ $skip: skip }, { $limit: limit }] : []),
+      ]),
     ]);
 
-    return NextResponse.json(products, { status: 200 });
+    const total = countResult[0]?.total ?? 0;
+
+    // Return paginated envelope instead of bare array
+    return NextResponse.json(
+      {
+        data: products,
+        pagination: buildPaginationMeta(total, page, limit),
+      },
+      { status: 200 },
+    );
   } catch (error: any) {
     console.error("GET /products error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -156,7 +175,7 @@ export async function GET(request: NextRequest) {
 /**
  * POST /api/products
  * Create a new product
- * 
+ *
  */
 export async function POST(request: NextRequest) {
   let uploadResult: any;
@@ -216,9 +235,9 @@ export async function POST(request: NextRequest) {
       image: finalImage,
       category,
       subcategory: subcategory ?? null,
-      
+
       info: info ?? "Product info is not available",
-      description: description ?? "Product description is not available",      
+      description: description ?? "Product description is not available",
       isSignature,
       isPopular,
       productType,
@@ -246,7 +265,10 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to create product" },
+      {
+        error:
+          error instanceof Error ? error.message : "Failed to create product",
+      },
       { status: 500 },
     );
   }
