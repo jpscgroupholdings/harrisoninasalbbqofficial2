@@ -24,7 +24,7 @@ const CartDrawer = () => {
 
   const handleCheckout = () => {
     setIsCartOpen(false);
-    router.push("/checkout");
+    router.push("/checkout?step=customer");
   };
 
   if (!isCartOpen) return null;
