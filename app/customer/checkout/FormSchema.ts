@@ -3,8 +3,8 @@
 import z from "zod";
 
 export const CustomerSchema = z.object({
-  firstname: z.string().min(1, "Firstname is required"),
-  lastname: z.string().min(1, "Last name is required"),
+  firstName: z.string().min(1, "Firstname is required"),
+  lastName: z.string().min(1, "Last name is required"),
 
   customerPhone: z
     .string()
@@ -22,7 +22,7 @@ export const ShippingSchema = z.object({
   line2: z.string().optional(),
   city: z.string().min(1, "City is required"),
   province: z.string().min(1, "Province is required"),
-  postalCode: z.string().min(1, "Postal code is required"),
+  zipCode: z.string().min(1, "Postal code is required"),
   country: z.literal("Philippines"),
   landmark: z.string().optional(),
 });

@@ -23,7 +23,9 @@ export async function POST(
       );
     }
 
-    const { paymentInfo } = order;
+    const { paymentInfo, shippingAddress } = order;
+    const { line1, line2, city, province, country, zipCode } =
+      shippingAddress;
 
     const referenceNumber = paymentInfo?.referenceNumber;
     const checkoutId = paymentInfo?.checkoutId;
@@ -50,11 +52,21 @@ export async function POST(
         },
       })),
       buyer: {
+        firstName: paymentInfo.firstName,
+        lastName: paymentInfo.lastName,
         contact: {
-          firstname: paymentInfo.firstname,
-          lastname: paymentInfo.lastname,
           email: paymentInfo.customerEmail,
           phone: paymentInfo.customerPhone,
+        },
+
+        shippingAddress: {
+          line1,
+          line2,
+          city,
+          province,
+          state: province,
+          zipCode,
+          countryCode: "PH",
         },
       },
       redirectUrl: {

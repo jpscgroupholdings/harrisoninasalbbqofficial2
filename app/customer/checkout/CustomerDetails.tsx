@@ -26,23 +26,23 @@ const CustomerDetails = ({
           label="First name"
           placeholder="Juan"
           type="text"
-          name="firstname"
-          value={customerData.firstname}
-          onChange={(e) => onChange("customer", "firstname", e.target.value)}
+          name="firstName"
+          value={customerData.firstName}
+          onChange={(e) => onChange("customer", "firstName", e.target.value)}
           required
           leftIcon={<DynamicIcon name="User" size={15} />}
-          error={errors.firstname}
+          error={errors.firstName}
         />
         <InputField
           label="Last Name"
           placeholder="Dela Cruz"
           type="text"
-          name="lastname"
-          value={customerData.lastname}
-          onChange={(e) => onChange("customer", "lastname", e.target.value)}
+          name="lastName"
+          value={customerData.lastName}
+          onChange={(e) => onChange("customer", "lastName", e.target.value)}
           required
           leftIcon={<DynamicIcon name="User" size={15} />}
-          error={errors.lastname}
+          error={errors.lastName}
         />
       </div>
       <InputField

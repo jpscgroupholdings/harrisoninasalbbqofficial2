@@ -25,11 +25,11 @@ const useFormErrors = (orderDetails: OrderFormState) => {
       const path = err.path.join(".");
 
       switch (path) {
-        case "customer.firstname":
-          formattedCustomerErrors.firstname = err.message;
+        case "customer.firstName":
+          formattedCustomerErrors.firstName = err.message;
           break;
-        case "customer.lastname":
-          formattedCustomerErrors.lastname = err.message;
+        case "customer.lastName":
+          formattedCustomerErrors.lastName = err.message;
           break;
         case "customer.customerPhone":
           formattedCustomerErrors.customerPhone = err.message;
@@ -46,8 +46,8 @@ const useFormErrors = (orderDetails: OrderFormState) => {
         case "shippingAddress.province":
           formattedShippingErrors.province = err.message;
           break;
-        case "shippingAddress.postalCode":
-          formattedShippingErrors.postalCode = err.message;
+        case "shippingAddress.zipCode":
+          formattedShippingErrors.zipCode = err.message;
           break;
       }
     });

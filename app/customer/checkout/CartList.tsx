@@ -93,9 +93,9 @@ const CartList = ({
   const { validateAll, customerErrors, shippingErrors } =
     useFormErrors(orderDetails);
 
-  const { firstname, lastname, customerPhone, customerEmail, notes } =
+  const { firstName, lastName, customerPhone, customerEmail, notes } =
     orderDetails?.customer;
-  const { line1, line2, city, postalCode, province, country, landmark } =
+  const { line1, line2, city, zipCode, province, country, landmark } =
     orderDetails?.shippingAddress;
 
   const {
@@ -110,15 +110,15 @@ const CartList = ({
 
   // check if current step has any errors or empty required fields
   const isDetailsIncomplete =
-    !orderDetails.customer.firstname ||
-    !orderDetails.customer.lastname ||
+    !orderDetails.customer.firstName ||
+    !orderDetails.customer.lastName ||
     !orderDetails.customer.customerEmail;
 
   const isShippingIncomplete =
     !orderDetails.shippingAddress.line1 ||
     !orderDetails.shippingAddress.city ||
     !orderDetails.shippingAddress.province ||
-    !orderDetails.shippingAddress.postalCode;
+    !orderDetails.shippingAddress.zipCode;
 
   const isNextDisabled =
     !selectedBranch ||
@@ -165,8 +165,8 @@ const CartList = ({
     try {
       const data = await createOrder({
         branchId: selectedBranch!._id,
-        firstname,
-        lastname,
+        firstName,
+        lastName,
         customerEmail,
         customerPhone: customerPhone || "",
         notes,
@@ -179,7 +179,7 @@ const CartList = ({
           line1,
           line2,
           city,
-          postalCode,
+          zipCode,
           province,
           country,
           landmark,

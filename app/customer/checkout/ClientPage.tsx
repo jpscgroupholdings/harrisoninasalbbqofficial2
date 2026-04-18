@@ -27,8 +27,8 @@ const ClientPage = () => {
 
   const [orderDetails, setOrderDetails] = useState<OrderFormState>({
     customer: {
-      firstname: "",
-      lastname: "",
+      firstName: "",
+      lastName: "",
       customerEmail: "",
       customerPhone: "",
       notes: "",
@@ -38,7 +38,7 @@ const ClientPage = () => {
       line2: "",
       city: "",
       province: "",
-      postalCode: "",
+      zipCode: "",
       country: "Philippines",
       landmark: "",
     },

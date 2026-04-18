@@ -75,7 +75,7 @@ const ShippingAddressSchema = new Schema(
     line2: { type: String },
     city: { type: String, required: true },
     province: { type: String, required: true },
-    postalCode: { type: String },
+    zipCode: { type: String },
     country: { type: String, default: "Philippines" },
 
     // optional but VERY useful for delivery apps
@@ -139,11 +139,11 @@ const OrderSchema = new Schema(
       },
 
       // Customer details
-      firstname: {
+      firstName: {
         type: String,
         required: true,
       },
-      lastname: {
+      lastName: {
         type: String,
         required: true,
       },

@@ -120,8 +120,8 @@ export interface OrdersApiResponse {
 
 export interface CreateOrderPayload {
   branchId: string;
-  firstname: string;
-  lastname: string;
+  firstName: string;
+  lastName: string;
   customerEmail?: string;
   customerPhone: string;
   notes?: string;
@@ -134,7 +134,7 @@ export interface CreateOrderPayload {
     line2?: string;
     city: string;
     province: string;
-    postalCode: string;
+    zipCode: string;
     country: "Philippines";
 
     // optional but VERY useful for delivery apps

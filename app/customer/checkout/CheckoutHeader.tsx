@@ -5,7 +5,7 @@ export const CheckoutHeader = ({ step }: { step: string }) => (
   <header className="z-20 bg-white/80 backdrop-blur-md border-b border-slate-100">
     <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
       <Link
-        href={step === "shipping" ? "?step=details" : "/"}
+        href={step === "shipping" ? "?step=customer" : "/"}
         className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 transition-colors"
       >
         <DynamicIcon name="ArrowLeft" size={15} />

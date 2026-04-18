@@ -77,12 +77,12 @@ const ShippingAddress = ({
           label="Postal Code"
           placeholder="e.g. 1100"
           type="text"
-          name="postalCode"
-          value={shippingAddress.postalCode}
-          onChange={(e) => onChange("shippingAddress","postalCode", e.target.value)}
+          name="zipCode"
+          value={shippingAddress.zipCode}
+          onChange={(e) => onChange("shippingAddress","zipCode", e.target.value)}
           required
           leftIcon={<DynamicIcon name="Hash" size={15} />}
-          error={errors.postalCode}
+          error={errors.zipCode}
         />
         <InputField
           label="Country"

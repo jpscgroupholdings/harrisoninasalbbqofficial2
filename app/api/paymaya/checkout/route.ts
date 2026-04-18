@@ -36,12 +36,15 @@ export async function POST(request: NextRequest) {
     const {
       branchId,
       items,
-      firstname,
-      lastname,
+      firstName,
+      lastName,
       customerEmail,
       customerPhone,
       notes,
+      shippingAddress
     } = body;
+
+    const {line1, line2, city, province, country, zipCode} = shippingAddress
 
     if (!branchId) {
       return NextResponse.json(
@@ -49,7 +52,7 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
-    if (!firstname || !customerPhone) {
+    if (!firstName || !lastName || !customerPhone) {
       return NextResponse.json(
         { error: "Customer details are required." },
         { status: 400 },
@@ -168,12 +171,22 @@ export async function POST(request: NextRequest) {
       },
       items: mayaItems,
       buyer: {
+        firstName,
+        lastName,
+
         contact: {
-          firstname: firstname,
-          lastname: lastname,
           email: customerEmail,
-          phone: customerPhone
-        }
+          phone: customerPhone,
+        },
+
+        shippingAddress: {
+          line1,
+          line2,
+          city,
+          state: province,
+          zipCode,
+          countryCode: "PH",
+        },
       },
       redirectUrl: {
         success: `${process.env.NEXT_PUBLIC_URL}/payment/success?referenceNumber=${referenceNumber}`,
@@ -218,10 +231,12 @@ export async function POST(request: NextRequest) {
           paymentInfo: {
             checkoutId: data.checkoutId,
             referenceNumber,
-            firstname,
-            lastname,
-            customerEmail, // optional
-            customerPhone,
+            firstName,
+            lastName,
+            customerEmail, 
+            customerPhone, // optional
+
+            shippingAddress
           },
           total: { vatableSales, vatAmount, totalAmount: totalPrice },
           notes, // optional
