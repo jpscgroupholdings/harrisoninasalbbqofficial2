@@ -14,7 +14,7 @@ export const CustomerSchema = z.object({
     .string()
     .email("Invalid emaild address"),
 
-  note: z.string().optional().or(z.literal("")),
+  notes: z.string().optional().or(z.literal("")),
 });
 
 export const ShippingSchema = z.object({

@@ -10,6 +10,7 @@ import { Inventory } from "@/models/Inventory";
 import { Order } from "@/models/Orders";
 import { Product } from "@/models/Product";
 import { ORDER_STATUSES } from "@/types/orderConstants";
+import { CreateOrderPayload } from "@/types/OrderTypes";
 import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest) {
       customerId = customer.id;
     }
 
-    const body = await request.json();
+    const body: CreateOrderPayload = await request.json();
 
     const MINIMUM_AMOUNT = 100;
     const TAX_RATE = 0.12;
@@ -35,7 +36,8 @@ export async function POST(request: NextRequest) {
     const {
       branchId,
       items,
-      customerName,
+      firstname,
+      lastname,
       customerEmail,
       customerPhone,
       notes,
@@ -47,7 +49,7 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
-    if (!customerName || !customerPhone) {
+    if (!firstname || !customerPhone) {
       return NextResponse.json(
         { error: "Customer details are required." },
         { status: 400 },
@@ -167,6 +169,8 @@ export async function POST(request: NextRequest) {
       items: mayaItems,
       buyer: {
         contact: {
+          firstname: firstname,
+          lastname: lastname,
           email: customerEmail,
           phone: customerPhone
         }
@@ -214,7 +218,8 @@ export async function POST(request: NextRequest) {
           paymentInfo: {
             checkoutId: data.checkoutId,
             referenceNumber,
-            customerName,
+            firstname,
+            lastname,
             customerEmail, // optional
             customerPhone,
           },

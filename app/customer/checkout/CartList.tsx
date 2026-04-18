@@ -93,7 +93,7 @@ const CartList = ({
   const { validateAll, customerErrors, shippingErrors } =
     useFormErrors(orderDetails);
 
-  const { firstname, lastname, customerPhone, customerEmail, note } =
+  const { firstname, lastname, customerPhone, customerEmail, notes } =
     orderDetails?.customer;
   const { line1, line2, city, postalCode, province, country, landmark } =
     orderDetails?.shippingAddress;
@@ -169,7 +169,7 @@ const CartList = ({
         lastname,
         customerEmail,
         customerPhone: customerPhone || "",
-        note,
+        notes,
 
         items: cartItems
           .filter((item) => item.quantity > 0)

@@ -51,6 +51,8 @@ export async function POST(
       })),
       buyer: {
         contact: {
+          firstname: paymentInfo.firstname,
+          lastname: paymentInfo.lastname,
           email: paymentInfo.customerEmail,
           phone: paymentInfo.customerPhone,
         },

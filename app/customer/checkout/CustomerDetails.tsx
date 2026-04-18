@@ -70,7 +70,7 @@ const CustomerDetails = ({
         label="Note (Optional)"
         placeholder="Enter any special instructions for your order"
         name="note"
-        value={customerData.note}
+        value={customerData.notes}
         onChange={(e) => onChange("customer", "note", e.target.value)}
       />
     </div>

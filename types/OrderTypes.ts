@@ -124,7 +124,7 @@ export interface CreateOrderPayload {
   lastname: string;
   customerEmail?: string;
   customerPhone: string;
-  note?: string;
+  notes?: string;
   items: {
     _id: string;
     quantity: number;

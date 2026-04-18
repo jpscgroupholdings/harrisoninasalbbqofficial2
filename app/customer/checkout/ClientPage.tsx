@@ -31,7 +31,7 @@ const ClientPage = () => {
       lastname: "",
       customerEmail: "",
       customerPhone: "",
-      note: "",
+      notes: "",
     },
     shippingAddress: {
       line1: "",
