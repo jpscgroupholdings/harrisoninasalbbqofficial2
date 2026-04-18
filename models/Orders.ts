@@ -68,6 +68,26 @@ const TimelineSchema = new Schema(
   { _id: false },
 );
 
+// Shipping Address Schema
+const ShippingAddressSchema = new Schema(
+  {
+    line1: { type: String, required: true },
+    line2: { type: String },
+    city: { type: String, required: true },
+    province: { type: String, required: true },
+    postalCode: { type: String },
+    country: { type: String, default: "Philippines" },
+
+    // optional but VERY useful for delivery apps
+    landmark: { type: String },
+    coordinates: {
+      lat: Number,
+      lng: Number,
+    },
+  },
+  { _id: false },
+);
+
 // ============================================
 // MAIN ORDER SCHEMA
 // ============================================
@@ -83,13 +103,13 @@ const OrderSchema = new Schema(
     customerId: {
       type: Schema.Types.ObjectId,
       ref: "Customer",
-      index: true
+      index: true,
     },
     branchSnapshot: {
       name: String, // captured at order time
       code: String, // e.g. OR-001
       address: String,
-      contactNumber: String
+      contactNumber: String,
     },
     status: {
       type: String,
@@ -111,11 +131,11 @@ const OrderSchema = new Schema(
 
       method: {
         type: {
-          type: String // "card" || "maya-wallet" 
+          type: String, // "card" || "maya-wallet"
         },
         description: String, // "Visa ending 0008" — Maya provides this
         last4: String, // card only, null for maya-wallet
-        scheme: String // "visa" | "mastercard" | null for maya-wallet
+        scheme: String, // "visa" | "mastercard" | null for maya-wallet
       },
 
       // Customer details
@@ -129,6 +149,10 @@ const OrderSchema = new Schema(
       },
       customerPhone: {
         type: String,
+        required: true,
+      },
+      shippingAddress: {
+        type: ShippingAddressSchema,
         required: true,
       },
     },

@@ -42,7 +42,24 @@ export interface OrderType {
     customerName: string;
     customerEmail: string;
     customerPhone: string;
+
+    shippingAddress: {
+      line1: string;
+      line2: string;
+      city: string;
+      province: string;
+      postalCode: string;
+      country: "Philippines";
+
+      // optional but VERY useful for delivery apps
+      landmark?: string;
+      coordinates?: {
+        lat: number;
+        lng: number;
+      };
+    };
   };
+
   total: {
     vatableSales: number;
     vatAmount?: number;
@@ -102,7 +119,8 @@ export interface OrdersApiResponse {
 
 export interface CreateOrderPayload {
   branchId: string;
-  customerName: string;
+  firstname: string;
+  lastname: string;
   customerEmail?: string;
   customerPhone: string;
   note?: string;
@@ -110,6 +128,21 @@ export interface CreateOrderPayload {
     _id: string;
     quantity: number;
   }[];
+  shippingAddress: {
+    line1: string;
+    line2?: string;
+    city: string;
+    province: string;
+    postalCode: string;
+    country: "Philippines";
+
+    // optional but VERY useful for delivery apps
+    landmark?: string;
+    coordinates?: {
+      lat: number;
+      lng: number;
+    };
+  };
 }
 
 /**
