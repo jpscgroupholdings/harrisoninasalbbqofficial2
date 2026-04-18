@@ -39,7 +39,8 @@ export interface OrderType {
       scheme?: string;
     };
 
-    customerName: string;
+    firstname: string;
+    lastname: string;
     customerEmail: string;
     customerPhone: string;
 

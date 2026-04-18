@@ -139,7 +139,11 @@ const OrderSchema = new Schema(
       },
 
       // Customer details
-      customerName: {
+      firstname: {
+        type: String,
+        required: true,
+      },
+      lastname: {
         type: String,
         required: true,
       },

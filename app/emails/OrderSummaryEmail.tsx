@@ -84,9 +84,20 @@ const mockOrder: OrderType = {
     referenceNumber: "TXN-20260415-0081",
     paymentStatus: "paid",
     paidAt: new Date("2026-04-15T10:31:45.000Z"),
-    customerName: "Maria Santos",
+    firstname: "Maria",
+    lastname: "Santos",
     customerEmail: "maria.santos@gmail.com",
     customerPhone: "+63 917 555 0123",
+
+    shippingAddress: {
+      line1: "Santol St.",
+      line2: "Poblacion",
+      city: "Makati City",
+      province: "Metro Manila",
+      postalCode: "4023",
+      country: "Philippines",
+      landmark: "Banda kina ate ruth",
+    },
   },
   total: { vatableSales: 1465.0, vatAmount: 175.8, totalAmount: 1640.8 },
 };
@@ -106,7 +117,7 @@ const OrderSummaryEmail = ({ order = mockOrder }: OrderSummaryEmailProps) => {
   } = order;
 
   const statusCopy = getStatusCopy(status);
-  const firstName = paymentInfo.customerName.split(" ")[0];
+  const {firstname} = paymentInfo
 
   return (
     <Tailwind>
@@ -131,7 +142,7 @@ const OrderSummaryEmail = ({ order = mockOrder }: OrderSummaryEmailProps) => {
                 {statusCopy.heading}
               </Text>
               <Text className="text-sm text-gray-600 m-0">
-                Hi <span className="font-medium text-black">{firstName}</span>
+                Hi <span className="font-medium text-black">{firstname}</span>
                 {" — "}
                 {statusCopy.message}
               </Text>
@@ -193,7 +204,7 @@ const OrderSummaryEmail = ({ order = mockOrder }: OrderSummaryEmailProps) => {
                     Customer
                   </Text>
                   <Text className="text-sm font-medium text-black mb-0.5">
-                    {paymentInfo.customerName}
+                    {paymentInfo.firstname} {paymentInfo.lastname}
                   </Text>
                   <Text className="text-sm text-gray-500 mb-0.5">
                     {paymentInfo.customerEmail}

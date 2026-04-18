@@ -79,7 +79,7 @@ export default function OrdersTable({ orders }: { orders: OrderType[] }) {
                   <TableCell className="px-6 py-4">
                     <div className="flex flex-col gap-0.5">
                       <span className="text-sm font-medium text-gray-900">
-                        {order.paymentInfo.customerName ?? "—"}
+                        {order.paymentInfo.firstname ?? "—"} {order.paymentInfo.lastname ?? "—"}
                       </span>
                       <span className="text-xs text-gray-500">
                         {order.paymentInfo.customerEmail ?? "—"}
@@ -181,7 +181,7 @@ export default function OrdersTable({ orders }: { orders: OrderType[] }) {
                     <div className="flex items-center gap-2">
                       <UserIcon size={14} className="text-gray-400" />
                       <span className="text-sm text-gray-700">
-                        {orderToView.paymentInfo?.customerName ?? "—"}
+                        {orderToView.paymentInfo?.firstname ?? "—"} {orderToView.paymentInfo.lastname ?? "—"}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
