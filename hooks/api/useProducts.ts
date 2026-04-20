@@ -143,6 +143,8 @@ export const useUpdateProduct = () => {
 
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      queryClient.invalidateQueries({ queryKey: ["subcategories"] });
     },
   });
 };

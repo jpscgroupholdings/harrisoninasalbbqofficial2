@@ -14,6 +14,7 @@ import {
 } from "@/types/products";
 import { DynamicIcon } from "@/lib/DynamicIcon";
 import { useRouter } from "next/navigation";
+import { categories_api, subcategories_api } from "../categories/hooks/api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -595,30 +596,14 @@ const ProductFormPage = ({ editProduct = null }: ProductFormPageProps) => {
         throw new Error("Please provide an image via upload, URL, or gallery");
 
       if (showCustomCategory && customCategory) {
-        const res = await fetch("/api/categories", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: customCategory }),
+        const newCat = await categories_api.create({
+          name: customCategory
         });
-        if (!res.ok) {
-          const err = await res.json();
-          toast.error(err.error || "Failed to create category");
-          return;
-        }
-        const newCat = await res.json();
-        categoryId = newCat._id;
+        categoryId = newCat?._id;
       }
 
       if (showCustomSubcategory && customSubcategory && categoryId) {
-        const res = await fetch("/api/subcategories", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name: customSubcategory,
-            category: categoryId,
-          }),
-        });
-        const newSub = await res.json();
+        const newSub = await subcategories_api.create({name: customSubcategory, categoryId});
         subcategoryId = newSub._id;
       }
 

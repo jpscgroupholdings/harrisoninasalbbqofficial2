@@ -210,7 +210,7 @@ const SubcategoriesPage = () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] }); // refresh count
       toast.success("Subcategory deleted!");
     },
-    onError: () => toast.error("Failed to delete subcategory"),
+    onError: (error: Error) => toast.error(error.message || "Failed to delete subcategory"),
   });
 
   const reorderMutation = useMutation({

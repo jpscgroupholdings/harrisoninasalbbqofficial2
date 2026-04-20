@@ -7,9 +7,9 @@ export const categories_api = {
 
   create: async (data: {
     name: string;
-    position: number;
+    position?: number;
     imageFile?: string;
-  }) => apiClient.post("/categories", data),
+  }) => apiClient.post<Category>("/categories", data),
 
   update: async ({
     id,
@@ -29,7 +29,7 @@ export const subcategories_api = {
   getByCategory: (categoryId: string) =>
     apiClient.get<SubCategory[]>(`/subcategories?category=${categoryId}`),
   create: async (data: { name: string; categoryId: string }) =>
-    apiClient.post("/subcategories", data),
+    apiClient.post<SubCategory>("/subcategories", data),
   update: async ({ id, data }: { id: string; data: { name?: string } }) =>
     apiClient.patch(`/subcategories/${id}`, data),
   delete: async (id: string) => apiClient.delete(`/subcategories/${id}`),
