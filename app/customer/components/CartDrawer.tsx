@@ -2,9 +2,9 @@
 
 import React from "react";
 import { useCart } from "@/contexts/CartContext";
-import { ArrowRight, Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import OrderNowButton from "@/components/ui/OrderNowButton";
+import { DynamicIcon } from "@/lib/DynamicIcon";
 
 const CartDrawer = () => {
   const router = useRouter();
@@ -41,7 +41,7 @@ const CartDrawer = () => {
         {/** Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
           <div className="flex items-center gap-3">
-            <ShoppingBag className="text-brand-color-500" size={20} />
+            <DynamicIcon name="ShoppingCart" className="text-brand-color-500" size={20} />
             <h2 className="text-xl font-bold text-gray-900">My order</h2>
           </div>
           <div className="flex items-center gap-2">
@@ -59,7 +59,7 @@ const CartDrawer = () => {
               onClick={() => setIsCartOpen(false)}
               className="p-2 hover:bg-gray-100 rounded-full"
             >
-              <X size={20} className="text-gray-500" />
+              <DynamicIcon name="X" size={20} className="text-gray-500" />
             </button>
           </div>
         </div>
@@ -69,7 +69,7 @@ const CartDrawer = () => {
           {cartItems.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center space-y-2">
               <div className="p-2 bg-gray-100 rounded-full items-center">
-                <ShoppingBag size={24} className="text-slate-600" />
+                <DynamicIcon name="ShoppingCart" size={24} className="text-slate-600" />
               </div>
               <h3 className="text-lg font-semibold text-gray-400">
                 Your cart is empty
@@ -107,7 +107,7 @@ const CartDrawer = () => {
                           }
                           className="p-1.5 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
                         >
-                          <Minus size={14} />
+                          <DynamicIcon name="Minus" size={14} />
                         </button>
                         <span className="font-semibold text-sm w-6 text-center">
                           {item.quantity}
@@ -118,7 +118,7 @@ const CartDrawer = () => {
                           }
                           className="p-1.5 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
                         >
-                          <Plus size={14} />
+                          <DynamicIcon name="Plus" size={14} />
                         </button>
                       </div>
 
@@ -126,7 +126,7 @@ const CartDrawer = () => {
                         onClick={() => removeFromCart(item._id)}
                         className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors cursor-pointer"
                       >
-                        <Trash2 size={16} />
+                        <DynamicIcon name="Trash2" size={16} />
                       </button>
                     </div>
                   </div>
@@ -162,7 +162,7 @@ const CartDrawer = () => {
               className="w-full bg-brand-color-500 hover:bg-[#c13500] text-white py-4 rounded-xl font-bold text-lg transition-colors shadow-lg hover:shadow-xl flex items-center justify-center gap-2 cursor-pointer"
             >
               Proceed to checkout
-              <ArrowRight size={20} />
+              <DynamicIcon name="ArrowRight" size={20} />
             </button>
 
             <button
