@@ -81,10 +81,18 @@ export async function GET(request: NextRequest) {
     await connectDB();
 
     const { page, limit, skip, sort, match } = parseRequestQuery(request, {
-      exactFields: ["productType", "status"],
-      searchFields: ["name", "description", "productType",  "price"],
+      exactFields: ["productType", "status", "category", "subcategory"],
+      searchFields: ["name", "description", "productType", "price"],
       defaultSort: { "category.position": 1, createdAt: -1 },
     });
+
+    const searchParams = new URL(request.url).searchParams;
+    const categoryName = searchParams.get("categoryName");
+    const subcategoryName = searchParams.get("subcategoryName");
+
+    const postLookupMatch: any = {};
+    if (categoryName) postLookupMatch["category.name"] = categoryName;
+    if (subcategoryName) postLookupMatch["subcategory.name"] = subcategoryName;
 
     const basePipeline: any[] = [
       // Use the merged match from parseRequestQuery
@@ -107,6 +115,7 @@ export async function GET(request: NextRequest) {
         },
       },
       { $unwind: { path: "$subcategory", preserveNullAndEmptyArrays: true } },
+      ...(Object.keys(postLookupMatch).length ? [{ $match: postLookupMatch }] : []),
       {
         $lookup: {
           from: "products",
