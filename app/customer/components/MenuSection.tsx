@@ -1,17 +1,20 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import ProductCard from "./ProductCard";
 import { LINKS } from "@/constant/links";
 import { useScrollToSection } from "@/hooks/utils/useScrollToSection";
 import { Category } from "@/types/category";
 import { useMenuCategories } from "@/app/main/components/CategoryCarousel";
-import { BranchProduct, useBranchProduct } from "@/hooks/api/useBranchProduct";
+import {
+  BranchProduct,
+  useBranchProductInfinite,
+} from "@/hooks/api/useBranchProductInfinite";
 import { useBranch } from "@/contexts/BranchContext";
-import { useProducts } from "@/hooks/api/useProducts";
 import PromoBanner from "./PromoBanner";
 import { DynamicIcon } from "@/lib/DynamicIcon";
 import { Product } from "@/types/products";
+import { useProductsInfinite } from "@/hooks/api/useInfiniteProducts";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -27,8 +30,11 @@ interface CategoryGroup {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function groupProducts(products: BranchProduct[]): CategoryGroup[] {
-  const categoryMap = new Map<string, Map<string | null, BranchProduct[]>>();
+function groupProducts(products: (BranchProduct | Product)[]): CategoryGroup[] {
+  const categoryMap = new Map<
+    string,
+    Map<string | null, (BranchProduct | Product)[]>
+  >();
 
   for (const product of products) {
     const catName = product.category?.name ?? "Uncategorized";
@@ -54,40 +60,6 @@ const MenuSection = () => {
   const { selectedBranch } = useBranch();
   const branchId = selectedBranch?._id;
 
-  // Always fetch all products (for no-branch browsing)
-  const {
-    data: allProducts,
-    refetch: refetchAll,
-    isLoading: isAllLoading,
-    isError: isAllError,
-  } = useProducts();
-
-  // Fetch branch products only when branch is selected
-  const {
-    data: branchProductsRaw,
-    refetch: refetchBranch,
-    isLoading: isBranchLoading,
-    isError: isBranchError,
-  } = useBranchProduct(branchId ?? "");
-
-  // Use branch products if available, otherwise fall back to all products
-  const dynamicProducts: BranchProduct[] | Product[] = branchId
-    ? (branchProductsRaw ?? [])
-    : allProducts?.data ?? [];
-
-  useScrollToSection();
-
-  const isLoading = branchId ? isBranchLoading : isAllLoading;
-  const isError = branchId ? isBranchError : isAllError;
-  const refetch = branchId ? refetchBranch : refetchAll;
-
-  const {
-    data: categories,
-    isPending: isCategoriesPending,
-    isError: isCategoriesError,
-    refetch: refetchCategories,
-  } = useMenuCategories();
-
   const [activeCategory, setActiveCategory] = useState<string>("All");
   const [activeSubcategory, setActiveSubcategory] = useState<string | null>(
     null,
@@ -97,19 +69,106 @@ const MenuSection = () => {
   );
 
   const contentRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null); // for IntersectionObserver
+
+  // Always fetch all products (for no-branch browsing)
+  const {
+    data: infiniteData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: isAllLoading,
+    isError: isAllError,
+    refetch: refetchAll,
+  } = useProductsInfinite({
+    limit: 20,
+    categoryName: activeCategory !== "All" ? activeCategory : undefined,
+    subcategoryName: activeSubcategory ?? undefined,
+    enabled: !branchId,
+  });
+
+  const allProducts = infiniteData?.pages.flatMap((p) => p.data) ?? [];
+
+  // Fetch branch products only when branch is selected
+  const {
+    data: branchInfiniteData,
+    fetchNextPage: fetchNextBranchPage,
+    hasNextPage: hasBranchNextPage,
+    isFetchingNextPage: isFetchingNextBranchPage,
+    isLoading: isBranchLoading,
+    isError: isBranchError,
+    refetch: refetchBranch,
+  } = useBranchProductInfinite(branchId ?? "", {
+    limit: 20,
+    categoryName: activeCategory !== "All" ? activeCategory : undefined,
+    subcategoryName: activeSubcategory ?? undefined,
+    enabled: !!branchId, // only fires when branch selected
+  });
+
+  const branchProducts = branchInfiniteData?.pages.flatMap((p) => p.data) ?? [];
+
+  // Use branch products if available, otherwise fall back to all products
+  const dynamicProducts = branchId ? (branchProducts ?? []) : allProducts;
+  const isLoading = branchId ? isBranchLoading : isAllLoading;
+  const isError = branchId ? isBranchError : isAllError;
+  const refetch = branchId ? refetchBranch : refetchAll;
+
+  useScrollToSection();
+
+  const {
+    data: categories,
+    isPending: isCategoriesPending,
+    isError: isCategoriesError,
+    refetch: refetchCategories,
+  } = useMenuCategories();
+
+  const handleObserver = useCallback(
+    (entries: IntersectionObserverEntry[]) => {
+      if (!entries[0].isIntersecting) return;
+
+      if (branchId) {
+        if (hasBranchNextPage && !isFetchingNextBranchPage)
+          fetchNextBranchPage();
+      } else {
+        if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+      }
+    },
+    [
+      branchId,
+      hasNextPage,
+      isFetchingNextPage,
+      fetchNextPage,
+      hasBranchNextPage,
+      isFetchingNextBranchPage,
+      fetchNextBranchPage,
+    ],
+  );
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(handleObserver, {
+      threshold: 0.1,
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [handleObserver]);
 
   // ── Filter + group ──────────────────────────────────────────────────────────
 
-  const filteredProducts = dynamicProducts.filter((p) => {
-    if (activeCategory !== "All" && p.category?.name !== activeCategory)
-      return false;
-    if (
-      activeSubcategory &&
-      (p.subcategory?.name ?? null) !== activeSubcategory
-    )
-      return false;
-    return true;
-  });
+  // ── Branch-side client filtering (branch products still filtered locally) ──
+  const filteredProducts = branchId
+    ? dynamicProducts.filter((p) => {
+        if (activeCategory !== "All" && p.category?.name !== activeCategory)
+          return false;
+        if (
+          activeSubcategory &&
+          (p.subcategory?.name ?? null) !== activeSubcategory
+        )
+          return false;
+        return true;
+      })
+    : dynamicProducts; // already filtered server-side for non-branch
 
   const groupedItems = groupProducts(filteredProducts);
 
@@ -125,7 +184,6 @@ const MenuSection = () => {
   const handleSelectCategory = (categoryName: string) => {
     setActiveCategory(categoryName);
     setActiveSubcategory(null);
-
     scrollToContent();
 
     if (categoryName === "All") {
@@ -141,14 +199,12 @@ const MenuSection = () => {
 
   const handleSelectSubcategory = (subcategoryName: string | null) => {
     setActiveSubcategory(subcategoryName);
-
     scrollToContent();
   };
 
-  // ── Sidebar helpers ───────────────────────────────────────────────────────
-
   const getSubcategoriesForCategory = (categoryName: string): string[] => {
     const subs = new Set<string>();
+    // For branch mode, derive from local data; for server mode, from loaded pages
     dynamicProducts
       .filter((p) => p.category?.name === categoryName)
       .forEach((p) => {
@@ -161,19 +217,23 @@ const MenuSection = () => {
 
   let globalIndex = 0;
 
-  const ProductGrid = ({ items }: { items: BranchProduct[] }) => (
+  const ProductGrid = ({ items }: { items: (BranchProduct | Product)[] }) => (
     <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 auto-rows-fr gap-4 md:gap-5">
-      {items.map((item) => {
+      {items.map((item, indexItem) => {
         const index = globalIndex++;
         return (
           <div
-            key={index}
+            key={index || indexItem}
             data-index={index}
             id={item._id}
-            className={`product-card-wrapper h-full transition-all duration-500`}
+            className="product-card-wrapper h-full transition-all duration-500"
             style={{ transitionDelay: `${(index % 8) * 60}ms` }}
           >
-            <ProductCard item={item} hasBranch={!!branchId} selectedBranch={selectedBranch?._id} />
+            <ProductCard
+              item={item as BranchProduct}
+              hasBranch={!!branchId}
+              selectedBranch={selectedBranch?._id}
+            />
           </div>
         );
       })}
@@ -186,7 +246,6 @@ const MenuSection = () => {
         <div className="space-y-12">
           {groupedItems.map(({ categoryName, subcategoryGroups }) => (
             <div key={categoryName}>
-              {/* Category header — only when All is selected */}
               {activeCategory === "All" && (
                 <div className="mb-7">
                   <h2 className="text-2xl font-bold text-[#1a1a1a] tracking-tight">
@@ -213,19 +272,41 @@ const MenuSection = () => {
               </div>
             </div>
           ))}
+
+          {/* ── Infinite scroll sentinel ─────────────────────────────── */}
+          <div ref={sentinelRef} className="py-4 flex justify-center">
+            {(isFetchingNextPage || isFetchingNextBranchPage) && (
+              <div className="flex flex-col items-center gap-2">
+                <div className="inline-block animate-spin">
+                  <div className="h-6 w-6 border-4 border-gray-200 border-t-brand-color-500 rounded-full" />
+                </div>
+                <h3>Finding best product for you..</h3>
+              </div>
+            )}
+            {branchId && !hasBranchNextPage && branchProducts.length > 0 && (
+              <p className="text-xs text-gray-400">You've seen everything!</p>
+            )}
+            {!branchId && !hasNextPage && allProducts.length > 0 && (
+              <p className="text-xs text-gray-400">You've seen everything!</p>
+            )}
+          </div>
         </div>
       ) : isLoading ? (
         <div className="text-center py-20">
           <div className="inline-block animate-spin mb-4">
             <div className="h-8 w-8 border-4 border-gray-200 border-t-brand-color-500 rounded-full" />
           </div>
-          <h3 className="text-base font-semibold text-gray-500 mb-1">
+          <h3 className="text-base font-semibold text-black mb-1">
             Loading products...
           </h3>
         </div>
       ) : isError ? (
         <div className="text-center py-20">
-          <DynamicIcon name="Search" size={32} className="mx-auto text-red-200 mb-4" />
+          <DynamicIcon
+            name="Search"
+            size={32}
+            className="mx-auto text-red-200 mb-4"
+          />
           <h3 className="text-base font-semibold text-gray-500 mb-1">
             Failed to load products
           </h3>
@@ -239,7 +320,11 @@ const MenuSection = () => {
         </div>
       ) : (
         <div className="text-center py-20">
-          <DynamicIcon name="Search" size={32} className="mx-auto text-gray-200 mb-4" />
+          <DynamicIcon
+            name="Search"
+            size={32}
+            className="mx-auto text-gray-200 mb-4"
+          />
           <h3 className="text-base font-semibold text-gray-500 mb-1">
             No products found
           </h3>
