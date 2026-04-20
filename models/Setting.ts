@@ -9,7 +9,6 @@ const SettingsSchema = new Schema(
         type: String,
         required: [true, "Phone number is required"],
         match: [/^\+?[\d\s\-().]{7,15}$/, "Please enter a valid phone number"],
-        select: false,
       },
       email: {
         type: String,
@@ -20,23 +19,33 @@ const SettingsSchema = new Schema(
           /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
           "Please fill a valid email address",
         ],
-        unique: true
+        unique: true,
+      },
+      viber: {
+        type: String,
+        match: [/^\+?[\d\s\-().]{7,15}$/, "Please enter a valid viber number"],
       },
     },
-    operatingHours: [
-      {
-        day: {
+    operatingHours: {
+      // Which days the store is open — e.g. ["Mon", "Tue", "Wed", "Thu", "Fri"]
+      days: [
+        {
           type: String,
           enum: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
         },
-        open: { type: String, match: [/^\d{2}:\d{2}$/, "Use HH:MM format"] },
-        close: { type: String, match: [/^\d{2}:\d{2}$/, "Use HH:MM format"] },
-        closed: { type: Boolean, default: false },
+      ],
+      openTime: {
+        type: String,
+        match: [/^\d{2}:\d{2}$/, "Use HH:MM format"],
       },
-    ],
-    taxRatePercent: { type: Number, required: true, min: 0, max: 1 },
+      closeTime: {
+        type: String,
+        match: [/^\d{2}:\d{2}$/, "Use HH:MM format"],
+      },
+      isClosed: { type: Boolean, default: false },
+    },
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
 export const Settings =
