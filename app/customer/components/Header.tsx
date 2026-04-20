@@ -108,7 +108,7 @@ const Header = () => {
                 className="relative p-2 sm:p-3 bg-gray-100 hover:bg-gray-200 rounded-full transition-all duration-300 group cursor-pointer"
               >
                 <DynamicIcon
-                  name="BaggageClaim"
+                  name="ShoppingBag"
                   size={20}
                   className="group-hover:scale-110 transition-transform darkText"
                 />
@@ -123,7 +123,7 @@ const Header = () => {
                 className="relative p-2 sm:p-3 bg-gray-100 hover:bg-gray-200 rounded-full transition-all duration-300 group cursor-pointer"
               >
                 <DynamicIcon
-                  name="ShoppingBag"
+                  name="ShoppingCart"
                   size={20}
                   className="group-hover:scale-110 transition-transform darkText"
                 />
