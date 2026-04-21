@@ -19,6 +19,7 @@ import { useState } from "react";
 import {
   formatBranchDataForForm,
   useBranches,
+  useDeleteBranch,
   useToggleBranchStatus,
 } from "@/hooks/api/useBranch";
 import BranchModal from "./BranchModal";
@@ -35,13 +36,16 @@ export const emptyForm: BranchFormData = {
 export default function BranchManagement() {
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState<BranchFormData>(emptyForm);
-  const [branchToEdit, setBranchToEdit] = useState<Branch | null>(null);
+
+  const [branchToUpdate, setBranchToUpdate] = useState<Branch | null>(null);
+
   const [errors, setErrors] = useState<BranchFormErrors>({});
   const [search, setSearch] = useState("");
 
   const { data: branches = [], isLoading } = useBranches();
 
   const toggleStatus = useToggleBranchStatus();
+  const deleteBranch = useDeleteBranch();
 
   const filtered = branches.filter(
     (b) =>
@@ -50,17 +54,26 @@ export default function BranchManagement() {
       b.address.toLowerCase().includes(search.toLowerCase()),
   );
 
-  const handleEditClick = (branch: Branch) => {
-    setBranchToEdit(branch);
-    // Use the conversion helper to transform API data to form data
-    const formData = formatBranchDataForForm(branch);
-    setForm(formData);
-    setShowModal(true);
+  const handleUpdateBranch = async (
+    branch: Branch,
+    type: "delete" | "edit" = "edit",
+  ) => {
+
+    setBranchToUpdate(branch);
+
+    if (type === "edit") {
+      // Use the conversion helper to transform API data to form data
+      const formData = formatBranchDataForForm(branch);
+      setForm(formData);
+      setShowModal(true);
+    } else {
+      await deleteBranch.mutateAsync(branch._id);
+    }
   };
 
   const handleCloseModal = () => {
     setShowModal(false);
-    setBranchToEdit(null);
+    setBranchToUpdate(null);
     setForm(emptyForm);
     setErrors({});
   };
@@ -135,13 +148,7 @@ export default function BranchManagement() {
         <Table>
           <TableHeader>
             <TableRow>
-              {[
-                "Branch",
-                "Code",
-                "Address",
-                "Status",
-                "Action",
-              ].map((h) => (
+              {["Branch", "Code", "Address", "Status", "Action"].map((h) => (
                 <TableHead key={h} className="text-center">
                   {h}
                 </TableHead>
@@ -194,7 +201,7 @@ export default function BranchManagement() {
                   <TableCell>
                     <div className="flex items-center justify-center gap-2">
                       <button
-                        onClick={() => handleEditClick(branch)}
+                        onClick={() => handleUpdateBranch(branch, "edit")}
                         className="text-xs font-medium py-1.5 px-2.5 rounded-lg border border-dark-green-600 bg-dark-green-500 text-white hover:bg-dark-green-600 hover:border-dark-green-600 disabled:opacity-50 cursor-pointer"
                       >
                         Edit
@@ -206,6 +213,15 @@ export default function BranchManagement() {
                       >
                         {branch.isActive ? "Deactivate" : "Activate"}
                       </button>
+                      {!branch.isActive && (
+                        <button
+                          onClick={() => handleUpdateBranch(branch, "delete")}
+                          disabled={toggleStatus.isPending}
+                          className="text-xs font-medium py-1.5 px-2.5 rounded-lg border border-red-600 bg-red-500 text-white hover:bg-red-600 hover:border-red-600 disabled:opacity-50 cursor-pointer"
+                        >
+                          Delete
+                        </button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -217,10 +233,18 @@ export default function BranchManagement() {
 
       {/* Modal */}
       {showModal && (
-        <Modal title={branchToEdit ? `Edit Branch: ${branchToEdit.name}` : "Add New Branch"} onClose={handleCloseModal}>
+        <Modal
+          title={
+            branchToUpdate
+              ? `Edit Branch: ${branchToUpdate.name}`
+              : "Add New Branch"
+          }
+          onClose={handleCloseModal}
+        >
           <BranchModal
-            branchToEdit={branchToEdit}
-            setBranchToEdit={setBranchToEdit}
+          
+            branchToUpdate={branchToUpdate}
+            setBranchToUpdate={setBranchToUpdate}
             setShowModal={setShowModal}
             form={form}
             setForm={setForm}
