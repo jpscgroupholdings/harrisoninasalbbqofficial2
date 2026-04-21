@@ -10,14 +10,10 @@ import { toast } from "sonner";
  * to GeoJSON format: { type: "Point", coordinates: [lng, lat] }
  */
 const formatBranchFormDataForAPI = (formData: BranchFormData) => {
-  const { location, open, close, ...rest } = formData;
+  const { location, ...rest } = formData;
 
   const payload = {
     ...rest,
-    operatingHours: {
-      open,
-      close,
-    },
     ...(location?.latitude &&
       location?.longitude && {
         location: {
@@ -41,9 +37,6 @@ const formatBranchDataForForm = (branch: Branch): BranchFormData => {
   return {
     name: branch.name,
     address: branch.address,
-    contactNumber: branch.contactNumber || "",
-    open: branch.operatingHours?.open || "08:00",
-    close: branch.operatingHours?.close || "22:00",
     location:
       branch.location?.coordinates && branch.location.coordinates.length === 2
         ? {

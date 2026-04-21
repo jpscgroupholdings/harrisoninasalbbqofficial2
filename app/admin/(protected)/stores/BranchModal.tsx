@@ -132,33 +132,8 @@ const BranchModal = ({
           className="capitalize"
           required
         />
-        <InputField
-          label="Contact Number"
-          value={form.contactNumber}
-          onChange={handleChangeForm}
-          name="contactNumber"
-          placeholder="e.g., 09171234567"
-        />
       </div>
 
-      {/* Operating Hours */}
-      <p className="block text-sm font-semibold text-slate-700 mb-2">
-        Operating Hours
-      </p>
-      <div className="grid grid-cols-2 gap-2 mb-6">
-        <InputField
-          type="time"
-          value={form.open}
-          name="open"
-          onChange={handleChangeForm}
-        />
-        <InputField
-          type="time"
-          value={form.close}
-          name="close"
-          onChange={handleChangeForm}
-        />
-      </div>
 
       {/* Coordinates Section */}
       <div className="mb-6 p-4 bg-slate-50 rounded-lg border border-slate-200">

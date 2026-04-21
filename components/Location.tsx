@@ -4,6 +4,14 @@ import { useState, useRef } from "react";
 import { LINKS } from "@/constant/links";
 import { DynamicIcon } from "@/lib/DynamicIcon";
 
+function buildMapLink(lat: number, lng: number) {
+  return `https://www.google.com/maps?q=${lat},${lng}`;
+}
+
+function buildEmbedUrl(lat: number, lng: number) {
+  return `https://maps.google.com/maps?q=${lat},${lng}&output=embed`;
+}
+
 const LocationsSection = () => {
   const [current, setCurrent] = useState(0);
   const touchStartX = useRef<number>(0);
@@ -14,7 +22,7 @@ const LocationsSection = () => {
       name: "King's Court",
       address: "King’s Court Building",
       mapLink: "https://maps.app.goo.gl/iKy7TX6hLx6XnooH9",
-      coordinates: { lat: 14.5547, lng: 121.0244 },
+      coordinates: { lat: 14.554891044450834, lng: 121.02440521419611 },
       embedUrl:
         "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3861.7267539!2d121.0134854!3d14.5576121!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3397c90c5888257f:0xf5a4b1009273b664!2sKings%20Court%20Building%201!5e0!3m2!1sen!2sph!4v1234567890!5m2!1sen!2sph",
     },
@@ -23,7 +31,7 @@ const LocationsSection = () => {
       name: "Century City Mall",
       address: "Century City Mall, Kalayaan Ave, Poblacion",
       mapLink: "https://maps.app.goo.gl/izGJTfTXctnDjc6q9",
-      coordinates: { lat: 14.5648, lng: 121.0509 },
+      coordinates: { lat: 14.565799256226898, lng: 121.02779184232841 },
       embedUrl:
         "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3861.587323602867!2d121.0278133!3d14.565576!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3397c9006ced35e7%3A0xf8984118b68af276!2sHarrison%20House%20of%20Inasal%20%26%20bbq!5e0!3m2!1sen!2sph!4v1769667586148!5m2!1sen!2sph",
     },
@@ -112,7 +120,7 @@ const LocationsSection = () => {
                     <div className="relative">
                       <div className="relative h-112.5 rounded-2xl overflow-hidden shadow-xl border border-gray-200 group">
                         <iframe
-                          src={location.embedUrl}
+                          src={buildEmbedUrl(location.coordinates.lat, location.coordinates.lng)}
                           width="100%"
                           height="100%"
                           style={{ border: 0 }}
@@ -161,7 +169,7 @@ const LocationsSection = () => {
                       {/* CTA */}
                       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 pt-4 mx-auto">
                         <a
-                          href={location.mapLink}
+                          href={buildMapLink(location.coordinates.lat, location.coordinates.lng)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center justify-center gap-2 bg-brand-color-500 hover:bg-[#c13500] text-white font-bold py-4 px-8 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 group"

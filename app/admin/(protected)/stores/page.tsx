@@ -26,9 +26,6 @@ import BranchModal from "./BranchModal";
 export const emptyForm: BranchFormData = {
   name: "",
   address: "",
-  contactNumber: "",
-  open: "08:00",
-  close: "22:00",
   location: {
     latitude: "",
     longitude: "",
@@ -142,8 +139,6 @@ export default function BranchManagement() {
                 "Branch",
                 "Code",
                 "Address",
-                "Contact",
-                "Hours",
                 "Status",
                 "Action",
               ].map((h) => (
@@ -188,10 +183,6 @@ export default function BranchManagement() {
                   </TableCell>
                   <TableCell>
                     <div>{branch.address}</div>
-                  </TableCell>
-                  <TableCell>{branch.contactNumber || "—"}</TableCell>
-                  <TableCell>
-                    {branch.operatingHours.open} – {branch.operatingHours.close}
                   </TableCell>
                   <TableCell>
                     <span

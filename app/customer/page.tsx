@@ -1,5 +1,5 @@
 import PromoBannerV2 from "@/app/customer/components/PromoBannerV2";
-import LocationsSection from "@/app/customer/components/Location";
+import LocationsSection from "@/components/Location";
 import MenuSection from "@/app/customer/components/MenuSection";
 import StickyScrollProducts from "@/app/customer/components/StickyScrollProducts";
 import MenuSectionSkeleton from "@/components/ui/MenuSectionSkeleton";

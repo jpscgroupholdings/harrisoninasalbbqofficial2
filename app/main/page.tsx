@@ -1,4 +1,4 @@
-import LocationsSection from "../customer/components/Location";
+import LocationsSection from "../../components/Location";
 import About from "./components/About";
 import CTA from "./components/CTA";
 import CarouselBanner from "./components/HeroBanner";

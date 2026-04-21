@@ -1,10 +1,4 @@
 // types/branch.ts
-
-export type OperatingHours = {
-  open: string;
-  close: string;
-};
-
 export type Location = {
   type: "Point";
   coordinates: [number, number] // [longitude, latitude] - GeoJSON format
@@ -15,8 +9,6 @@ export type Branch = {
   name: string;
   code: string;
   address: string;
-  contactNumber?: string;
-  operatingHours: OperatingHours;
   location: Location,
   isActive: boolean;
   createdAt?: string;
@@ -26,9 +18,6 @@ export type Branch = {
 export type BranchFormData = {
   name: string;
   address: string;
-  contactNumber?: string;
-  open: string;
-  close: string;
   location?: {
     latitude: string;
     longitude: string

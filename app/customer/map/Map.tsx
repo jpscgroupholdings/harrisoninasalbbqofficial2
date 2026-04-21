@@ -507,23 +507,6 @@ const Map = () => {
                               {branch.address}
                             </span>
                           </div>
-                          {branch.contactNumber && (
-                            <div className="flex items-center gap-1.5">
-                              <PhoneIcon className="w-3 h-3 text-gray-400 shrink-0" />
-                              <span className="text-[11px] text-gray-500">
-                                {branch.contactNumber}
-                              </span>
-                            </div>
-                          )}
-                          {branch.operatingHours && (
-                            <div className="flex items-center gap-1.5">
-                              <ClockIcon className="w-3 h-3 text-gray-400 shrink-0" />
-                              <span className="text-[11px] text-gray-500">
-                                {branch.operatingHours.open} –{" "}
-                                {branch.operatingHours.close}
-                              </span>
-                            </div>
-                          )}
                           {branch.location?.coordinates && (
                             <div className="flex items-center gap-1.5">
                               <Globe className="w-3 h-3 text-gray-400 shrink-0" />

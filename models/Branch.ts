@@ -30,23 +30,9 @@ const BranchSchema = new Schema(
         required: true,
       },
     },
-    contactNumber: {
-      type: String,
-      trim: true,
-    },
-    email: {
-      type: String,
-      lowercase: true,
-      trim: true,
-      match: [/^\S+@\S+\.\S+$/, "Invalid email format"],
-    },
     manager: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Staff",
-    },
-   operatingHours: {
-      open: { type: String, default: "08:00", match: [/^\d{2}:\d{2}$/, "Use HH:MM format"] },
-      close: { type: String, default: "22:00", match: [/^\d{2}:\d{2}$/, "Use HH:MM format"] },
     },
     isActive: {
       type: Boolean,
