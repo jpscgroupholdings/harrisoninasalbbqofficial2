@@ -101,7 +101,6 @@ const MapParent: React.FC<MapParentProps> = ({ onSelectCoordinates }) => {
                       <p className="font-semibold">{branch.name}</p>
                       <p className="text-xs text-gray-600">{branch.code}</p>
                       <p className="text-xs text-gray-600">{branch.address}</p>
-
                       <p className="text-xs text-gray-500 mt-1">
                         {lat.toFixed(4)}, {lng.toFixed(4)}
                       </p>

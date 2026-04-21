@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import { LINKS } from "@/constant/links";
 import { DynamicIcon } from "@/lib/DynamicIcon";
+import { useBranches } from "@/hooks/api/useBranch";
 
 function buildMapLink(lat: number, lng: number) {
   return `https://www.google.com/maps?q=${lat},${lng}`;
@@ -16,6 +17,7 @@ const LocationsSection = () => {
   const [current, setCurrent] = useState(0);
   const touchStartX = useRef<number>(0);
 
+  const {data: branches} = useBranches();
   const locations = [
     {
       id: 1,
@@ -37,7 +39,7 @@ const LocationsSection = () => {
     },
   ];
 
-  const total = locations.length;
+  const total = branches?.length ?? 0;
 
   const goTo = (index: number) => {
     setCurrent((index + total) % total);
@@ -113,14 +115,14 @@ const LocationsSection = () => {
               onTouchStart={handleTouchStart}
               onTouchEnd={handleTouchEnd}
             >
-              {locations.map((location) => (
-                <div key={location.id} className="min-w-full px-2">
+              {branches?.map((location) => (
+                <div key={location._id} className="min-w-full px-2">
                   <div className="items-center py-8">
                     {/* Map */}
                     <div className="relative">
                       <div className="relative h-112.5 rounded-2xl overflow-hidden shadow-xl border border-gray-200 group">
                         <iframe
-                          src={buildEmbedUrl(location.coordinates.lat, location.coordinates.lng)}
+                          src={buildEmbedUrl(location.location.coordinates[1], location.location.coordinates[0],)}
                           width="100%"
                           height="100%"
                           style={{ border: 0 }}
@@ -169,7 +171,7 @@ const LocationsSection = () => {
                       {/* CTA */}
                       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 pt-4 mx-auto">
                         <a
-                          href={buildMapLink(location.coordinates.lat, location.coordinates.lng)}
+                          href={buildMapLink(location.location.coordinates[1], location.location.coordinates[0])}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center justify-center gap-2 bg-brand-color-500 hover:bg-[#c13500] text-white font-bold py-4 px-8 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 group"
@@ -214,7 +216,7 @@ const LocationsSection = () => {
         {/* Dots + Counter */}
         <div className="flex items-center justify-center gap-4 mt-8">
           <div className="flex gap-2">
-            {locations.map((_, i) => (
+            {branches?.map((_, i) => (
               <button
                 key={i}
                 onClick={() => goTo(i)}
