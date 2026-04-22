@@ -1,11 +1,9 @@
 import OrderMessageEmail from "@/app/emails/OrderMessageEmail";
-import OrderSummaryEmail from "@/app/emails/OrderSummaryEmail";
 import { getCustomerAuth } from "@/lib/getAuth";
 import { getAuthHeader } from "@/lib/getAuthHeader";
 import { connectDB } from "@/lib/mongodb";
 import { EMAIL_FROM, resend } from "@/lib/resend";
 import { Branch } from "@/models/Branch";
-import { Customer } from "@/models/Customer";
 import { Inventory } from "@/models/Inventory";
 import { Order } from "@/models/Orders";
 import { Product } from "@/models/Product";
@@ -13,6 +11,9 @@ import { ORDER_STATUSES } from "@/types/orderConstants";
 import { CreateOrderPayload } from "@/types/OrderTypes";
 import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
+import "@/lib/registerModels";
+import { Settings } from "@/models/Setting";
+import { getStoreStatus } from "@/lib/storeStatus";
 
 export async function POST(request: NextRequest) {
   await connectDB();
@@ -20,6 +21,23 @@ export async function POST(request: NextRequest) {
   session.startTransaction();
 
   try {
+    const settings = await Settings.findOne().session(session);
+
+    if (!settings) {
+      throw new Error("Store settings not found.");
+    }
+
+    const storeStatus = getStoreStatus(settings.operatingHours);
+
+    if (!storeStatus.isOpen) {
+      return NextResponse.json(
+        {
+          error: storeStatus.message,
+        },
+        { status: 403 },
+      );
+    }
+
     const customer = await getCustomerAuth(request);
 
     let customerId = null;
@@ -41,10 +59,10 @@ export async function POST(request: NextRequest) {
       customerEmail,
       customerPhone,
       notes,
-      shippingAddress
+      shippingAddress,
     } = body;
 
-    const {line1, line2, city, province, country, zipCode} = shippingAddress
+    const { line1, line2, city, province, zipCode } = shippingAddress;
 
     if (!branchId) {
       return NextResponse.json(
@@ -233,10 +251,10 @@ export async function POST(request: NextRequest) {
             referenceNumber,
             firstName,
             lastName,
-            customerEmail, 
+            customerEmail,
             customerPhone, // optional
 
-            shippingAddress
+            shippingAddress,
           },
           total: { vatableSales, vatAmount, totalAmount: totalPrice },
           notes, // optional
