@@ -1,39 +1,57 @@
 import mongoose, { models, Schema } from "mongoose";
-import { Ruge_Boogie } from "next/font/google";
 
-const UserSchema = new Schema({
-  _id: {
-    type: String,
-    require: [true, "Customer ID is required"],
-    trim: true,
-  },
-  name: {
-    type: String,
-    require: [true, "Customer Name is Required"],
-    trim: true,
-  },
-  email: {
-    type: String,
-    require: [true, "Customer Email is reqruired"],
-  },
-  emailVerified: {
-    type: Boolean,
-    require: true,
-  },
-  image: {
-    type: String,
-    require: false,
-    trim: true,
-  },
-  createdAt: {
-    type: Date,
-    require: true,
-  },
+const UserSchema = new Schema(
+  {
+    _id: {
+      type: String,
+      required: [true, "User ID is required"],
+      trim: true,
+    },
 
-  updatedAt: {
-    type: Date,
-    require: true,
+    name: {
+      type: String,
+      required: [true, "Full name is required"],
+      trim: true,
+    },
+
+    firstName: {
+      type: String,
+      required: false,
+      trim: true,
+      default: "",
+    },
+
+    lastName: {
+      type: String,
+      required: false,
+      trim: true,
+      default: "",
+    },
+
+    email: {
+      type: String,
+      required: [true, "Email is required"],
+      trim: true,
+      lowercase: true,
+    },
+
+    emailVerified: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
+
+    image: {
+      type: String,
+      required: false,
+      trim: true,
+      default: "",
+    },
   },
-});
+  {
+    timestamps: true,
+    versionKey: false
+  },
+);
 
 export const User = models.User || mongoose.model("User", UserSchema);
