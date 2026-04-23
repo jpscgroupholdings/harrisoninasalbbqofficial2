@@ -13,23 +13,23 @@ const db = client.db();
 
 export const auth = betterAuth({
   database: mongodbAdapter(db, { client }),
-
   user: {
     additionalFields: {
       firstName: {
         type: "string",
-        required: false
+        required: false,
       },
       lastName: {
         type: "string",
-        required: false
-      }
-    }
+        required: false,
+      },
+    },
   },
 
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
+    autoSignIn: true,
 
     // 🔹 SEND RESET EMAIL
     sendResetPassword: async ({ user, url }) => {
@@ -76,7 +76,7 @@ export const auth = betterAuth({
         from: EMAIL_FROM,
         to: user.email,
         subject: "Verify your email",
-        html, 
+        html,
       });
     },
   },
@@ -87,12 +87,15 @@ export const auth = betterAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       mapProfileToUser: (profile) => {
         return {
-          firtName: profile.given_name,
+          firstName: profile.given_name,
           lastName: profile.family_name,
-          name: [profile.given_name, profile.family_name].filter(Boolean).join("") || profile.name, 
-          image: profile.picture
-        }
-      }
+          name:
+            [profile.given_name, profile.family_name]
+              .filter(Boolean)
+              .join(" ") || profile.name,
+          image: profile.picture,
+        };
+      },
     },
   },
 
