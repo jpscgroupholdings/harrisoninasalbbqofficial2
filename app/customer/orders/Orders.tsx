@@ -5,11 +5,11 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import React, { useMemo, useState } from "react";
 import { useOrders } from "@/hooks/api/useOrders";
 import { DynamicIcon } from "@/lib/DynamicIcon";
-import { useCustomerMe } from "@/hooks/api/useAuthMe";
 import { GuestOrderLookup } from "./GuestPage";
 import LoadingPage from "@/components/ui/LoadingPage";
 import { useOrderActions } from "@/hooks/useOrderActions";
 import { ORDER_STATUSES, OrderStatus } from "@/types/orderConstants";
+import { authClient } from "@/lib/auth-client";
 
 type Tab = {
   key: string;
@@ -27,7 +27,7 @@ const TABS: Tab[] = [
 ];
 
 const Orders = () => {
-  const { data: currentUser, isPending, fetchStatus } = useCustomerMe();
+  const {data: currentUser, isPending} = authClient.useSession();
   const { data: placedOrders, isPending: isOrdersPending } = useOrders({
     type: "customer",
   });
@@ -101,7 +101,7 @@ const Orders = () => {
 
 
   // Early returns AFTER all hooks
-  if ((isPending || isOrdersPending) && fetchStatus !== "idle") {
+  if ((isPending || isOrdersPending) && isPending) {
     return (
       <div className="relative h-screen">
         <LoadingPage />
