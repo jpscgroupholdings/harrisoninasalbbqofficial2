@@ -23,6 +23,10 @@ export const auth = betterAuth({
         type: "string",
         required: false,
       },
+      phone: {
+        type: "string",
+        required: false,
+      },
     },
   },
 
@@ -104,5 +108,6 @@ export const auth = betterAuth({
   trustedOrigins: [
     "https://food.harrisoninasalbbq.com.ph",
     "http://localhost:3000",
+    "http://localhost:3001",
   ],
 });
