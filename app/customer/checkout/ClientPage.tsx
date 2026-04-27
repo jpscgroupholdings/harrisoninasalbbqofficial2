@@ -89,12 +89,14 @@ const ClientPage = () => {
         landmark: shippingAddress?.landmark || "",
       },
     }));
-  }, [session]);
+  }, [session, session?.user, myAddress]);
 
-  if(isPending){
-    return <div className="h-screen flex items-center">
-      <LoadingPage />
-    </div>
+  if (isPending) {
+    return (
+      <div className="h-screen flex items-center">
+        <LoadingPage />
+      </div>
+    );
   }
 
   return (
@@ -120,7 +122,7 @@ const ClientPage = () => {
               openModal={openModal}
             />
 
-            {step === "customer" && (
+            {step === "customer" && !isPending && (
               <CustomerDetails
                 customerData={orderDetails.customer}
                 errors={customerErrors}
