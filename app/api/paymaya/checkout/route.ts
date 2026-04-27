@@ -1,5 +1,5 @@
 import OrderMessageEmail from "@/app/emails/OrderMessageEmail";
-import { getCustomerAuth, requireBetterAuth } from "@/lib/getAuth";
+import { requireBetterAuth } from "@/lib/getAuth";
 import { getAuthHeader } from "@/lib/getAuthHeader";
 import { connectDB } from "@/lib/mongodb";
 import { EMAIL_FROM, resend } from "@/lib/resend";

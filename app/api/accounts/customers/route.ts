@@ -1,8 +1,8 @@
 import { getCustomerStats } from "@/lib/customer/getCustomerStats";
 import { requireAdmin } from "@/lib/getAuth";
 import { connectDB } from "@/lib/mongodb";
-import { Customer } from "@/models/Customer";
 import { NextRequest, NextResponse } from "next/server";
+import { User } from "@/models/User";
 
 export async function GET(request: NextRequest) {
   try {
@@ -20,12 +20,12 @@ export async function GET(request: NextRequest) {
     const filter = { isActive: true };
 
     const [data, total] = await Promise.all([
-      Customer.find(filter, "fullname email phone createdAt")
+      User.find(filter, "fullname email phone createdAt")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .lean(),
-      Customer.countDocuments(filter),
+      User.countDocuments(filter),
     ]);
 
     const totalPages = Math.ceil(total / limit);

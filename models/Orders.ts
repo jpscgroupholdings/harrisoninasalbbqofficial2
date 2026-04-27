@@ -102,7 +102,7 @@ const OrderSchema = new Schema(
     },
     customerId: {
       type: Schema.Types.ObjectId,
-      ref: "Customer",
+      ref: "User",
       index: true,
     },
     branchSnapshot: {
