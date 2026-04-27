@@ -13,15 +13,7 @@ import SectionHeader from "../../components/SectionHeader";
 import Link from "next/link";
 import Modal from "@/components/ui/Modal";
 import { Loader2, Trash2 } from "lucide-react";
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-const toBase64 = (file: File): Promise<string> =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
+import { fileToBase64 } from "@/lib/fileUtils";
 
 // ── Image Upload Button ───────────────────────────────────────────────────────
 const ImageUploadButton = ({
@@ -41,7 +33,7 @@ const ImageUploadButton = ({
       toast.error("Image must be under 10MB");
       return;
     }
-    const base64 = await toBase64(file);
+    const base64 = await fileToBase64(file);
     onChange(base64);
     e.target.value = "";
   };

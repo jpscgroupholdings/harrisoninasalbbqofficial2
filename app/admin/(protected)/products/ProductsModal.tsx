@@ -7,6 +7,7 @@ import { TextareaField } from "@/components/ui/TextAreaField";
 import { Category } from "@/types/category";
 import { IncludedItemUI, ITEM_TYPES, ProductType, Product } from "@/types/products";
 import { DynamicIcon } from "@/lib/DynamicIcon";
+import { fileToBase64 } from "@/lib/fileUtils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -421,14 +422,6 @@ const ProductsModal = ({
   };
 
   // ── Submit ────────────────────────────────────────────────────────────────────
-
-  const fileToBase64 = (file: File): Promise<string> =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();

@@ -15,6 +15,7 @@ import {
 import { DynamicIcon } from "@/lib/DynamicIcon";
 import { useRouter } from "next/navigation";
 import { categories_api, subcategories_api } from "../categories/hooks/api";
+import { fileToBase64 } from "@/lib/fileUtils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -566,14 +567,6 @@ const ProductFormPage = ({ editProduct = null }: ProductFormPageProps) => {
   };
 
   // ── Submit ────────────────────────────────────────────────────────────────────
-
-  const fileToBase64 = (file: File): Promise<string> =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
