@@ -1,12 +1,12 @@
 import CartDrawer from "./components/CartDrawer";
 import Footer from "@/components/ui/Footer";
-import Header from "@/app/customer/components/Header";
 import { CartProvider } from "@/contexts/CartContext";
 import React, { Suspense } from "react";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import { Metadata } from "next";
 import { BranchProvider } from "@/contexts/BranchContext";
-import HeaderSkeleton from "@/app/customer/components/HeaderSkeleton"
+import HeaderSkeleton from "@/app/customer/components/HeaderSkeleton";
+import IndexHeader from "./components/header/IndexHeader";
 
 export const metadata: Metadata = {
   title: "Customer | House of Inasal & BBQ",
@@ -19,7 +19,7 @@ export default function layout({ children }: { children: React.ReactNode }) {
       <BranchProvider>
         <CartProvider>
           <Suspense fallback={<HeaderSkeleton />}>
-            <Header />
+            <IndexHeader />
           </Suspense>
           <CartDrawer />
           {children}
