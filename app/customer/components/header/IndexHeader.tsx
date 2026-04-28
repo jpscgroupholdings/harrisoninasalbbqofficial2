@@ -14,7 +14,7 @@ import { HeaderAuthDesktop } from "./HeaderAuthDesktop";
 import { HeaderMobileMenu } from "./HeaderAuthMobile";
 import { HeaderModals } from "./HeaderModal";
 
-const IndexHeader = () => {
+const Header = () => {
   const { data: session, isPending: sessionPending } = authClient.useSession();
 
   const { modal: modalType, openModal, closeModal } = useModalQuery();
@@ -101,4 +101,4 @@ const IndexHeader = () => {
   );
 };
 
-export default IndexHeader;
+export default Header;
