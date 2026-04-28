@@ -8,4 +8,5 @@ import "@/models/Product"
 import "@/models/Staff"
 import "@/models/SubCategory"
 import "@/models/Setting";
-import "@/models/User"
+import "@/models/User";
+import "@/models/Cart"
