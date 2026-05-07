@@ -27,17 +27,6 @@ export async function POST(request: NextRequest) {
       throw new Error("Store settings not found.");
     }
 
-    const storeStatus = getStoreStatus(settings.operatingHours);
-
-    if (!storeStatus.isOpen) {
-      return NextResponse.json(
-        {
-          error: storeStatus.message,
-        },
-        { status: 403 },
-      );
-    }
-
     const customer = await requireBetterAuth();
 
     let customerId = null;
