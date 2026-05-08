@@ -16,6 +16,12 @@ function toMinutes(time: string): number {
   return total === 0 ? 1440 : total; // treat 00:00 as end of day
 }
 
+function getNowInTimeZone(tz: string): Date{
+  const now = new Date();
+  const localStr = now.toLocaleString("en-US", {timeZone: tz});
+  return new Date(localStr);
+};
+
 export function getStoreStatus(
   operatingHours: SettingsType["operatingHours"],
 ): StoreStatus {
@@ -42,7 +48,7 @@ export function getStoreStatus(
     };
   }
 
-  const now = new Date();
+  const now = getNowInTimeZone("Asia/Manila");
   const todayIndex = (now.getDay() + 6) % 7; // Mon=0 ... Sun=6
   const yesterdayIndex = (todayIndex + 6) % 7;
 
