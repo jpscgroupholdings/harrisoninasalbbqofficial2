@@ -81,7 +81,7 @@ export const STATUS_PRIORITY: Record<OrderStatus, number> = {
  */
 
 export const STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus | null> = {
-  [ORDER_STATUSES.PENDING]: ORDER_STATUSES.CANCELLED,                        // Waiting for payment, staff doesn't transition this
+  [ORDER_STATUSES.PENDING]: ORDER_STATUSES.PREPARING,   // Accept order for cod
   [ORDER_STATUSES.PAID]: ORDER_STATUSES.PREPARING,      // Staff accepts the paid order
   [ORDER_STATUSES.PREPARING]: ORDER_STATUSES.READY,     // Food ready
   [ORDER_STATUSES.READY]: ORDER_STATUSES.DISPATCHED,    // Dispatch to customer

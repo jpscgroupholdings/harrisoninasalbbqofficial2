@@ -155,22 +155,20 @@ export default function OrdersTable({
                   </TableRow>
                 );
               })
+            ) : isPending ? (
+              <TableRow>
+                <TableCell>
+                  <div className="h-full bg-white">
+                    <LoadingPage />
+                  </div>
+                </TableCell>
+              </TableRow>
             ) : (
               <TableRow>
                 <TableCell colSpan={8} className="py-12 text-center">
                   <p className="text-sm text-gray-500">
                     No orders found on this branch.
                   </p>
-                </TableCell>
-              </TableRow>
-            )}
-
-            {isPending && (
-              <TableRow>
-                <TableCell>
-                  <div className="h-full bg-white">
-                    <LoadingPage />
-                  </div>
                 </TableCell>
               </TableRow>
             )}
