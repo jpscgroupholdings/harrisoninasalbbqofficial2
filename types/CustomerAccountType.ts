@@ -7,6 +7,7 @@ export type Customer = {
   password: string;
   isActive: boolean;
   createdAt?: string;
+  image: string;
 };
 
 export type CustomerCreateInput = {
