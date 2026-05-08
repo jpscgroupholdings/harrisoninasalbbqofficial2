@@ -33,7 +33,7 @@ interface ProductResponse {
 }
 
 const ORDER_ENDPOINTS = {
-  admin: "/admin/orders",
+  admin: "/admin/orders/",
   customer: "/customer/orders/",
 } as const;
 
