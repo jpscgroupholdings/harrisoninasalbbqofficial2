@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     const filter = {};
 
     const [data, total] = await Promise.all([
-      User.find(filter, "name firstName lastName email phone createdAt")
+      User.find(filter)
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
