@@ -55,7 +55,7 @@ export async function GET(
 
     // Check if staff is authorized for this order's branch
     if (
-      staff.role !== STAFF_ROLES.SUPERADMIN &&
+      staff.role !== STAFF_ROLES.SUPERADMIN && staff.role !== STAFF_ROLES.CASHIER &&
       order.branchId?.toString() !== staff.branch?.toString()
     ) {
       return NextResponse.json(
