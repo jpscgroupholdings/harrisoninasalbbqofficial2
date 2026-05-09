@@ -162,6 +162,26 @@ export const useUpdateOrder = () => {
   });
 };
 
+export const useCancelCustomerOrder = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    UpdateOrderResponse,
+    Error,
+    { id: string; data: UpdateOrderPayLoad }
+  >({
+    mutationFn: ({ id, data }: { id: string; data: UpdateOrderPayLoad }) =>
+      apiClient.patch(`/customer/orders/${id}`, data),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+};
+
 // ============================================
 // HELPER HOOKS
 // ============================================
