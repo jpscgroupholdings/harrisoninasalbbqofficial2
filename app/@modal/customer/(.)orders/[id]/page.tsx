@@ -1,15 +1,20 @@
-import Modal from '@/components/Modal';
-import OrderDetails from '@/app/customer/orders/OrderDetails';
+"use client";
 
-export default async function OrderModal({ 
-  params 
-}: { 
-  params: Promise<{ id: string }> 
+import { use } from "react";
+import { useRouter } from "next/navigation";
+import OrderDetails from "@/app/customer/orders/OrderDetails";
+import Modal from "@/components/ui/Modal";
+
+export default function OrderModal({
+  params,
+}: {
+  params: Promise<{ id: string }>;
 }) {
-  const { id } = await params;
-  
+  const router = useRouter();
+  const { id } = use(params);
+
   return (
-    <Modal>
+    <Modal onClose={() => router.back()} title="Order Details">
       <OrderDetails orderId={id} variant="modal" />
     </Modal>
   );
