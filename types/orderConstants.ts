@@ -72,70 +72,101 @@ export const STATUS_PRIORITY: Record<OrderStatus, number> = {
 // ============================================
 // STATUS TRANSITIONS (State Machine)
 // ============================================
- 
+
 /**
  * Valid transitions between statuses
  * Defines what status an order can move to from its current status
- * 
+ *
  * null = no transition allowed (terminal state)
  */
 
 export const STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[] | null> = {
-  [ORDER_STATUSES.PENDING]:[ ORDER_STATUSES.PREPARING, ORDER_STATUSES.CANCELLED],   // Accept order for cod
-  [ORDER_STATUSES.PAID]: [ORDER_STATUSES.PREPARING],      // Staff accepts the paid order
-  [ORDER_STATUSES.PREPARING]: [ORDER_STATUSES.READY],     // Food ready
-  [ORDER_STATUSES.READY]: [ORDER_STATUSES.DISPATCHED],    // Dispatch to customer
+  [ORDER_STATUSES.PENDING]: [
+    ORDER_STATUSES.PREPARING,
+    ORDER_STATUSES.CANCELLED,
+  ], // Accept order for cod
+  [ORDER_STATUSES.PAID]: [ORDER_STATUSES.PREPARING], // Staff accepts the paid order
+  [ORDER_STATUSES.PREPARING]: [ORDER_STATUSES.READY], // Food ready
+  [ORDER_STATUSES.READY]: [ORDER_STATUSES.DISPATCHED], // Dispatch to customer
   [ORDER_STATUSES.DISPATCHED]: [ORDER_STATUSES.COMPLETED], // Delivery complete
-  [ORDER_STATUSES.COMPLETED]: null,                      // Terminal state
-  [ORDER_STATUSES.CANCELLED]: null,                      // Terminal state
-  [ORDER_STATUSES.FAILED]: null,                         // Terminal state (payment failed)
-  [ORDER_STATUSES.EXPIRED]: null,                        // Terminal state
+  [ORDER_STATUSES.COMPLETED]: null, // Terminal state
+  [ORDER_STATUSES.CANCELLED]: null, // Terminal state
+  [ORDER_STATUSES.FAILED]: null, // Terminal state (payment failed)
+  [ORDER_STATUSES.EXPIRED]: null, // Terminal state
 };
 
 // ============================================
 // UI ACTION CONFIGURATION
 // ============================================
- 
+
 /**
  * UI button configuration for order actions
  * Contains label and styling for each status's primary action
- * 
+ *
  * null = no action button shown for this status
  */
 export const ORDER_ACTION_CONFIG: Record<
   OrderStatus,
-  {
-    label: string;
-    variant: string;
-  } | null
+  Partial<
+    Record<
+      OrderStatus,
+      {
+        label: string;
+        variant: string;
+      }
+    >
+  >
 > = {
-  [ORDER_STATUSES.PENDING]: null,
+  [ORDER_STATUSES.PENDING]: {
+    [ORDER_STATUSES.PREPARING]: {
+      label: "Accept Order",
+      variant: "bg-[#ef4501] hover:bg-[#c13500]",
+    },
+
+    [ORDER_STATUSES.CANCELLED]: {
+      label: "Cancel Order",
+      variant: "bg-red-600 hover:bg-red-700",
+    },
+  },
+
   [ORDER_STATUSES.PAID]: {
-    label: "Accept Order",
-    variant: "bg-[#ef4501] hover:bg-[#c13500]",
+    [ORDER_STATUSES.PREPARING]: {
+      label: "Accept Order",
+      variant: "bg-[#ef4501] hover:bg-[#c13500]",
+    },
   },
+
   [ORDER_STATUSES.PREPARING]: {
-    label: "Mark as Ready",
-    variant: "bg-green-700 hover:bg-green-800",
+    [ORDER_STATUSES.READY]: {
+      label: "Mark as Ready",
+      variant: "bg-green-700 hover:bg-green-800",
+    },
   },
+
   [ORDER_STATUSES.READY]: {
-    label: "Dispatch",
-    variant: "bg-orange-500 hover:bg-orange-600",
+    [ORDER_STATUSES.DISPATCHED]: {
+      label: "Dispatch",
+      variant: "bg-orange-500 hover:bg-orange-600",
+    },
   },
+
   [ORDER_STATUSES.DISPATCHED]: {
-    label: "Mark Completed",
-    variant: "bg-amber-500 hover:bg-amber-600",
+    [ORDER_STATUSES.COMPLETED]: {
+      label: "Mark Completed",
+      variant: "bg-amber-500 hover:bg-amber-600",
+    },
   },
-  [ORDER_STATUSES.COMPLETED]: null,
-  [ORDER_STATUSES.CANCELLED]: null,
-  [ORDER_STATUSES.FAILED]: null,
-  [ORDER_STATUSES.EXPIRED]: null,
+
+  [ORDER_STATUSES.COMPLETED]: {},
+  [ORDER_STATUSES.CANCELLED]: {},
+  [ORDER_STATUSES.FAILED]: {},
+  [ORDER_STATUSES.EXPIRED]: {},
 };
 
 // ============================================
 // TIMELINE FIELD MAPPING
 // ============================================
- 
+
 /**
  * Maps each status to its corresponding timeline field
  * When an order transitions to a status, update this field with current time
@@ -152,7 +183,7 @@ export const TIMELINE_FIELD_MAP: Record<
   | "expiredAt"
   | null
 > = {
-  [ORDER_STATUSES.PENDING]: null,        // No timestamp on pending
+  [ORDER_STATUSES.PENDING]: null, // No timestamp on pending
   [ORDER_STATUSES.PAID]: "paidAt",
   [ORDER_STATUSES.PREPARING]: "preparingAt",
   [ORDER_STATUSES.READY]: "readyAt",
@@ -166,7 +197,7 @@ export const TIMELINE_FIELD_MAP: Record<
 // ============================================
 // HELPER FUNCTIONS
 // ============================================
- 
+
 /**
  * Check if an order can transition from one status to another
  * @param currentStatus - Current order status
@@ -191,36 +222,30 @@ export function canTransitionTo(
 
   return false;
 }
- 
+
 /**
  * Get the next valid status for an order
  * @param currentStatus - Current order status
  * @returns Next valid status, or null if no transition allowed
  */
-export function getNextStatus(currentStatus: OrderStatus): OrderStatus[] | null {
+export function getNextStatus(
+  currentStatus: OrderStatus,
+): OrderStatus[] | null {
   return STATUS_TRANSITIONS[currentStatus];
 }
- 
+
 /**
  * Get the action config for a status
  * @param status - Order status
  * @returns Action config with label and variant, or null
  */
 export function getActionConfig(
-  status: OrderStatus,
-  paymentMethod: "cod" | "maya"
-): { label: string; variant: string } | null {
-
-  if(status === ORDER_STATUSES.PENDING){
-     // Only COD can be manually accepted at pending
-    return paymentMethod === "cod"
-      ? { label: "Accept Order", variant: "bg-[#ef4501] hover:bg-[#c13500]" }
-      : null; // Maya must wait for payment confirmation
-  }
-
-  return ORDER_ACTION_CONFIG[status];
+  currentStatus: OrderStatus,
+  targetStatus: OrderStatus,
+) {
+  return ORDER_ACTION_CONFIG[currentStatus]?.[targetStatus] ?? null;
 }
- 
+
 /**
  * Get priority score for a status (for sorting)
  * @param status - Order status
@@ -229,18 +254,18 @@ export function getActionConfig(
 export function getPriority(status: OrderStatus): number {
   return STATUS_PRIORITY[status];
 }
- 
+
 /**
  * Get timeline field name for a status
  * @param status - Order status
  * @returns Timeline field name, or null
  */
 export function getTimelineField(
-  status: OrderStatus
+  status: OrderStatus,
 ): keyof typeof TIMELINE_FIELD_MAP | null {
   return TIMELINE_FIELD_MAP[status] as any;
 }
- 
+
 /**
  * Validate if a value is a valid OrderStatus
  * @param value - Value to check
