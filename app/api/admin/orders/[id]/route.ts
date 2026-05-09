@@ -113,6 +113,8 @@ export async function PATCH(
       );
     }
 
+    await requireAdmin(request);
+
     // Parse and validate request body
     const body = await request.json();
     const { status: newStatus } = body;
@@ -154,7 +156,7 @@ export async function PATCH(
 
     const currentStatus = order.status as OrderStatus;
     // Check if transition is valid
-    if (!canTransitionTo(currentStatus, newStatus)) {
+    if (!canTransitionTo(currentStatus, newStatus, "admin")) {
       return NextResponse.json(
         {
           error: `Cannot transition from "${currentStatus}" to "${newStatus}"`,

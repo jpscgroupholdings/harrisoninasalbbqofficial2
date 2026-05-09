@@ -80,12 +80,12 @@ export const STATUS_PRIORITY: Record<OrderStatus, number> = {
  * null = no transition allowed (terminal state)
  */
 
-export const STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus | null> = {
-  [ORDER_STATUSES.PENDING]: ORDER_STATUSES.PREPARING,   // Accept order for cod
-  [ORDER_STATUSES.PAID]: ORDER_STATUSES.PREPARING,      // Staff accepts the paid order
-  [ORDER_STATUSES.PREPARING]: ORDER_STATUSES.READY,     // Food ready
-  [ORDER_STATUSES.READY]: ORDER_STATUSES.DISPATCHED,    // Dispatch to customer
-  [ORDER_STATUSES.DISPATCHED]: ORDER_STATUSES.COMPLETED, // Delivery complete
+export const STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[] | null> = {
+  [ORDER_STATUSES.PENDING]:[ ORDER_STATUSES.PREPARING, ORDER_STATUSES.CANCELLED],   // Accept order for cod
+  [ORDER_STATUSES.PAID]: [ORDER_STATUSES.PREPARING],      // Staff accepts the paid order
+  [ORDER_STATUSES.PREPARING]: [ORDER_STATUSES.READY],     // Food ready
+  [ORDER_STATUSES.READY]: [ORDER_STATUSES.DISPATCHED],    // Dispatch to customer
+  [ORDER_STATUSES.DISPATCHED]: [ORDER_STATUSES.COMPLETED], // Delivery complete
   [ORDER_STATUSES.COMPLETED]: null,                      // Terminal state
   [ORDER_STATUSES.CANCELLED]: null,                      // Terminal state
   [ORDER_STATUSES.FAILED]: null,                         // Terminal state (payment failed)
@@ -175,10 +175,17 @@ export const TIMELINE_FIELD_MAP: Record<
  */
 export function canTransitionTo(
   currentStatus: OrderStatus,
-  targetStatus: OrderStatus
+  targetStatus: OrderStatus,
+  role: "admin" | "customer"
 ): boolean {
-  const nextStatus = STATUS_TRANSITIONS[currentStatus];
-  return nextStatus === targetStatus;
+  const allowed = STATUS_TRANSITIONS[currentStatus];
+  if (!allowed?.includes(targetStatus)) return false;
+
+  if (role === "customer") {
+    return targetStatus === ORDER_STATUSES.CANCELLED;
+  }
+
+  return true; // admin can do anything in the allowed list
 }
  
 /**
@@ -186,7 +193,7 @@ export function canTransitionTo(
  * @param currentStatus - Current order status
  * @returns Next valid status, or null if no transition allowed
  */
-export function getNextStatus(currentStatus: OrderStatus): OrderStatus | null {
+export function getNextStatus(currentStatus: OrderStatus): OrderStatus[] | null {
   return STATUS_TRANSITIONS[currentStatus];
 }
  
