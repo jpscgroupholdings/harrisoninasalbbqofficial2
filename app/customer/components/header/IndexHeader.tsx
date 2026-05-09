@@ -14,10 +14,11 @@ import { HeaderAuthDesktop } from "./HeaderAuthDesktop";
 import { HeaderMobileMenu } from "./HeaderAuthMobile";
 import { HeaderModals } from "./HeaderModal";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 
 const Header = () => {
   const { data: session, isPending: sessionPending } = authClient.useSession();
-  const router = useRouter()
+  const router = useRouter();
 
   const { modal: modalType, openModal, closeModal } = useModalQuery();
 
@@ -26,7 +27,9 @@ const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
@@ -34,15 +37,20 @@ const Header = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const queryClient = useQueryClient();
+
   const handleLogout = async () => {
     setIsLoggingOut(true);
     await authClient.signOut({
       fetchOptions: {
-        onSuccess: () => {
+        onSuccess: async () => {
           closeModal();
+
+          await queryClient.invalidateQueries({ queryKey: ["orders"] });
+          console.log("Called this")
           toast.success("Logged out successfully");
           setIsLoggingOut(false);
-          router.push("/")
+          router.push("/");
         },
       },
     });
