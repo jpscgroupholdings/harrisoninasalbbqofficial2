@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { StatusBadge } from "./StatusBadge";
 import { useOrder } from "@/hooks/api/useOrders";
 import LoadingPage from "@/components/ui/LoadingPage";
-import Modal from "@/components/ui/Modal";
+import { formatDate } from "@/helper/formatDate";
 
 interface OrderDetailsProps {
   orderId: string;
@@ -15,7 +15,7 @@ interface OrderDetailsProps {
 export default function OrderDetails({ orderId }: OrderDetailsProps) {
   const { data: placedOrders, isLoading } = useOrder({type: "customer"}, orderId);
   const router = useRouter();
-  const order = placedOrders?.data;
+  const order = placedOrders;
   
   const [showAllItems, setShowAllItems] = useState(false);
   const ITEMS_TO_SHOW = 3;
@@ -33,22 +33,10 @@ export default function OrderDetails({ orderId }: OrderDetailsProps) {
     )
   }
 
-
   // If no order after loading, show nothing (redirect will happen)
   if (!order) {
     return null;
   }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
 
   return (
     <div
