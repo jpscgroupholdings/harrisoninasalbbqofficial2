@@ -16,9 +16,6 @@ export default function OrderDetails({ orderId }: OrderDetailsProps) {
   const { data: placedOrders, isLoading } = useOrder({type: "customer"}, orderId);
   const router = useRouter();
   const order = placedOrders;
-
-  console.log("placedOrders:", placedOrders);
-console.log("order:", order);
   
   const [showAllItems, setShowAllItems] = useState(false);
   const ITEMS_TO_SHOW = 3;
