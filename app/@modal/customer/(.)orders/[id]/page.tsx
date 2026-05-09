@@ -10,7 +10,7 @@ export default async function OrderModal({
   
   return (
     <Modal>
-      <OrderDetails orderId={id} />
+      <OrderDetails orderId={id} variant="modal" />
     </Modal>
   );
 }
