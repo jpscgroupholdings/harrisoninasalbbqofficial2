@@ -7,6 +7,7 @@ import {
 } from "@/hooks/utils/useIntersectionAnimation";
 import { Calendar, ChevronDown } from "lucide-react";
 import React, { useState } from "react";
+import { formatDate } from "@/helper/formatDate";
 
 interface NewsArticle {
   id: number;
@@ -110,15 +111,6 @@ const NewsSection = () => {
       ...prev,
       [articleId]: !prev[articleId],
     }));
-  };
-
-  const formatDate = (dateString: string) => {
-    const options: Intl.DateTimeFormatOptions = {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    };
-    return new Date(dateString).toLocaleDateString("en-US", options);
   };
 
   const truncateText = (text: string, limit: number = TEXT_LIMIT) => {
