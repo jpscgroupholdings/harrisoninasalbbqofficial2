@@ -1,12 +1,12 @@
 // hooks/useOrderActions.ts
 import { useCart } from "@/contexts/CartContext";
-import { useUpdateOrder } from "./api/useOrders";
+import { useCancelCustomerOrder } from "./api/useOrders";
 import { apiClient } from "@/lib/apiClient";
 import { toast } from "sonner";
 import { useState } from "react";
 
 export function useOrderActions() {
-  const updateOrder = useUpdateOrder();
+  const updateOrder = useCancelCustomerOrder();
   const { addToCart, setIsCartOpen } = useCart();
   const [isLoading, setIsLoading] = useState(false);
 
