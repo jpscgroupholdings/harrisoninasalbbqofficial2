@@ -1,18 +1,18 @@
 export const pageStatus = {
-    '/checkout' : true,
-    '/orders': true,
-}
+  "/orders/[id]/review": false,
+};
 
 export function isRouteBlocked(pathname: string): boolean {
-  if (pathname in pageStatus) {
-    return !pageStatus[pathname as keyof typeof pageStatus]
-  }
+  for (const [route, enabled] of Object.entries(pageStatus)) {
+    // Convert Next.js dynamic route to regex
+    const pattern = route.replace(/\[.*?\]/g, "[^/]+");
 
-  for (const route in pageStatus) {
-    if (pathname.startsWith(route + '/')) {
-      return !pageStatus[route as keyof typeof pageStatus]
+    const regex = new RegExp(`^${pattern}$`);
+
+    if (regex.test(pathname)) {
+      return !enabled;
     }
   }
 
-  return false
+  return false;
 }
