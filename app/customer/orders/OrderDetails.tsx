@@ -10,13 +10,16 @@ import { formatDate } from "@/helper/formatDate";
 
 interface OrderDetailsProps {
   orderId: string;
+  variant?: "modal" | "page";
 }
 
-export default function OrderDetails({ orderId }: OrderDetailsProps) {
-  const { data: placedOrders, isLoading } = useOrder({type: "customer"}, orderId);
+export default function OrderDetails({
+  orderId,
+  variant = "page",
+}: OrderDetailsProps) {
+  const { data: order, isLoading } = useOrder({ type: "customer" }, orderId);
   const router = useRouter();
-  const order = placedOrders;
-  
+
   const [showAllItems, setShowAllItems] = useState(false);
   const ITEMS_TO_SHOW = 3;
 
@@ -27,10 +30,18 @@ export default function OrderDetails({ orderId }: OrderDetailsProps) {
     }
   }, [isLoading, order, router]);
 
-  if(isLoading){
-    return(
-      <LoadingPage className="h-screen"/>
-    )
+  if (isLoading) {
+    return (
+      <div
+        className={
+          variant === "modal"
+            ? "flex min-h-[420px] items-center justify-center"
+            : "flex min-h-screen items-center justify-center"
+        }
+      >
+        <LoadingPage className="h-[50vh]" />
+      </div>
+    );
   }
 
   // If no order after loading, show nothing (redirect will happen)
@@ -40,11 +51,12 @@ export default function OrderDetails({ orderId }: OrderDetailsProps) {
 
   return (
     <div
-      className={`space-y-6 max-w-5xl max-h-[calc(100vh-100px)] overflow-y-auto mx-auto p-4 hide-scrollbar`}
+      className={
+        variant === "modal"
+          ? "max-h-[calc(100vh-100px)] overflow-y-auto p-4 hide-scrollbar"
+          : "mx-auto min-h-screen max-w-5xl px-4 py-10"
+      }
     >
-      {isLoading && (
-        <LoadingPage />
-      )}
       {/* Header */}
       <div className="border-b pb-4">
         <div className="flex justify-between items-start mb-2">
@@ -139,8 +151,8 @@ export default function OrderDetails({ orderId }: OrderDetailsProps) {
         <h3 className="font-semibold mb-3">Order Items</h3>
         <div className="space-y-3">
           {(showAllItems
-            ? order.items ?? []
-            : order.items?.slice(0, ITEMS_TO_SHOW) ?? []
+            ? (order.items ?? [])
+            : (order.items?.slice(0, ITEMS_TO_SHOW) ?? [])
           ).map((item, index) => (
             <div
               key={`${item._id}-${index}`}
@@ -202,7 +214,7 @@ export default function OrderDetails({ orderId }: OrderDetailsProps) {
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">Tax (12%)</span>
             <span className="font-[550]">
-              ₱{(order.total?.vatAmount?.toFixed(2))}
+              ₱{order.total?.vatAmount?.toFixed(2)}
             </span>
           </div>
           <div className="flex justify-between text-lg font-bold pt-2 border-t border-gray-200">
