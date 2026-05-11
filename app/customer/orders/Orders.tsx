@@ -9,7 +9,11 @@ import { useOrderActions } from "@/hooks/useOrderActions";
 import { ORDER_STATUSES, OrderStatus } from "@/types/orderConstants";
 import { authClient } from "@/lib/auth-client";
 import { ItemMosaic } from "../components/ItemMosaic";
-import { useCustomerOrders } from "@/hooks/api/customers/useCustomerOrders";
+import {
+  OrderSummary,
+  useCustomerOrders,
+  useCustomerOrderSummary,
+} from "@/hooks/api/customers/useCustomerOrders";
 import Pagination from "@/components/ui/Pagination";
 
 /* ─── Types ─────────────────────────────────────────────────────────── */
@@ -29,11 +33,11 @@ const TABS: Tab[] = [
   },
   { key: "preparing", label: "To dispatch" },
   {
-    key: "to-receive",
+    key: "dispatched",
     label: "To receive",
     statuses: [ORDER_STATUSES.DISPATCHED, ORDER_STATUSES.READY],
   },
-  { key: "completed", label: "To review" },
+  { key: "completed", label: "Completed" },
   { key: "cancelled", label: "Cancelled" },
 ];
 
@@ -260,6 +264,8 @@ const Orders = () => {
   const activeTab = searchParams.get("status") || "all";
   const currentPage = Number(searchParams.get("page") || "1");
 
+  const { data: orderSummary } = useCustomerOrderSummary();
+
   const { data: placedOrders, isPending: isOrdersPending } = useCustomerOrders({
     status: activeTab === "all" ? undefined : activeTab,
     page: currentPage,
@@ -296,11 +302,20 @@ const Orders = () => {
       : placedOrders.data.filter((o) => o.status === activeTab);
   }, [placedOrders, activeTab]);
 
+  // Derive tab badge counts from summary (never from the filtered list)
+  const getTabCount = (tab: Tab): number | undefined => {
+    if (!orderSummary) return undefined;
+    if (tab.key === "all") return undefined; // "All" badge not shown
+    if (tab.key === "cancelled") return undefined; // Cancelled badge not shown
+    return orderSummary[tab.key as keyof OrderSummary] ?? 0;
+  };
+
   const totalItems: number = placedOrders?.pagination?.total ?? 0;
   const totalPages: number = Math.ceil(totalItems / ITEM_PER_PAGE);
 
   const handleTabChange = (tabKey: string) => {
     const params = new URLSearchParams(searchParams.toString());
+    params.delete("page"); // reset to page 1 on tab change
     if (tabKey === "all") {
       params.delete("status");
     } else {
@@ -336,7 +351,7 @@ const Orders = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
-      <div className="max-w-2xl mx-auto px-4 py-8">
+      <div className="max-w-3xl mx-auto px-4 py-8 space-y-8">
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-[22px] font-medium text-gray-900 tracking-tight">
@@ -350,19 +365,7 @@ const Orders = () => {
         {/* Tabs */}
         <div className="flex gap-1.5 overflow-x-auto pb-1 mb-6 scrollbar-hide py-1">
           {TABS.map((tab) => {
-            const count =
-              tab.key === ORDER_STATUSES.COMPLETED
-                ? placedOrders?.data.filter(
-                    (o) =>
-                      o.status === ORDER_STATUSES.COMPLETED && !o.isReviewed,
-                  ).length
-                : tab.statuses
-                  ? placedOrders?.data.filter((o) =>
-                      tab.statuses!.includes(o.status),
-                    ).length
-                  : placedOrders?.data.filter((o) => o.status === tab.key)
-                      .length;
-
+            const count = getTabCount(tab);
             const isActive = activeTab === tab.key;
 
             return (
@@ -377,7 +380,7 @@ const Orders = () => {
                 ].join(" ")}
               >
                 {tab.label}
-                {(count ?? 0) > 0 && tab.key !== ORDER_STATUSES.CANCELLED && (
+                {(count ?? 0) > 0 && (
                   <span
                     className={[
                       "absolute -top-1 -right-1 w-4 h-4 text-[10px] font-semibold rounded-full flex items-center justify-center border border-white",
@@ -435,20 +438,18 @@ const Orders = () => {
             ))}
           </div>
         )}
-      </div>
-      
-      {totalPages > 0 && (
-        <div className="max-w-2xl mx-auto">
+
+        {totalPages > 0 && (
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
             total={totalItems}
             onPageChange={handlePageChange}
+            limit={ITEM_PER_PAGE}
             windowSize={2}
-            showInfo={false}
           />
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
