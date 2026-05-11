@@ -10,6 +10,7 @@ import { ORDER_STATUSES, OrderStatus } from "@/types/orderConstants";
 import { authClient } from "@/lib/auth-client";
 import { ItemMosaic } from "../components/ItemMosaic";
 import { useCustomerOrders } from "@/hooks/api/customers/useCustomerOrders";
+import Pagination from "@/components/ui/Pagination";
 
 /* ─── Types ─────────────────────────────────────────────────────────── */
 type Tab = {
@@ -66,6 +67,34 @@ function StatusPill({ status }: { status: OrderStatus }) {
     >
       {STATUS_LABELS[status] ?? status}
     </span>
+  );
+}
+
+/* ─── Skeleton card ──────────────────────────────────────────────────── */
+function OrderCardSkeleton() {
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden animate-pulse">
+      <div className="flex">
+        <div className="w-24 h-24 bg-gray-100 shrink-0" />
+        <div className="flex-1 px-4 py-3.5 flex flex-col justify-between">
+          <div>
+            <div className="flex justify-between mb-2">
+              <div className="h-3 w-20 bg-gray-100 rounded-full" />
+              <div className="h-5 w-16 bg-gray-100 rounded-full" />
+            </div>
+            <div className="h-3.5 w-3/4 bg-gray-100 rounded-full mb-1.5" />
+            <div className="h-3.5 w-1/2 bg-gray-100 rounded-full" />
+          </div>
+          <div className="flex justify-between mt-3">
+            <div className="h-4 w-16 bg-gray-100 rounded-full" />
+            <div className="h-7 w-20 bg-gray-100 rounded-lg" />
+          </div>
+        </div>
+      </div>
+      <div className="border-t border-gray-100 px-4 py-2.5 flex justify-end gap-2">
+        <div className="h-7 w-24 bg-gray-100 rounded-lg" />
+      </div>
+    </div>
   );
 }
 
@@ -219,16 +248,24 @@ function OrderCard({
   );
 }
 
+const ITEM_PER_PAGE = 10;
+
 /* ─── Main page ──────────────────────────────────────────────────────── */
 const Orders = () => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+
   const { data: currentUser, isPending } = authClient.useSession();
   const activeTab = searchParams.get("status") || "all";
+  const currentPage = Number(searchParams.get("page") || "1");
+
   const { data: placedOrders, isPending: isOrdersPending } = useCustomerOrders({
     status: activeTab === "all" ? undefined : activeTab,
+    page: currentPage,
+    limit: ITEM_PER_PAGE,
   });
+
   const { handlePayOrder, handleCancelOrder, handleBuyAgain } =
     useOrderActions();
 
@@ -259,6 +296,9 @@ const Orders = () => {
       : placedOrders.data.filter((o) => o.status === activeTab);
   }, [placedOrders, activeTab]);
 
+  const totalItems: number = placedOrders?.pagination?.total ?? 0;
+  const totalPages: number = Math.ceil(totalItems / ITEM_PER_PAGE);
+
   const handleTabChange = (tabKey: string) => {
     const params = new URLSearchParams(searchParams.toString());
     if (tabKey === "all") {
@@ -269,6 +309,18 @@ const Orders = () => {
     router.push(
       params.toString() ? `${pathname}?${params.toString()}` : pathname,
     );
+  };
+
+  const handlePageChange = (page: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (page === 1) {
+      params.delete("page");
+    } else {
+      params.set("page", String(page));
+    }
+    router.push(`${pathname}?${params.toString()}`);
+    // Scroll back to top of list smoothly
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   /* Early returns after all hooks */
@@ -283,7 +335,7 @@ const Orders = () => {
   if (!currentUser) return <GuestOrderLookup />;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-24">
       <div className="max-w-2xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-6">
@@ -350,7 +402,13 @@ const Orders = () => {
         </div>
 
         {/* Orders list */}
-        {filteredOrders.length === 0 ? (
+        {isOrdersPending ? (
+          <div className="flex flex-col gap-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <OrderCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : filteredOrders.length === 0 ? (
           <div className="text-center py-20">
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <DynamicIcon name="Package" size={28} className="text-gray-300" />
@@ -378,6 +436,19 @@ const Orders = () => {
           </div>
         )}
       </div>
+      
+      {totalPages > 0 && (
+        <div className="max-w-2xl mx-auto">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            total={totalItems}
+            onPageChange={handlePageChange}
+            windowSize={2}
+            showInfo={false}
+          />
+        </div>
+      )}
     </div>
   );
 };
