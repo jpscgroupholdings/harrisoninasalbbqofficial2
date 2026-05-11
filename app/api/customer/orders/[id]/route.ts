@@ -37,21 +37,10 @@ export async function GET(
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    const formattedOrder = {
-      _id: order._id,
-      customerId: order.customerId?.toString() ?? null,
-      createdAt: order.createdAt,
-      status: order.status,
-      items: order.items,
-      total: order.total,
-      paymentInfo: order.paymentInfo,
-      estimatedTime: order.estimatedTime,
-      isReviewed: order.isReviewed,
-      actionConfig: ORDER_ACTION_CONFIG[order.status as OrderStatus],
-      priority: STATUS_PRIORITY[order.status as OrderStatus],
-    };
-
-    return NextResponse.json({  ...formattedOrder });
+    return NextResponse.json({
+      ...order,
+      _id: order._id.toString(),
+    });
   } catch (error) {
     console.error("GET guest order error:", error);
 
