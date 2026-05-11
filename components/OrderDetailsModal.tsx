@@ -8,17 +8,18 @@ import { MailIcon, PhoneIcon, UserIcon } from "lucide-react";
 interface OrderDetailsProps {
   orderId: string;
   role: "admin" | "customer";
+  variant: "modal" | "page"
 }
 
-const OrderDetailsModal = ({ orderId, role }: OrderDetailsProps) => {
+const OrderDetailsModal = ({ orderId, role, variant }: OrderDetailsProps) => {
     
   const { data: orderToView, isLoading, isError } = useOrderBase(role, orderId);
 
   const vatableSales = orderToView?.total?.vatableSales ?? 0;
   const totalAmount = orderToView?.total?.totalAmount ?? 0;
 
-  return (
-    <>
+  const content = (
+   <>
       {isLoading && (
         <div className="relative flex items-center justify-center py-12 h-[50vh]">
           <LoadingPage />
@@ -246,7 +247,19 @@ const OrderDetailsModal = ({ orderId, role }: OrderDetailsProps) => {
         </div>
       )}
     </>
-  );
+  )
+
+  if (variant === "page") {
+    return (
+      <div className="min-h-screen bg-stone-50 px-4 py-10">
+        <div className="mx-auto max-w-3xl bg-white rounded-2xl border border-stone-100 shadow-sm p-6 md:p-10">
+          {content}
+        </div>
+      </div>
+    );
+  }
+
+  return content;
 };
 
 export default OrderDetailsModal;

@@ -15,7 +15,7 @@ export default function OrderModal({
 
   return (
     <Modal onClose={() => router.back()} title="Order Details">
-      <OrderDetailsModal orderId={id} role="customer"/>
+      <OrderDetailsModal orderId={id} role="customer" variant="modal"/>
     </Modal>
   );
 }

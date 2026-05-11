@@ -7,5 +7,5 @@ export default async function OrderPage({
 }) {
   const { id } = await params;
 
-  return <OrderDetailsModal orderId={id} role="admin"/>;
+  return <OrderDetailsModal orderId={id} role="admin" variant="page"/>;
 }
