@@ -2,8 +2,8 @@
 
 import { use } from "react";
 import { useRouter } from "next/navigation";
-import OrderDetails from "@/app/customer/orders/OrderDetails";
 import Modal from "@/components/ui/Modal";
+import OrderDetailsModal from "@/components/OrderDetailsModal";
 
 export default function OrderModal({
   params,
@@ -15,7 +15,7 @@ export default function OrderModal({
 
   return (
     <Modal onClose={() => router.back()} title="Order Details">
-      <OrderDetails orderId={id} variant="modal" />
+      <OrderDetailsModal orderId={id} role="customer"/>
     </Modal>
   );
 }
