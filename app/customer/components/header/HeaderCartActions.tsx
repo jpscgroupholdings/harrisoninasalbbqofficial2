@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { DynamicIcon } from "@/lib/DynamicIcon";
 import { useCart } from "@/contexts/CartContext";
-import { useCustomerOrders } from "@/hooks/api/customers/useCustomerOrders";
+import { useCustomerOrderSummary } from "@/hooks/api/customers/useCustomerOrders";
 
 interface Props {
   mounted: boolean;
@@ -11,14 +11,13 @@ interface Props {
 
 export const HeaderCartActions = ({ mounted }: Props) => {
   const { totalItems, setIsCartOpen } = useCart();
-  const { data: placedOrders } = useCustomerOrders();
+  const { data: orderSummary } = useCustomerOrderSummary();
 
   const activeOrdersCount =
-    placedOrders?.data.filter(
-      (order) =>
-        order.status !== "cancelled" &&
-        (order.status !== "completed" || !order.isReviewed),
-    ).length ?? 0;
+    (orderSummary?.pending ?? 0) +
+    (orderSummary?.preparing ?? 0) +
+    (orderSummary?.dispatched ?? 0) + 
+    (orderSummary?.completed ?? 0);
 
   return (
     <div className="hidden md:flex items-center gap-2 sm:gap-4">
