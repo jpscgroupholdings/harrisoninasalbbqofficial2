@@ -23,17 +23,40 @@ import { ChangeEvent, useState } from "react";
 
 const InventoryTable = () => {
   const { data: inventoryData = [], isPending } = useBranchInventories();
-  const { mutate: updateInventory, isPending: isUpdating, isError, error } = useUpdateInventory();
-  const { mutate: bulkUpdate, isPending: isBulkUpdating, isError: isBulkError, error: bulkError } = useBulkUpdateInventory();
+  const {
+    mutate: updateInventory,
+    isPending: isUpdating,
+    isError,
+    error,
+  } = useUpdateInventory();
+  const {
+    mutate: bulkUpdate,
+    isPending: isBulkUpdating,
+    isError: isBulkError,
+    error: bulkError,
+  } = useBulkUpdateInventory();
 
   const inventoryHeader = [
-    "Image", "Name", "Category", "Price", "Stock", "Status", "Action",
+    "Image",
+    "Name",
+    "Category",
+    "Price",
+    "Stock",
+    "Incoming Order",
+    "Available",
+    "Status",
+    "Action",
   ];
 
   // ── Single edit state ─────────────────────────────────────────────────────
   const [isEditStock, setIsEditStock] = useState(false);
-  const [inventoryStocks, setInventoryStocks] = useState({ quantity: 0, reorderLevel: 0 });
-  const [productToEdit, setProductToEdit] = useState<InventoryItem | null>(null);
+  const [inventoryStocks, setInventoryStocks] = useState({
+    quantity: 0,
+    reorderLevel: 0,
+  });
+  const [productToEdit, setProductToEdit] = useState<InventoryItem | null>(
+    null,
+  );
 
   // ── Bulk edit state ───────────────────────────────────────────────────────
   const [isBulkMode, setIsBulkMode] = useState(false);
@@ -49,18 +72,33 @@ const InventoryTable = () => {
 
   const getStockStatus = (status: StockStatus) => {
     if (status === STOCK_STATUSES.OUT_OF_STOCK)
-      return { label: "Empty", className: "bg-red-50 text-red-700 border border-red-200" };
+      return {
+        label: "Empty",
+        className: "bg-red-50 text-red-700 border border-red-200",
+      };
     if (status === STOCK_STATUSES.LOW_STOCK)
-      return { label: "Low Stock", className: "bg-yellow-50 text-yellow-700 border border-yellow-200" };
+      return {
+        label: "Low Stock",
+        className: "bg-yellow-50 text-yellow-700 border border-yellow-200",
+      };
     if (status === STOCK_STATUSES.IN_STOCK)
-      return { label: "In Stock", className: "bg-green-50 text-green-700 border border-green-200" };
-    return { label: "Unknown", className: "bg-slate-50 text-slate-700 border border-slate-200" };
+      return {
+        label: "In Stock",
+        className: "bg-green-50 text-green-700 border border-green-200",
+      };
+    return {
+      label: "Unknown",
+      className: "bg-slate-50 text-slate-700 border border-slate-200",
+    };
   };
 
   // ── Single edit handlers ──────────────────────────────────────────────────
 
   const handleProductToEdit = (product: InventoryItem) => {
-    setInventoryStocks({ quantity: product.quantity, reorderLevel: product.reorderLevel });
+    setInventoryStocks({
+      quantity: product.quantity,
+      reorderLevel: product.reorderLevel,
+    });
     setProductToEdit(product);
     setIsEditStock(true);
   };
@@ -126,7 +164,9 @@ const InventoryTable = () => {
     const items = Array.from(selectedIds).map((id) => ({
       productId: id,
       quantity: bulkValues.quantity,
-      ...(bulkValues.applyReorderLevel && { reorderLevel: bulkValues.reorderLevel }),
+      ...(bulkValues.applyReorderLevel && {
+        reorderLevel: bulkValues.reorderLevel,
+      }),
     }));
 
     bulkUpdate(items, {
@@ -143,7 +183,6 @@ const InventoryTable = () => {
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-
       {/* Toolbar */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
         <p className="text-sm text-slate-500">
@@ -192,7 +231,10 @@ const InventoryTable = () => {
                 <TableHead className="w-10 text-center">
                   <input
                     type="checkbox"
-                    checked={selectedIds.size === inventoryData.length && inventoryData.length > 0}
+                    checked={
+                      selectedIds.size === inventoryData.length &&
+                      inventoryData.length > 0
+                    }
                     onChange={toggleSelectAll}
                     className="cursor-pointer accent-brand-color-500"
                   />
@@ -201,7 +243,10 @@ const InventoryTable = () => {
               {inventoryHeader
                 .filter((h) => !(isBulkMode && h === "Action"))
                 .map((item, index) => (
-                  <TableHead key={index} className="text-center font-semibold text-slate-700">
+                  <TableHead
+                    key={index}
+                    className="text-center font-semibold text-slate-700"
+                  >
                     {item}
                   </TableHead>
                 ))}
@@ -224,7 +269,10 @@ const InventoryTable = () => {
                   }`}
                 >
                   {isBulkMode && (
-                    <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                    <TableCell
+                      className="text-center"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <input
                         type="checkbox"
                         checked={isSelected}
@@ -246,15 +294,37 @@ const InventoryTable = () => {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="font-medium text-slate-900">{item.name}</TableCell>
-                  <TableCell className="text-sm text-slate-600">{item.category}</TableCell>
-                  <TableCell className="text-center text-slate-900 font-medium">₱{item.price}</TableCell>
-                  <TableCell className="text-center">
-                    <span className="font-semibold text-slate-900">{item.quantity}</span>
-                    <span className="text-xs text-slate-500 block">Reorder: {item.reorderLevel}</span>
+                  <TableCell className="font-medium text-slate-900">
+                    {item.name}
+                  </TableCell>
+                  <TableCell className="text-sm text-slate-600">
+                    {item.category}
+                  </TableCell>
+                  <TableCell className="text-center text-slate-900 font-medium">
+                    ₱{item.price}
                   </TableCell>
                   <TableCell className="text-center">
-                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${status.className}`}>
+                    <span className="font-semibold text-slate-900">
+                      {item.quantity}
+                    </span>
+                    <span className="text-xs text-slate-500 block">
+                      Reorder: {item.reorderLevel}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <span className="font-semibold text-slate-900">
+                      {item.reserved}
+                    </span>
+                  </TableCell>
+                   <TableCell className="text-center">
+                    <span className="font-semibold text-slate-900">
+                      {item.available}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <span
+                      className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${status.className}`}
+                    >
                       {status.label}
                     </span>
                   </TableCell>
@@ -362,7 +432,10 @@ const InventoryTable = () => {
                 onChange={handleBulkChange}
                 className="cursor-pointer accent-brand-color-500"
               />
-              <label htmlFor="applyReorderLevel" className="text-sm text-slate-600 cursor-pointer select-none">
+              <label
+                htmlFor="applyReorderLevel"
+                className="text-sm text-slate-600 cursor-pointer select-none"
+              >
                 Apply same reorder level to all
               </label>
             </div>
@@ -381,7 +454,8 @@ const InventoryTable = () => {
 
             {isBulkError && (
               <p className="text-sm text-red-600">
-                {bulkError?.message ?? "Something went wrong. Please try again."}
+                {bulkError?.message ??
+                  "Something went wrong. Please try again."}
               </p>
             )}
 
@@ -399,7 +473,9 @@ const InventoryTable = () => {
                 disabled={isBulkUpdating}
                 className="px-4 py-2 text-sm font-medium text-white bg-brand-color-500 hover:bg-brand-color-600 rounded-lg transition-colors disabled:opacity-60 cursor-pointer"
               >
-                {isBulkUpdating ? "Saving..." : `Update ${selectedIds.size} item${selectedIds.size > 1 ? "s" : ""}`}
+                {isBulkUpdating
+                  ? "Saving..."
+                  : `Update ${selectedIds.size} item${selectedIds.size > 1 ? "s" : ""}`}
               </button>
             </div>
           </form>
