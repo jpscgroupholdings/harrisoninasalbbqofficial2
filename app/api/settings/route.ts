@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    await connectDB
+    await connectDB();
 
     // Settings is a singleton — always fetch the first (and only) document
     const settings = await Settings.findOne().select("+contact.phone +contact.viber");
