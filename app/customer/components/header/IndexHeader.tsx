@@ -46,7 +46,7 @@ const Header = () => {
         onSuccess: async () => {
           closeModal();
 
-          await queryClient.invalidateQueries({ queryKey: ["orders"] });
+          queryClient.removeQueries({ queryKey: ["orders"] }); // remove the orders cache
           toast.success("Logged out successfully");
           setIsLoggingOut(false);
           router.push("/");
