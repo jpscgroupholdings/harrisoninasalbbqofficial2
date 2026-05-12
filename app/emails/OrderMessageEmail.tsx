@@ -43,17 +43,35 @@ function getStatusContent(
   status: OrderStatus,
   publicUrl: string,
   referenceNumber: string,
+  paymentMethod?: string
 ) {
+  const isMaya = paymentMethod === "maya";
+  const isCOD = paymentMethod === "cod";
+
   switch (status) {
     case "pending":
       return {
-        preview: "Complete your payment to confirm your order",
-        heading: "Payment needed",
-        message:
-          "Your order has been placed! Complete your payment to get it confirmed and we'll start preparing it right away.",
-        ctaLabel: "Pay now",
-        ctaHref: `${publicUrl}/orders?referenceNumber=${referenceNumber}`,
+        preview: isMaya
+          ? "Complete your payment to confirm your order"
+          : isCOD
+            ? "Your cash on delivery order is awaiting confirmation"
+            : "Your order is pending",
+        heading: isMaya
+          ? "Payment needed"
+          : isCOD
+            ? "Order placed successfully"
+            : "Order pending",
+        message: isMaya
+          ? "Your order has been placed! Complete your payment to get it confirmed and we'll start preparing it right away."
+          : isCOD
+            ? "Your order has been successfully placed and is currently awaiting confirmation from the store. We'll begin preparing it once confirmed."
+            : "Your order has been received and is currently being reviewed.",
+        ctaLabel: isMaya ? "Pay now" : null,
+        ctaHref: isMaya
+          ? `${publicUrl}/orders?referenceNumber=${referenceNumber}`
+          : undefined,
       };
+
     case "failed":
       return {
         preview: "We couldn't complete your order",
@@ -63,6 +81,7 @@ function getStatusContent(
         ctaLabel: "Try again",
         ctaHref: `${publicUrl}/`,
       };
+
     case "cancelled":
       return {
         preview: "Your order has been cancelled",
@@ -70,6 +89,7 @@ function getStatusContent(
         message:
           "Your order has been cancelled. If you didn't request this or have any concerns, please don't hesitate to reach out.",
       };
+
     case "expired":
       return {
         preview: "Your order has expired",
@@ -79,6 +99,7 @@ function getStatusContent(
         ctaLabel: "Place a new order",
         ctaHref: `${publicUrl}/`,
       };
+
     default:
       return {
         preview: "An update on your order",
@@ -142,7 +163,8 @@ const OrderMessageEmail = ({ order = mockOrder }: OrderMessageEmailProps) => {
   const { preview, heading, message, ctaLabel, ctaHref } = getStatusContent(
     status,
     publicUrl,
-    order.paymentInfo?.referenceNumber ?? "",
+    paymentInfo?.referenceNumber ?? "",
+    paymentInfo?.paymentMethod,
   );
 
   return (
