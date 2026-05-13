@@ -3,6 +3,8 @@ import { DynamicIcon } from "@/lib/DynamicIcon";
 import { OrdersApiResponse } from "@/types/OrderTypes";
 import { ORDER_STATUSES, OrderStatus } from "@/types/orderConstants";
 import { format } from "date-fns";
+import { OrderItemImage } from "../components/OrderItemImage";
+import { useRouter } from "next/navigation";
 
 interface GuestOrderModalProps {
   order: OrdersApiResponse["data"][number] | null;
@@ -39,18 +41,24 @@ function OrderActions({
 }) {
   if (!order) return null;
 
+  const router = useRouter();
+
   const status = order.status as OrderStatus;
 
   const canPay =
     status === ORDER_STATUSES.PENDING ||
     status === ORDER_STATUSES.FAILED ||
     status === ORDER_STATUSES.EXPIRED;
+
   const canCancel =
     status === ORDER_STATUSES.PENDING ||
     status === ORDER_STATUSES.FAILED ||
     status === ORDER_STATUSES.EXPIRED;
+
   const canBuyAgain =
     status === ORDER_STATUSES.COMPLETED || status === ORDER_STATUSES.CANCELLED;
+
+  const isCompleted = status === ORDER_STATUSES.COMPLETED;
 
   if (!canPay && !canCancel && !canBuyAgain) return null;
 
@@ -76,10 +84,20 @@ function OrderActions({
         </button>
       )}
 
+      {isCompleted && (
+        <button
+          onClick={() => router.push(`/orders/${order._id}/review`)}
+          className="w-full flex items-center justify-center gap-2 bg-brand-color-500 hover:bg-brand-color-600 active:bg-brand-color-900 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors"
+        >
+          <DynamicIcon name="Star" size={15} />
+          Leave Review
+        </button>
+      )}
+
       {canBuyAgain && (
         <button
           onClick={() => onBuyAgain(order.items)}
-          className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors"
+          className="w-full flex items-center justify-center gap-2 bg-green-800 hover:bg-green-700 active:bg-green-900 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors"
         >
           <DynamicIcon name="RotateCcw" size={15} />
           Order again
@@ -153,11 +171,9 @@ export const GuestOrderModal = ({
             <div key={i} className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 {item.image ? (
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    className="w-10 h-10 rounded-lg object-cover border border-slate-100 shrink-0"
-                  />
+                  <div className="w-10 h-10 rounded-lg object-cover border border-slate-100 shrink-0">
+                    <OrderItemImage image={item.image} name={item.name} />
+                  </div>
                 ) : (
                   <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
                     <DynamicIcon
