@@ -7,7 +7,6 @@ import { Metadata } from "next";
 import { BranchProvider } from "@/contexts/BranchContext";
 import HeaderSkeleton from "@/app/customer/components/HeaderSkeleton";
 import IndexHeader from "./components/header/IndexHeader";
-import { OrderProvider } from "@/contexts/OrderContext";
 
 export const metadata: Metadata = {
   title: "Customer | House of Inasal & BBQ",
@@ -17,7 +16,6 @@ export const metadata: Metadata = {
 export default function layout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <OrderProvider>
         <BranchProvider>
           <CartProvider>
             <Suspense fallback={<HeaderSkeleton />}>
@@ -29,7 +27,6 @@ export default function layout({ children }: { children: React.ReactNode }) {
             <Footer />
           </CartProvider>
         </BranchProvider>
-      </OrderProvider>
     </>
   );
 }
