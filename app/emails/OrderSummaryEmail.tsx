@@ -64,15 +64,15 @@ const mockOrder: OrderType = {
   notes: "Please make the sisig extra spicy. No sawsawan needed.",
   items: [
     {
-      _id: "p001",
+      productId: "p001",
       name: "Grilled Pork Sisig",
       price: 215,
       quantity: 2,
       image: "",
     },
-    { _id: "p002", name: "Crispy Pata", price: 680, quantity: 1, image: "" },
-    { _id: "p003", name: "Java Rice ×3", price: 45, quantity: 3, image: "" },
-    { _id: "p004", name: "Mango Shake", price: 110, quantity: 2, image: "" },
+    { productId: "p002", name: "Crispy Pata", price: 680, quantity: 1, image: "" },
+    { productId: "p003", name: "Java Rice ×3", price: 45, quantity: 3, image: "" },
+    { productId: "p004", name: "Mango Shake", price: 110, quantity: 2, image: "" },
   ],
   paymentInfo: {
     method: {
