@@ -1,5 +1,5 @@
 export const pageStatus = {
-  "/orders/[id]/review": false,
+  "/orders/[id]/review": true,
 };
 
 export function isRouteBlocked(pathname: string): boolean {
