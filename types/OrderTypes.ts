@@ -8,6 +8,18 @@ import { OrderStatus } from "./orderConstants";
  * to ensure type consistency across the app
  */
 
+// Add this new interface
+export interface OrderItem {
+  productId: string;   // ref to Product — this is what you use for reviews
+  name: string;
+  price: number;
+  description?: string;
+  image?: string;
+  category?: string;   // ObjectId as string
+  quantity: number;
+  // no _id — your schema has _id: false
+}
+
 export interface OrderType {
   _id: string;
   createdAt: string;
@@ -24,7 +36,7 @@ export interface OrderType {
     contactNumber: string;
   };
 
-  items: CartItem[];
+  items: OrderItem[];
   paymentInfo: {
     checkoutId?: string;
     referenceNumber?: string;
