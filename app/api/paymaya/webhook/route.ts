@@ -12,22 +12,25 @@ import { NextRequest, NextResponse } from "next/server";
 // Maya's current webhook events (use these, NOT the deprecated CHECKOUT_* events)
 // Deprecated: CHECKOUT_SUCCESS, CHECKOUT_FAILURE, CHECKOUT_DROPOUT, CHECKOUT_CANCELLED
 const PAYMENT_STATUS_MAP: Record<string, string> = {
-  PAYMENT_SUCCESS: "paid",
+  PAYMENT_SUCCESS: "pending",
   PAYMENT_FAILED: "failed",
   PAYMENT_EXPIRED: "expired",
   PAYMENT_CANCELLED: "cancelled",
   AUTHORIZED: "authorized", // Card payments only (hold/capture flow)
 };
 
-export function getStatusSubject(status: string, referenceNumber?: string) {
+export function getStatusSubject(
+  paymentStatus: string,
+  referenceNumber?: string,
+) {
   const ref = referenceNumber ? ` — ${referenceNumber.toUpperCase()}` : "";
 
-  switch (status) {
-    case "paid":
+  switch (paymentStatus) {
+    case "PAYMENT_SUCCESS":
       return `Order Confirmed${ref}`;
-    case "failed":
+    case "PAYMENT_FAILED":
       return `Your Order Could Not Be Completed${ref}`;
-    case "expired":
+    case "PAYMENT_EXPIRED":
       return `Your Order Has Expired${ref}`;
     default:
       return `Order Update${ref}`;
@@ -78,9 +81,14 @@ export async function POST(request: NextRequest) {
 
     const orderStatus = PAYMENT_STATUS_MAP[paymentStatus];
 
-    if (!orderStatus) {
-      // Could be a 3DS event (3DS_PAYMENT_SUCCESS, etc.) or RECURRING_*
-      // Log it but don't crash
+    const knownStatuses = [
+      "PAYMENT_SUCCESS",
+      "PAYMENT_FAILED",
+      "PAYMENT_EXPIRED",
+      "PAYMENT_CANCELLED",
+      "AUTHORIZED",
+    ];
+    if (!knownStatuses.includes(paymentStatus)) {
       console.warn(`[Maya Webhook] Unhandled paymentStatus: ${paymentStatus}`);
       return ack;
     }
@@ -98,7 +106,7 @@ export async function POST(request: NextRequest) {
       return ack;
     }
 
-    const finalStatuses = ["paid", "failed", "expired", "cancelled"];
+    const finalStatuses = ["failed", "expired", "cancelled"];
     if (finalStatuses.includes(existingOrder.status)) {
       console.log(
         `[Maya Webhook] ⏭️ Skipping — order already in final state: ${existingOrder.status}`,
@@ -115,12 +123,16 @@ export async function POST(request: NextRequest) {
           "paymentInfo.paymentId": paymentId ?? null,
           "paymentInfo.paymentStatus": paymentStatus,
           // Timeline tracking per status
-          ...(orderStatus === "paid" && { "timeline.paidAt": new Date() }),
-          ...(orderStatus === "failed" && { "timeline.failedAt": new Date() }),
-          ...(orderStatus === "expired" && {
+          ...(paymentStatus === "PAYMENT_SUCCESS" && {
+            "timeline.paidAt": new Date(),
+          }),
+          ...(paymentStatus === "PAYMENT_FAILED" && {
+            "timeline.failedAt": new Date(),
+          }),
+          ...(paymentStatus === "PAYMENT_EXPIRED" && {
             "timeline.expiredAt": new Date(),
           }),
-          ...(orderStatus === "cancelled" && {
+          ...(orderStatus === "PAYMENT_CANCELLED" && {
             "timeline.cancelledAt": new Date(),
           }),
           "paymentInfo.method": fundSource
@@ -140,13 +152,13 @@ export async function POST(request: NextRequest) {
       `[Maya Webhook] ✅ Order ${requestReferenceNumber} → ${orderStatus}`,
     );
 
-    if(paymentStatus === "PAYMENT_SUCCESS"){
-      for(const item of existingOrder.items){
+    if (paymentStatus === "PAYMENT_SUCCESS") {
+      for (const item of existingOrder.items) {
         await Inventory.findOneAndUpdate(
-          {productId: item.productId, branchId: existingOrder.branchId},
-          { $inc: { quantity: -item.quantity, reserved: -item.quantity}},
-          {session}
-        )
+          { productId: item.productId, branchId: existingOrder.branchId },
+          { $inc: { quantity: -item.quantity, reserved: -item.quantity } },
+          { session },
+        );
       }
     }
 
@@ -159,7 +171,7 @@ export async function POST(request: NextRequest) {
       // restore stock for each item
       for (const item of existingOrder.items) {
         await Inventory.findOneAndUpdate(
-          {productId: item.productId, branchId: existingOrder.branchId}, // ← you need productId in OrderItemSchema for this!
+          { productId: item.productId, branchId: existingOrder.branchId }, // ← you need productId in OrderItemSchema for this!
           { $inc: { reserved: -item.quantity } },
           { new: true, session },
         );
@@ -170,10 +182,13 @@ export async function POST(request: NextRequest) {
       from: EMAIL_FROM,
       to: order.paymentInfo.customerEmail,
       subject: getStatusSubject(
-        order.status,
+        paymentStatus,
         order.paymentInfo.referenceNumber,
       ),
-      react: order.paymentInfo.paymentStatus !== "PAYMENT_SUCCESS" ? OrderMessageEmail({order: order}) : OrderSummaryEmail({ order: order }),
+      react:
+        order.paymentInfo.paymentStatus !== "PAYMENT_SUCCESS"
+          ? OrderMessageEmail({ order: order })
+          : OrderSummaryEmail({ order: order }),
     });
 
     if (emailError) {
