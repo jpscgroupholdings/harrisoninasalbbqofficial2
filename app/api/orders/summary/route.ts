@@ -31,11 +31,7 @@ export async function GET(request: NextRequest) {
     }
 
     const summary = {
-      // "To pay": only genuinely unpaid orders (excludes COD — they show "Awaiting pickup" not a pay badge)
-      // COD pending orders are in byStatus["pending"] too, so if you want to exclude them
-      // you'd need a separate pipeline stage. For now this matches your existing behavior.
       pending: byStatus["pending"] ?? 0,
-
       // "To dispatch": payment confirmed (paid) + actively being prepared
       preparing: (byStatus["paid"] ?? 0) + (byStatus["preparing"] ?? 0),
 

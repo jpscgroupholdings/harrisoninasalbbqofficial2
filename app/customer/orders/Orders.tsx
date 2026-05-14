@@ -35,7 +35,7 @@ const TABS: Tab[] = [
   {
     key: "dispatched",
     label: "To receive",
-    statuses: [ORDER_STATUSES.DISPATCHED, ORDER_STATUSES.READY],
+    statuses: [ORDER_STATUSES.READY],
   },
   { key: "completed", label: "Completed" },
   { key: "cancelled", label: "Cancelled" },
@@ -45,7 +45,6 @@ const TABS: Tab[] = [
 const STATUS_STYLES: Record<string, string> = {
   [ORDER_STATUSES.PENDING]: "bg-amber-50 text-amber-800",
   [ORDER_STATUSES.PREPARING]: "bg-blue-50 text-blue-800",
-  [ORDER_STATUSES.DISPATCHED]: "bg-purple-50 text-purple-800",
   [ORDER_STATUSES.READY]: "bg-purple-50 text-purple-800",
   [ORDER_STATUSES.COMPLETED]: "bg-green-50 text-green-800",
   [ORDER_STATUSES.CANCELLED]: "bg-red-50 text-red-800",
@@ -55,7 +54,6 @@ const STATUS_STYLES: Record<string, string> = {
 const STATUS_LABELS: Record<string, string> = {
   [ORDER_STATUSES.PENDING]: "To pay",
   [ORDER_STATUSES.PREPARING]: "Preparing",
-  [ORDER_STATUSES.DISPATCHED]: "Dispatched",
   [ORDER_STATUSES.READY]: "Ready",
   [ORDER_STATUSES.COMPLETED]: "Completed",
   [ORDER_STATUSES.CANCELLED]: "Cancelled",

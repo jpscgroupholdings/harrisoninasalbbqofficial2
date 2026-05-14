@@ -23,11 +23,6 @@ export function StatusBadge({ status }: { status: OrderStatus }) {
       color: "bg-blue-100 text-blue-700 border border-blue-200",
       icon: <Package size={14} />,
     },
-    dispatched: {
-      label: "Order is on-going",
-      color: "bg-orange-100 text-orange-700 border border-orange-200",
-      icon: <Truck size={14} />,
-    },
     ready: {
       label: "Ready to pickup",
       color: "bg-orange-100 text-orange-700 border border-orange-200",

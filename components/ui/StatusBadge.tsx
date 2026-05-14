@@ -9,7 +9,6 @@ export default function StatusBadge({ status }: StatusBadgeProps) {
   const statusStyles: Record<OrderType["status"], string> = {
     pending: "bg-amber-500",
     preparing: "bg-blue-500",
-    dispatched: "bg-red-500",
     ready: "bg-orange-500",
     cancelled: "bg-gray-500",
     completed: "bg-[#ef4501]",
