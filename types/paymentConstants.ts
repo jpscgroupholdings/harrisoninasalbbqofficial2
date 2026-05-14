@@ -1,0 +1,7 @@
+export const PAYMENT_STATUSES = {
+  PAYMENT_SUCCESS: "PAYMENT_SUCCESS",
+  PAYMENT_FAILED: "PAYMENT_FAILED",
+  PAYMENT_EXPIRED: "PAYMENT_SUCCESS",
+} as const;
+
+export type PaymentStatus = (typeof PAYMENT_STATUSES)[keyof typeof PAYMENT_STATUSES];
