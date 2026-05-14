@@ -138,8 +138,12 @@ export function parseExactFilters(
 ): Record<string, any> {
   const match: Record<string, any> = {};
   for (const field of fields) {
-    const val = searchParams.get(field);
-    if (val) match[field] = val;
+    const val = searchParams.getAll(field); // gets all values
+    if (val.length === 1) {
+      match[field] = val[0];
+    } else if (val.length > 1) {
+      match[field] = { $in: val };
+    }
   }
   return match;
 }
