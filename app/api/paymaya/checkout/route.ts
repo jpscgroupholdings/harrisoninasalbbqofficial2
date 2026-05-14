@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
       shippingAddress,
     } = body;
 
-    const { line1, line2, city, province, zipCode } = shippingAddress;
+    const { line1, line2, city, province, zipCode } = shippingAddress ?? {};
 
     if (!branchId) {
       return NextResponse.json(
@@ -201,15 +201,16 @@ export async function POST(request: NextRequest) {
           email: customerEmail,
           phone: customerPhone,
         },
-
-        shippingAddress: {
-          line1,
+        ...(shippingAddress && {
+          shippingAddress: {
+             line1,
           line2,
           city,
           state: province,
           zipCode,
           countryCode: "PH",
-        },
+          }
+        })
       },
       redirectUrl: {
         success: `${process.env.NEXT_PUBLIC_URL}/payment/success?referenceNumber=${referenceNumber}`,
