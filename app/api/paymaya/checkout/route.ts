@@ -30,14 +30,7 @@ export async function POST(request: NextRequest) {
 
     const storeStatus = getStoreStatus(settings.operatingHours);
 
-    if (!storeStatus.isOpen) {
-      return NextResponse.json(
-        {
-          error: storeStatus.message,
-        },
-        { status: 403 },
-      );
-    }
+    if (!storeStatus.isOpen) throw new Error(storeStatus.message);
 
     const customer = await requireBetterAuth();
 
@@ -66,28 +59,17 @@ export async function POST(request: NextRequest) {
 
     const { line1, line2, city, province, zipCode } = shippingAddress ?? {};
 
-    if (!branchId) {
-      return NextResponse.json(
-        { error: "Branch is required." },
-        { status: 400 },
-      );
-    }
-    if (!firstName || !lastName || !customerPhone) {
-      return NextResponse.json(
-        { error: "Customer details are required." },
-        { status: 400 },
-      );
-    }
+    if (!branchId) throw new Error("Branch is required.");
 
-    if (!items || !Array.isArray(items) || items.length === 0) {
-      return NextResponse.json({ error: "Cart is empty." }, { status: 400 });
-    }
+    if (!firstName || !lastName || !customerPhone)
+      throw new Error("Customer details are required.");
+
+    if (!items || !Array.isArray(items) || items.length === 0)
+      throw new Error("Cart is empty.");
 
     const branch = await Branch.findById(branchId).session(session);
 
-    if (!branch) {
-      return NextResponse.json({ error: "Branch not found!" }, { status: 400 });
-    }
+    if (!branch) throw new Error("Branch not found!");
 
     let totalPrice = 0;
 
@@ -117,28 +99,27 @@ export async function POST(request: NextRequest) {
         throw new Error(`${product.name} is not available at this branch.`);
       }
 
-      const available = inventory.available; // from the model virtual
-
-      if (available === 0) {
-        throw new Error(`${product.name} is out of stock.`);
-      }
-
-      if (available < cartItem.quantity) {
-        throw new Error(
-          `${product.name} only has ${available} item(s) available.`,
-        );
-      }
-
       // only increment reserved, quantity stays untouched until paid
-      await Inventory.findOneAndUpdate(
+      const updatedInventory = await Inventory.findOneAndUpdate(
         {
           productId: cartItem._id,
           branchId: branchId,
-          reserved: { $gte: inventory.quantity },
+          $expr: {
+            $gte: [
+              { $subtract: ["$quantity", "$reserved"] }, // available
+              cartItem.quantity, // must have enough
+            ],
+          },
         },
         { $inc: { reserved: cartItem.quantity } },
         { new: true, session },
       );
+
+      if (!updatedInventory) {
+        throw new Error(
+          `${product.name} is out of stock or insufficient quantity.`,
+        );
+      }
 
       totalPrice += product.price * cartItem.quantity;
 
@@ -291,10 +272,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (emailError) {
-      return NextResponse.json(
-        { error: "Failed to send order summary email. Please try again." },
-        { status: 500 },
-      );
+      console.error("[Order] Failed to send email:", emailError);
     }
 
     return NextResponse.json(
