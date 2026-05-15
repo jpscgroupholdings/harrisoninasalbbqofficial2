@@ -65,7 +65,7 @@ export const CartProvider: React.FC<{
   const [isHydrated, setIsHydrated] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
 
-  const {data: session} = authClient.useSession();
+  const { data: session } = authClient.useSession();
 
   // Holds the pending debounce timer for DB sync
   const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -87,6 +87,8 @@ export const CartProvider: React.FC<{
             const items: CartItem[] = data.items ?? [];
             setCartItems(items);
             lastSyncedRef.current = items;
+
+            localStorage.removeItem(LOCALSTORAGE_KEY);
           }
         } catch (err) {
           console.error("[CartContext] Failed to load cart from DB:", err);
@@ -138,29 +140,26 @@ export const CartProvider: React.FC<{
 
   // ─── DB sync helper ─────────────────────────────────────────────────────────
 
-  const syncToDb = useCallback(
-    async (items: CartItem[]) => {
-      // Skip if nothing actually changed
-      if (JSON.stringify(items) === JSON.stringify(lastSyncedRef.current)) return;
+  const syncToDb = useCallback(async (items: CartItem[]) => {
+    // Skip if nothing actually changed
+    if (JSON.stringify(items) === JSON.stringify(lastSyncedRef.current)) return;
 
-      setIsSyncing(true);
-      try {
-        const res = await fetch("/api/customer/cart", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ items }),
-        });
-        if (!res.ok) throw new Error(`PUT /api/cart → ${res.status}`);
-        lastSyncedRef.current = items;
-      } catch (err) {
-        console.error("[CartContext] Failed to sync cart to DB:", err);
-        // Optionally: surface a toast notification here
-      } finally {
-        setIsSyncing(false);
-      }
-    },
-    []
-  );
+    setIsSyncing(true);
+    try {
+      const res = await fetch("/api/customer/cart", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items }),
+      });
+      if (!res.ok) throw new Error(`PUT /api/cart → ${res.status}`);
+      lastSyncedRef.current = items;
+    } catch (err) {
+      console.error("[CartContext] Failed to sync cart to DB:", err);
+      // Optionally: surface a toast notification here
+    } finally {
+      setIsSyncing(false);
+    }
+  }, []);
 
   // ─── Cart actions (always optimistic) ───────────────────────────────────────
 
@@ -169,7 +168,7 @@ export const CartProvider: React.FC<{
       const existing = prev.find((c) => c._id === item._id);
       if (existing) {
         return prev.map((c) =>
-          c._id === item._id ? { ...c, quantity: c.quantity + 1 } : c
+          c._id === item._id ? { ...c, quantity: c.quantity + 1 } : c,
         );
       }
       return [...prev, { ...item }];
@@ -187,15 +186,19 @@ export const CartProvider: React.FC<{
         return;
       }
       setCartItems((prev) =>
-        prev.map((item) => (item._id === id ? { ...item, quantity } : item))
+        prev.map((item) => (item._id === id ? { ...item, quantity } : item)),
       );
     },
-    [removeFromCart]
+    [removeFromCart],
   );
 
-  const clearCart = useCallback(() => {
+  const clearCart = useCallback(async () => {
     setCartItems([]);
-  }, []);
+
+    if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
+    lastSyncedRef.current = cartItems; // ensure guard doesn't skip it
+    await syncToDb([]);
+  }, [syncToDb, cartItems]);
 
   // ─── Derived values ──────────────────────────────────────────────────────────
 
@@ -203,7 +206,7 @@ export const CartProvider: React.FC<{
   const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
   const totalPrice = cartItems.reduce(
     (sum, item) => sum + item.price * item.quantity,
-    0
+    0,
   );
   const vatableSales = totalPrice / 1.12;
   const vatAmount = totalPrice - vatableSales;
