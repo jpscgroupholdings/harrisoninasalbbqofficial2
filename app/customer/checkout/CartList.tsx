@@ -285,7 +285,7 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
         try {
           await createCodOrder(orderPayload);
           toast.success("Order placed successfully!");
-          clearCart();
+          await clearCart();
           router.push("/");
         } finally {
           setIsCodPending(false);
@@ -302,7 +302,7 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
           );
         }
 
-        clearCart();
+        await clearCart();
         window.location.href = data.redirectUrl;
       }
     } catch (error: any) {
