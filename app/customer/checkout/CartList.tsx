@@ -14,7 +14,7 @@ import Modal from "@/components/ui/Modal";
 import { CreateOrderPayload } from "@/types/OrderTypes";
 
 const createCodOrder = async (payload: CreateOrderPayload) => {
-  const res = await fetch("/api/cod-checkout", {
+  const res = await fetch("/api/customer/cod-checkout", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -197,16 +197,11 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
   const [isCodPending, setIsCodPending] = useState(false);
 
   // check if current step has any errors or empty required fields
-  const isDetailsIncomplete =
-    !orderDetails.customer.firstName ||
-    !orderDetails.customer.lastName ||
-    !orderDetails.customer.customerEmail;
-
-  const isShippingIncomplete =
-    !orderDetails.shippingAddress.line1 ||
-    !orderDetails.shippingAddress.city ||
-    !orderDetails.shippingAddress.province ||
-    !orderDetails.shippingAddress.zipCode;
+  const isDetailsIncomplete = !CustomerSchema.safeParse(orderDetails.customer)
+    .success;
+  const isShippingIncomplete = !ShippingSchema.safeParse(
+    orderDetails.shippingAddress,
+  ).success;
 
   const isNextDisabled =
     !selectedBranch ||
@@ -214,17 +209,16 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
     (isShipping && isShippingIncomplete);
 
   const handleNext = () => {
-    // validate current step only before proceeding
-    const result = isDetails
-      ? CustomerSchema.safeParse(orderDetails.customer)
-      : ShippingSchema.safeParse(orderDetails.shippingAddress);
-
-    if (!result.success) {
-      toast.error("Please fix the errors before continuing.");
-      return;
+    if (isDetails) {
+      const result = CustomerSchema.safeParse(orderDetails.customer);
+      if (!result.success) {
+        // populate customerErrors so fields show red
+        validateAll(); // or a step-scoped validate
+        return;
+      }
     }
-
-    onNext(); // parent pushes ?step=shipping or whatever
+    // same for shipping step
+    onNext();
   };
 
   // ── Handlers ─────────────────────────────────────────────────────────────────
