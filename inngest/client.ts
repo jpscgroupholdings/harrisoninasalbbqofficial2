@@ -6,7 +6,8 @@ export type Events = {
     "order/created": {
         data: {
             orderId: string;
-            referenceNumber: string
+            referenceNumber: string;
+            paymentMethod: string;
         }
     }
 }
