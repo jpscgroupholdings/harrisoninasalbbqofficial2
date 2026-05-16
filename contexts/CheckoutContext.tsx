@@ -20,6 +20,7 @@ type CheckoutContextType = {
   shippingErrors: ReturnType<typeof useFormErrors>["shippingErrors"];
   handleStateChange: (type: keyof OrderFormState, field: string, value: string) => void;
   handleNext: () => void;
+  validateField: (step: "customer" | "shippingAddress", field: string, value: string) => void
 };
 
 export const CheckoutStep = {
@@ -67,7 +68,7 @@ export const CheckoutProvider = ({ children }: { children: React.ReactNode }) =>
     },
   });
 
-  const { customerErrors, shippingErrors } = useFormErrors(orderDetails);
+  const { customerErrors, shippingErrors, validateField } = useFormErrors(orderDetails);
 
   const handleStateChange = (
     type: keyof OrderFormState,
@@ -120,6 +121,7 @@ export const CheckoutProvider = ({ children }: { children: React.ReactNode }) =>
         shippingErrors,
         handleStateChange,
         handleNext,
+        validateField
       }}
     >
       {children}
