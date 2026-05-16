@@ -1,5 +1,20 @@
 import mongoose, { models, Schema } from "mongoose";
 
+const ReservationSchema = new Schema(
+  {
+    orderId: {
+      type: Schema.Types.ObjectId,
+      ref: "Order",
+      required: true,
+    },
+    quantity: {
+      type: Number,
+      required: true,
+    },
+  },
+  { _id: false },
+);
+
 const InventorySchema = new Schema(
   {
     productId: {
@@ -21,10 +36,9 @@ const InventorySchema = new Schema(
       default: 0,
     },
 
-    reserved: {
-      type: Number,
-      default: 0,
-      min: 0,
+    reservations: {
+      type: [ReservationSchema],
+      default: [],
     },
 
     reorderLevel: {
@@ -48,8 +62,22 @@ const InventorySchema = new Schema(
   },
 );
 
+// compute from reservations array - always accurate
+InventorySchema.virtual("reserved").get(function () {
+  return this.reservations.reduce(
+    (sum: number, r: { quantity: number }) => sum + r.quantity,
+    0,
+  );
+});
+
 InventorySchema.virtual("available").get(function () {
-  return this.quantity - this.reserved;
+  return (
+    this.quantity -
+    this.reservations.reduce(
+      (sum: number, r: { quantity: number }) => sum + r.quantity,
+      0,
+    )
+  );
 });
 
 InventorySchema.index({ productId: 1, branchId: 1 }, { unique: true });
