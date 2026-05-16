@@ -135,7 +135,7 @@ export interface CreateOrderPayload {
   branchId: string;
   firstName: string;
   lastName: string;
-  customerEmail?: string;
+  customerEmail: string;
   customerPhone: string;
   notes?: string;
   items: {
