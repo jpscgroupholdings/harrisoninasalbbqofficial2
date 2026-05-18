@@ -19,7 +19,7 @@ interface ProductResponse {
 const ORDER_ENDPOINTS = {
   admin: "/admin/orders/",
   customer: "/customer/orders/",
-  guest: "/customer/orders/guest?ref="
+  guest: "/customer/orders/guest?ref=",
 } as const;
 
 export type OrderParams = {
@@ -35,8 +35,7 @@ export function useOrdersBase(
   type: keyof typeof ORDER_ENDPOINTS,
   params?: OrderParams,
 ) {
-
-  const {data: session, isPending} = authClient.useSession();
+  const { data: session, isPending } = authClient.useSession();
   const isCustomer = type === "customer";
 
   return useQuery<ProductResponse, Error>({
@@ -53,7 +52,13 @@ export function useOrdersBase(
 export function useOrderBase(type: keyof typeof ORDER_ENDPOINTS, id: string) {
   return useQuery<OrderType, Error>({
     queryKey: ["orders", type, id],
-    queryFn: () => apiClient.get(`${ORDER_ENDPOINTS[type]}${id}`),
+    queryFn: async () => {
+      try {
+        return await apiClient.get(`${ORDER_ENDPOINTS[type]}${id}`);
+      } catch (error: any) {
+        throw new Error(error?.message ?? "Failed to fetch order");
+      }
+    },
     staleTime: 30000,
     enabled: !!id,
   });
