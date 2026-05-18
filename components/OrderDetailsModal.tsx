@@ -9,7 +9,7 @@ import { MailIcon, PhoneIcon, UserIcon } from "lucide-react";
 
 interface OrderDetailsProps {
   orderId: string;
-  role: "admin" | "customer";
+  role: "admin" | "customer" | "guest";
   variant: "modal" | "page";
 }
 
