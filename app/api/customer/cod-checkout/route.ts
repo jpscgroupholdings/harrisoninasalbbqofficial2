@@ -70,11 +70,9 @@ export async function POST(request: NextRequest) {
 
     // 9. Reserve inventory now that we have orderId
     await reserveInventory(orderItems, body.branchId, order._id, session);
+    await session.commitTransaction();
 
     const paymentMethod = order?.paymentInfo?.paymentMethod;
-
-    await session.commitTransaction();
-    session.endSession();
 
     // 10. Side effects (after commit — failures are non-fatal)
     await Promise.allSettled([
@@ -86,11 +84,9 @@ export async function POST(request: NextRequest) {
       sendOrderConfirmationEmail(order),
     ]);
 
-    await session.commitTransaction();
-    session.endSession();
-
     return NextResponse.json(
       {
+        success: true,
         referenceNumber,
       },
       { status: 201 },
@@ -104,5 +100,7 @@ export async function POST(request: NextRequest) {
       },
       { status: 500 },
     );
+  } finally {
+    await session.endSession();
   }
 }
