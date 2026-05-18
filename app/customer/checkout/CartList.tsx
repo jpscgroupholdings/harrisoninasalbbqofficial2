@@ -20,12 +20,17 @@ const createCodOrder = async (payload: CreateOrderPayload) => {
     body: JSON.stringify(payload),
   });
 
+  const text = await res.text();
+  const data = text ? JSON.parse(text) : null;
+
   if (!res.ok) {
-    const data = await res.json();
     throw new Error(data.error ?? "Failed to place order.");
   }
 
-  return res.json();
+  return data as {
+    success: boolean;
+    referenceNumber: string;
+  };
 };
 
 /** Single cart row */
@@ -277,10 +282,10 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
       if (selectedPayment === "cod") {
         setIsCodPending(true);
         try {
-          await createCodOrder(orderPayload);
+          const guestOrder = await createCodOrder(orderPayload);
           toast.success("Order placed successfully!");
           await clearCart();
-          router.push("/");
+          router.push(`/orders?referenceNumber=${encodeURIComponent(guestOrder.referenceNumber)}`);
         } finally {
           setIsCodPending(false);
         }
@@ -303,6 +308,7 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
       toast.error("Order Failed", {
         description: error.message,
       });
+      console.log(error.message);
     }
   };
 
