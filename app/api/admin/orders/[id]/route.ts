@@ -25,6 +25,8 @@ import { getStatusSubject } from "@/app/api/paymaya/webhook/route";
 import OrderSummaryEmail from "@/app/emails/OrderSummaryEmail";
 import { OrderType } from "@/types/OrderTypes";
 import { PAYMENT_STATUSES, PaymentStatus } from "@/types/paymentConstants";
+import { Inventory } from "@/models/Inventory";
+import mongoose, { ClientSession } from "mongoose";
 
 // ============================================
 // GET /api/orders/[id]
@@ -86,6 +88,42 @@ export async function GET(
   }
 }
 
+export async function completeInventory(
+  orderId: mongoose.Types.ObjectId,
+  branchId: string,
+  session: ClientSession,
+) {
+  const inventoryDocs = await Inventory.find(
+    { branchId, "reservations.orderId": orderId },
+    { reservations: 1 },
+    { session },
+  );
+
+  // Already processed on a previous attempt — safe no-op
+  if (inventoryDocs.length === 0) return;
+
+  for (const inv of inventoryDocs) {
+    const reservation = inv.reservations.find(
+      (r: { orderId: string; quantity: number }) =>
+        r.orderId.toString() === orderId.toString(),
+    );
+
+    if (!reservation) continue; // already cleared, skip
+
+    await Inventory.updateOne(
+      {
+        _id: inv._id,
+        "reservations.orderId": orderId, // idempotent guard — same pattern as reserveInventory
+      },
+      {
+        $pull: { reservations: { orderId } },
+        $inc: { quantity: -reservation.quantity },
+      },
+      { session },
+    );
+  }
+}
+
 // ============================================
 // PATCH /api/orders/[id]
 // ============================================
@@ -99,118 +137,113 @@ export async function PATCH(
   request: NextRequest,
   context: { params: Promise<{ id: string }> },
 ) {
+  // ============================================
+  // VALIDATE INPUTS (before any DB/transaction)
+  // ============================================
+
+  const { id } = await context.params;
+
+  if (!id || id.length !== 24) {
+    return NextResponse.json(
+      { error: "Invalid order ID format" },
+      { status: 400 },
+    );
+  }
+
+  await requireAdmin(request);
+
+  const body = await request.json();
+  const { status: newStatus } = body;
+
+  if (!newStatus) {
+    return NextResponse.json(
+      { error: "Status is required", example: { status: "preparing" } },
+      { status: 400 },
+    );
+  }
+
+  if (!isValidOrderStatus(newStatus)) {
+    return NextResponse.json(
+      {
+        error: `Invalid status: "${newStatus}"`,
+        validStatuses: Object.values(STATUS_TRANSITIONS).flat().filter(Boolean),
+      },
+      { status: 400 },
+    );
+  }
+
+  // ============================================
+  // FETCH ORDER (before transaction — read-only)
+  // ============================================
+
+  await connectDB();
+
+  const order = await Order.findById(id);
+
+  if (!order) {
+    return NextResponse.json({ error: "Order not found" }, { status: 404 });
+  }
+
+  const currentStatus = order.status as OrderStatus;
+  const paymentMethod = order.paymentInfo?.paymentMethod as "cod" | "maya";
+  const paymentStatus = order.paymentInfo?.paymentStatus as PaymentStatus;
+
+  if (
+    paymentMethod === "maya" &&
+    currentStatus === ORDER_STATUSES.PENDING &&
+    newStatus === ORDER_STATUSES.PREPARING &&
+    paymentStatus !== PAYMENT_STATUSES.PAYMENT_SUCCESS
+  ) {
+    return NextResponse.json(
+      {
+        error:
+          "Maya orders cannot be accepted while payment is still pending. Wait for payment confirmation first.",
+        currentStatus,
+        paymentMethod,
+        requiredStatus: PAYMENT_STATUSES.PAYMENT_SUCCESS,
+      },
+      { status: 400 },
+    );
+  }
+
+  if (!canTransitionTo(currentStatus, newStatus, "admin")) {
+    return NextResponse.json(
+      {
+        error: `Cannot transition from "${currentStatus}" to "${newStatus}"`,
+        currentStatus,
+        allowedNextStatus:
+          getNextStatus(currentStatus) ?? "no transitions allowed",
+      },
+      { status: 400 },
+    );
+  }
+
+  // ============================================
+  // TRANSACTION (writes only)
+  // ============================================
+
+  const session = await mongoose.startSession();
+
   try {
-    await connectDB();
+    await session.withTransaction(async () => {
+      const updateData: Record<string, any> = { status: newStatus };
 
-    const { id } = await context.params;
+      const timelineField = getTimelineField(newStatus);
+      if (timelineField) {
+        updateData[`timeline.${timelineField}`] = new Date();
+      }
 
-    // Validate MongoDB ObjectId format
-    if (!id || id.length !== 24) {
-      return NextResponse.json(
-        { error: "Invalid order ID format" },
-        { status: 400 },
-      );
-    }
+      await Order.updateOne({ _id: id }, { $set: updateData }, { session });
 
-    await requireAdmin(request);
-
-    // Parse and validate request body
-    const body = await request.json();
-    const { status: newStatus } = body;
-
-    // Check if status provided
-    if (!newStatus) {
-      return NextResponse.json(
-        {
-          error: "Status is required",
-          example: { status: "preparing" },
-        },
-        { status: 400 },
-      );
-    }
-
-    // Validate new status is a valid OrderStatus
-    if (!isValidOrderStatus(newStatus)) {
-      return NextResponse.json(
-        {
-          error: `Invalid status: "${newStatus}"`,
-          validStatuses: Object.values(STATUS_TRANSITIONS)
-            .flat()
-            .filter(Boolean),
-        },
-        { status: 400 },
-      );
-    }
-
-    // Fetch order
-    const order = await Order.findById(id);
-
-    if (!order) {
-      return NextResponse.json({ error: "Order not found" }, { status: 404 });
-    }
+      if (newStatus === ORDER_STATUSES.COMPLETED) {
+        await completeInventory(order._id, order.branchId, session);
+      }
+    });
 
     // ============================================
-    // VALIDATE STATUS TRANSITION
+    // POST-TRANSACTION SIDE EFFECTS
     // ============================================
 
-    const currentStatus = order.status as OrderStatus;
-
-    const paymentMethod = order.paymentInfo?.paymentMethod as "cod" | "maya";
-    const paymentStatus = order.paymentInfo?.paymentStatus as PaymentStatus;
-
-    if (
-      paymentMethod === "maya" &&
-      currentStatus === ORDER_STATUSES.PENDING &&
-      newStatus === ORDER_STATUSES.PREPARING &&
-      paymentStatus !== PAYMENT_STATUSES.PAYMENT_SUCCESS
-    ) {
-      return NextResponse.json(
-        {
-          error:
-            "Maya orders cannot be accepted while payment is still pending. Wait for payment confirmation first.",
-          currentStatus,
-          paymentMethod,
-          requiredStatus: PAYMENT_STATUSES.PAYMENT_SUCCESS,
-        },
-        { status: 400 },
-      );
-    }
-
-    // Check if transition is valid
-    if (!canTransitionTo(currentStatus, newStatus, "admin")) {
-      return NextResponse.json(
-        {
-          error: `Cannot transition from "${currentStatus}" to "${newStatus}"`,
-          currentStatus,
-          allowedNextStatus:
-            getNextStatus(currentStatus) ?? "no transitions allowed",
-        },
-        { status: 400 },
-      );
-    }
-
-    // ============================================
-    // UPDATE ORDER STATUS
-    // ============================================
-
-    const previousStatus = order.status;
-    const updateData: Record<string, any> = {
-      status: newStatus,
-    };
-
-    // ============================================
-    // UPDATE TIMELINE
-    // ============================================
-
-    // Auto-update timeline when status changes
-    const timelineField = getTimelineField(newStatus);
-
-    if (timelineField && timelineField !== null) {
-      updateData[`timeline.${timelineField}`] = new Date();
-    }
-
-    // Save order
-    await Order.updateOne({ _id: id }, { $set: updateData });
     const updatedOrder = await Order.findById(id);
 
     if (newStatus === ORDER_STATUSES.COMPLETED) {
@@ -225,26 +258,21 @@ export async function PATCH(
       });
 
       if (emailError) {
-        console.error("[Maya Webhook] Email failed:", emailError);
+        console.error("[PATCH order] Email failed:", emailError);
       }
     }
-
-    // ============================================
-    // RETURN RESPONSE
-    // ============================================
 
     return NextResponse.json({
       _id: updatedOrder._id.toString(),
       status: updatedOrder.status,
       updatedAt: updatedOrder.updatedAt,
-      previousStatus,
+      previousStatus: currentStatus,
       timeline: updatedOrder.timeline || {},
-      message: `Order status updated from ${previousStatus} to ${newStatus}`,
+      message: `Order status updated from ${currentStatus} to ${newStatus}`,
     });
   } catch (error: any) {
     console.error("PATCH /api/orders/[id] error:", error);
 
-    // Handle validation errors
     if (error.name === "ValidationError") {
       return NextResponse.json(
         { error: "Invalid order data", details: error.message },
@@ -252,7 +280,6 @@ export async function PATCH(
       );
     }
 
-    // Handle cast errors (invalid MongoDB ID)
     if (error.name === "CastError") {
       return NextResponse.json(
         { error: "Invalid order ID format" },
@@ -267,5 +294,7 @@ export async function PATCH(
       },
       { status: 500 },
     );
+  } finally {
+    await session.endSession();
   }
 }
