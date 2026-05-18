@@ -19,6 +19,7 @@ interface ProductResponse {
 const ORDER_ENDPOINTS = {
   admin: "/admin/orders/",
   customer: "/customer/orders/",
+  guest: "/customer/orders/guest?ref="
 } as const;
 
 export type OrderParams = {
