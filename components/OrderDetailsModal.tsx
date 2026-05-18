@@ -4,7 +4,6 @@ import { OrderActions } from "@/app/customer/orders/components/OrderActions";
 import LoadingPage from "@/components/ui/LoadingPage";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { useOrderBase } from "@/hooks/api/shared/useOrdersBase";
-import { useOrderActions } from "@/hooks/useOrderActions";
 import { ORDER_STATUSES } from "@/types/orderConstants";
 import { PAYMENT_STATUSES } from "@/types/paymentConstants";
 import { MailIcon, PhoneIcon, UserIcon } from "lucide-react";
@@ -16,14 +15,12 @@ interface OrderDetailsProps {
 }
 
 const OrderDetailsModal = ({ orderId, role, variant }: OrderDetailsProps) => {
-  const { data: orderToView, isLoading, isError } = useOrderBase(role, orderId);
   const {
-    handlePayOrder,
-    handleCancelOrder,
-    handleBuyAgain,
-    isLoading: ActionLoading,
-  } = useOrderActions();
-
+    data: orderToView,
+    isLoading,
+    isError,
+    error,
+  } = useOrderBase(role, orderId);
   const vatableSales = orderToView?.total?.vatableSales ?? 0;
   const totalAmount = orderToView?.total?.totalAmount ?? 0;
 
@@ -42,22 +39,12 @@ const OrderDetailsModal = ({ orderId, role, variant }: OrderDetailsProps) => {
       )}
       {isError && (
         <p className="text-center text-sm text-red-500 py-8">
-          Failed to load order.
+          {error?.message ?? "Failed to fetch order"}
         </p>
       )}
       {orderToView && (
         <div>
-          {role === "guest" && (
-            <OrderActions
-              order={orderToView}
-              onPayOrder={() => handlePayOrder(orderToView._id)}
-              onCancelOrder={() => {
-                handleCancelOrder(orderToView._id);
-              }}
-              onBuyAgain={handleBuyAgain}
-              isLoading={ActionLoading}
-            />
-          )}
+          {role === "guest" && <OrderActions order={orderToView} />}
           <div className="flex flex-col gap-6">
             {/* Header */}
             <div className="flex items-center justify-between">
