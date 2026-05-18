@@ -8,7 +8,7 @@ import LoadingPage from "@/components/ui/LoadingPage";
 import { useOrderActions } from "@/hooks/useOrderActions";
 import { ORDER_STATUSES, OrderStatus } from "@/types/orderConstants";
 import { authClient } from "@/lib/auth-client";
-import { ItemMosaic } from "../components/ItemMosaic";
+import { ItemMosaic } from "../../components/ItemMosaic";
 import {
   OrderSummary,
   useCustomerOrders,
@@ -17,7 +17,7 @@ import {
 import Pagination from "@/components/ui/Pagination";
 import { PAYMENT_STATUSES } from "@/types/paymentConstants";
 import { formatDate } from "@/helper/formatDate";
-import { useOrderState } from "./hooks/useOrderState";
+import { useOrderState } from "../hooks/useOrderState";
 
 /* ─── Types ─────────────────────────────────────────────────────────── */
 type Tab = {

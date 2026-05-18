@@ -1,61 +1,18 @@
 import { syne } from "@/app/font";
 import { InputField } from "@/components/ui/InputField";
 import { MODAL_TYPES, useModalQuery } from "@/hooks/utils/useModalQuery";
-import { apiClient } from "@/lib/apiClient";
 import { DynamicIcon } from "@/lib/DynamicIcon";
-import { OrdersApiResponse } from "@/types/OrderTypes";
-import { useCallback, useEffect, useState } from "react";
-import { toast } from "sonner";
-import { GuestOrderModal } from "./GuestOrderModal";
-import Modal from "@/components/ui/Modal";
-import { useOrderActions } from "@/hooks/useOrderActions";
-import { useSearchParams } from "next/navigation";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export const GuestOrderLookup = () => {
-  const searchParams = useSearchParams();
-  const reference = searchParams.get("referenceNumber") || "";
+  const router = useRouter();
   const { openModal: handleOpenModal } = useModalQuery();
   const [referenceNumber, setReferenceNumber] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
-  const { handlePayOrder, handleCancelOrder, handleBuyAgain, isLoading } =
-    useOrderActions();
-
-  const [foundOrder, setFoundOrder] = useState<
-    OrdersApiResponse["data"][number] | null
-  >(null);
-
-  const searchOrder = useCallback(async (ref: string) => {
-    const trimmed = ref.trim();
-    if (!trimmed) return;
-
-    setIsSearching(true);
-    try {
-      const response = await apiClient.get<OrdersApiResponse>(
-        `/customer/orders/guest?ref=${encodeURIComponent(trimmed)}`,
-      );
-      const order = response.data[0] ?? null;
-      if (!order) {
-        toast.error("No order found with that reference number.");
-      } else {
-        setFoundOrder(order);
-      }
-    } catch (error: any) {
-      toast.error(error.message);
-    } finally {
-      setIsSearching(false);
-    }
-  }, []);
-
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    searchOrder(referenceNumber);
+    router.push(`/orders/guest/${encodeURIComponent(referenceNumber.trim())}`);
   };
-
-  useEffect(() => {
-    if (!reference) return;
-    setReferenceNumber(reference);
-    searchOrder(reference);
-  }, [reference]);
 
   return (
     <div
@@ -106,19 +63,11 @@ export const GuestOrderLookup = () => {
 
             <button
               type="submit"
-              disabled={!referenceNumber.trim() || isSearching}
+              disabled={!referenceNumber.trim()}
               className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-brand-color-500 hover:bg-[#c13500] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm transition-all shadow-md"
             >
-              {isSearching ? (
-                <DynamicIcon
-                  name="Loader2"
-                  size={16}
-                  className="animate-spin"
-                />
-              ) : (
-                <DynamicIcon name="Search" size={16} />
-              )}
-              {isSearching ? "Searching..." : "Find My Order"}
+              <DynamicIcon name="Search" size={16} />
+              Find My Order
             </button>
           </form>
 
@@ -133,26 +82,6 @@ export const GuestOrderLookup = () => {
           </div>
         </div>
       </div>
-
-      {foundOrder && (
-        <Modal
-          onClose={() => setFoundOrder(null)}
-          title="Order Details"
-          subTitle="Your order details"
-          contentClassName="p-4"
-        >
-          <GuestOrderModal
-            order={foundOrder}
-            onPayOrder={() => handlePayOrder(foundOrder._id)}
-            onCancelOrder={() => {
-              handleCancelOrder(foundOrder._id);
-              setFoundOrder(null);
-            }}
-            onBuyAgain={handleBuyAgain}
-            isLoading={isLoading}
-          />
-        </Modal>
-      )}
     </div>
   );
 };
