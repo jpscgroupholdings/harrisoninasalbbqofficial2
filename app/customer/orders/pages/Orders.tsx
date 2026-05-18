@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import React, { Suspense, useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { DynamicIcon } from "@/lib/DynamicIcon";
 import { GuestOrderLookup } from "./GuestPage";
 import LoadingPage from "@/components/ui/LoadingPage";
@@ -15,9 +15,9 @@ import {
   useCustomerOrderSummary,
 } from "@/hooks/api/customers/useCustomerOrders";
 import Pagination from "@/components/ui/Pagination";
-import { PAYMENT_STATUSES } from "@/types/paymentConstants";
 import { formatDate } from "@/helper/formatDate";
 import { useOrderState } from "../hooks/useOrderState";
+import CancelOrderModal from "../components/CancelOrderModal";
 
 /* ─── Types ─────────────────────────────────────────────────────────── */
 type Tab = {
@@ -111,6 +111,7 @@ function OrderCard({
   onCancelOrder,
   onBuyAgain,
   onLeaveReview,
+  isLoading,
 }: {
   order: any;
   onViewDetails: () => void;
@@ -118,8 +119,12 @@ function OrderCard({
   onCancelOrder: () => void;
   onBuyAgain: () => void;
   onLeaveReview: () => void;
+  isLoading: boolean;
 }) {
+  
   const itemNames = order.items.map((i: any) => i.name).join(", ");
+
+  const [isCancelOrder, setIsCancelOrder] = useState(false)
 
   const actions = useOrderState(order);
   if (!actions) return null;
@@ -205,16 +210,17 @@ function OrderCard({
                     <DynamicIcon name="ExternalLink" size={13} />
                     Pay now
                   </button>
-                  {canCancel && (
-                    <button
-                      onClick={onCancelOrder}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-red-200 text-red-700 text-[12px] font-medium transition-colors hover:bg-red-50"
-                    >
-                      <DynamicIcon name="X" size={13} />
-                      Cancel
-                    </button>
-                  )}
                 </>
+              )}
+
+              {canCancel && (
+                <button
+                  onClick={() => setIsCancelOrder(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-red-200 text-red-700 text-[12px] font-medium transition-colors hover:bg-red-50"
+                >
+                  <DynamicIcon name="X" size={13} />
+                  Cancel
+                </button>
               )}
 
               {needsReview && (
@@ -250,6 +256,15 @@ function OrderCard({
           View details
         </button>
       </div>
+
+      {isCancelOrder && order._id && (
+        <CancelOrderModal
+          order={order}
+          setIsCancel={setIsCancelOrder}
+          handleCancelOrder={onCancelOrder}
+          isLoading={isLoading}
+        />
+      )}
     </div>
   );
 }
@@ -301,8 +316,12 @@ const Orders = () => {
 
   const filteredOrders = placedOrders?.data ?? [];
 
-  const { handlePayOrder, handleCancelOrder, handleBuyAgain } =
-    useOrderActions();
+  const {
+    handlePayOrder,
+    handleCancelOrder,
+    handleBuyAgain,
+    isLoading: isOrderActionLoading,
+  } = useOrderActions();
 
   // Derive tab badge counts from summary (never from the filtered list)
   const getTabCount = (tab: Tab): number | undefined => {
@@ -438,6 +457,7 @@ const Orders = () => {
                 onCancelOrder={() => handleCancelOrder(order._id)}
                 onBuyAgain={() => handleBuyAgain(order.items)}
                 onLeaveReview={() => router.push(`/orders/${order._id}/review`)}
+                isLoading={isOrderActionLoading}
               />
             ))}
           </div>
