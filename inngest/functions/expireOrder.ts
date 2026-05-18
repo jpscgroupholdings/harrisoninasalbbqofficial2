@@ -8,8 +8,7 @@ import { PAYMENT_STATUSES } from "@/types/paymentConstants";
 export const expireOrder = inngest.createFunction(
   { id: "expire-pending-order", triggers: { event: "order/created" } },
   async ({ event, step }) => {
-
-    const sleepDuration = event.data.paymentMethod === "maya" ? "30m" : "24h"
+    const sleepDuration = event.data.paymentMethod === "maya" ? "30m" : "4h";
 
     // Wait 30 minutes before doing anything
     await step.sleep("wait-for-payment-window", sleepDuration);
@@ -33,16 +32,17 @@ export const expireOrder = inngest.createFunction(
         order.paymentInfo?.paymentMethod === "maya" &&
         order.paymentInfo?.paymentStatus === PAYMENT_STATUSES.PAYMENT_SUCCESS
       ) {
-        return {skipped: true, reason: "Payment method is maya and already paid."}
+        return {
+          skipped: true,
+          reason: "Payment method is maya and already paid.",
+        };
       }
 
       // Release reserved inventory for each item
-      for (const item of order.items) {
-        await Inventory.findOneAndUpdate(
-          { productId: item.productId, branchId: order.branchId },
-          { $inc: { reserved: -item.quantity } },
-        );
-      }
+      await Inventory.updateMany(
+        { branchId: order.branchId, "reservations.orderId": order._id },
+        { $pull: { reservations: { orderId: order._id } } },
+      );
 
       // Mark order as expired
       await Order.findByIdAndUpdate(order._id, {
