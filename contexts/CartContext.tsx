@@ -19,7 +19,7 @@ interface CartContextType {
   addToCart: (item: CartItem) => void;
   removeFromCart: (id: string | number) => void;
   updateQuantity: (id: string | number, quantity: number) => void;
-  clearCart: () => void;
+  clearCart: () => Promise<void>;
   totalProducts: number;
   totalItems: number;
   vatableSales: number;
@@ -196,9 +196,14 @@ export const CartProvider: React.FC<{
     setCartItems([]);
 
     if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
-    lastSyncedRef.current = cartItems; // ensure guard doesn't skip it
-    await syncToDb([]);
-  }, [syncToDb, cartItems]);
+
+    if (isAuthenticated) {
+      lastSyncedRef.current = cartItems; // ensure guard doesn't skip it
+      await syncToDb([]);
+    } else {
+      localStorage.removeItem(LOCALSTORAGE_KEY);
+    }
+  }, [syncToDb, cartItems, isAuthenticated]);
 
   // ─── Derived values ──────────────────────────────────────────────────────────
 
