@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ data: [order] });
+    return NextResponse.json(order);
   } catch (error: any) {
     console.error("GET /api/orders/guest error:", error);
     return NextResponse.json(
