@@ -2,18 +2,41 @@ import { Order } from "@/models/Orders";
 import { connectDB } from "../../lib/mongodb";
 import { SalesData, TopProduct } from "@/types/adminType";
 
+export type DashboardRange = "week" | "month" | "year";
+
+export function getDateRange(range: DashboardRange) {
+  const now = new Date();
+  const start = new Date();
+
+  if (range === "week") {
+    start.setDate(now.getDate() - 7);
+  }
+
+  if (range === "month") {
+    start.setMonth(now.getMonth() - 1);
+  }
+
+  if (range === "year") {
+    start.setFullYear(now.getFullYear() - 1);
+  }
+
+  return { start, end: now };
+}
+
 export async function getDashboardStats() {
   await connectDB();
 
   const totalOrders = await Order.countDocuments();
 
   const revenueResult = await Order.aggregate([
-    {$match: {
+    {
+      $match: {
         status: {
-            $nin: ["pending", "cancelled"]
-        }
-    }},
-    { $group: { _id: null, totalRevenue: { $sum: "$total.total" } } },
+          $nin: ["pending", "cancelled"],
+        },
+      },
+    },
+    { $group: { _id: null, totalRevenue: { $sum: "$total.totalAmount" } } },
   ]);
   const totalRevenue = revenueResult[0]?.totalRevenue || 0;
 
@@ -36,60 +59,70 @@ export async function getDashboardStats() {
   };
 }
 
-export async function getSalesData():Promise<SalesData[]> {
+export async function getSalesData(
+  range: DashboardRange = "week",
+): Promise<SalesData[]> {
   await connectDB();
-  const sevenDaysAgo = new Date();
 
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  const { start, end } = getDateRange(range);
+
+  const dateFormat = range === "year" ? "%Y-%m" : "%m/%d";
 
   const result = await Order.aggregate([
     {
       $match: {
-        createdAt: {$gt: sevenDaysAgo},
-        status: "completed"
+        createdAt: { $gt: start, $lte: end },
+        status: "completed",
       },
     },
     {
       $group: {
         _id: {
-          $dateToString: {format: "%m/%d", date: "$createdAt"}
+          $dateToString: { format: dateFormat, date: "$createdAt" },
         },
-        sales: {$sum: "$total.total"}
-      }
+        sales: { $sum: "$total.totalAmount" },
+      },
     },
     {
-      $sort: { _id: 1}
+      $sort: { _id: 1 },
     },
     {
-      $project: {_id: 0, date: "$_id", sales: 1}
-    }
+      $project: { _id: 0, date: "$_id", sales: 1 },
+    },
   ]);
 
   return result;
 }
 
-export async function getTopProducts(): Promise<TopProduct[]>{
-  
+export async function getTopProducts(
+  range: DashboardRange = "month",
+): Promise<TopProduct[]> {
   await connectDB();
+
+  const { start, end } = getDateRange(range);
 
   const result = await Order.aggregate([
     {
       $match: {
-        status: "completed"
-      }
+        createdAt: {
+          $gte: start,
+          $lte: end,
+        },
+        status: "completed",
+      },
     },
     {
-      $unwind: "$items"
+      $unwind: "$items",
     },
     {
       $group: {
         _id: "$items.name",
-        sales: {$sum: "$items.quantity"}
-      }
+        sales: { $sum: "$items.quantity" },
+      },
     },
-    {$sort : {sales : -1}},
-    {$limit: 5},
-    {$project: {_id: 0, name: "$_id", sales: 1}}
-  ])
-  return result
+    { $sort: { sales: -1 } },
+    { $limit: 5 },
+    { $project: { _id: 0, name: "$_id", sales: 1 } },
+  ]);
+  return result;
 }
