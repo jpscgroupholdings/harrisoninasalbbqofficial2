@@ -1,14 +1,18 @@
-import React from "react";
 import DashboardCards from "@/app/admin/components/DashboardCard";
 import SalesChart from "@/app/admin/components/SalesChart";
 import { mockSalesData, mockTopProducts } from "@/data/mockData";
-import { getDashboardStats, getSalesData, getTopProducts } from "@/services/admin/dashboard.service";
+import {
+  DashboardRange,
+  getDashboardStats,
+  getSalesData,
+  getTopProducts,
+} from "@/services/admin/dashboard.service";
 
 export default async function DashboardPage() {
-  
   const stats = await getDashboardStats();
-  const salesData = await getSalesData();
-  const topProduct = await getTopProducts();
+
+  const salesData = await getSalesData("week");
+  const topProducts = await getTopProducts("week");
 
   return (
     <div className="space-y-8">
@@ -26,7 +30,10 @@ export default async function DashboardPage() {
       <DashboardCards stats={stats} />
 
       {/* Charts */}
-      <SalesChart salesData={salesData} topProducts={topProduct} />
+      <SalesChart
+        initialSalesData={salesData}
+        initialTopProducts={topProducts}
+      />
     </div>
   );
 }
