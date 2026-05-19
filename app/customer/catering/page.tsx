@@ -25,7 +25,7 @@ export default function CateringPage() {
 
         <div className="relative h-full flex flex-col items-center justify-center text-center px-6">
           <div className="mb-4">
-              <BrandLogo />
+              <BrandLogo subdomain="food"/>
           </div>
           <h1
             className="text-5xl md:text-6xl font-bold text-white leading-tight mb-5"

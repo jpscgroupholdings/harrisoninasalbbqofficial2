@@ -63,7 +63,7 @@ const Header = () => {
     >
       <div className="max-w-400 mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between lg:justify-around h-18 lg:h-20">
-          <BrandLogo />
+          <BrandLogo subdomain="food"/>
 
           <HeaderBranchButton mounted={mounted} onOpen={openModal} />
 

@@ -2,19 +2,20 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import React from "react";
 import { cn } from "@/lib/utils";
 import { useSubdomainPath } from "@/hooks/useSubdomainUrl";
 
 const BrandLogo = ({
   color = "normal",
   className,
+  subdomain = undefined,
 }: {
   color?: "white" | "normal";
   className?: string;
+  subdomain?: string | undefined
 }) => {
-
-  const homeUrl = useSubdomainPath("/", undefined)
+  
+  const homeUrl = useSubdomainPath("/", subdomain)
 
   return (
     <Link href={homeUrl} className="cursor-pointer">
