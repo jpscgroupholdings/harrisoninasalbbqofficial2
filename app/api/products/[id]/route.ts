@@ -1,3 +1,4 @@
+import '@/lib/registerModels';
 import { connectDB } from "@/lib/mongodb";
 import { Product } from "@/models/Product";
 import { NextRequest, NextResponse } from "next/server";
@@ -22,7 +23,7 @@ export async function GET(
       );
     }
 
-    const product = await Product.findById(id).populate('includedItems.product', 'name image price');
+    const product = await Product.findById(id).populate('includedItems.product', 'name image price').populate('category', 'name').populate('subcategory', 'name');
 
     if (!product) {
       return NextResponse.json(
