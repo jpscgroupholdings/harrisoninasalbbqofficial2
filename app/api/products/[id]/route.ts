@@ -41,6 +41,45 @@ export async function GET(
     },
     { $unwind: { path: "$subcategory", preserveNullAndEmptyArrays: true } },
 
+    {
+      $lookup: {
+        from: "products",
+        localField: "includedItems.product",
+        foreignField: "_id",
+        as: "_includedItems",
+      },
+    },
+    {
+      $addFields: {
+        includedItems: {
+          $map: {
+            input: { $ifNull: ["$includedItems", []] },
+            as: "item",
+            in: {
+              product: {
+                $arrayElemAt: [
+                  {
+                    $filter: {
+                      input: "$_includedItems",
+                      as: "p",
+                      cond: { $eq: ["$$p._id", "$$item.product"] },
+                    },
+                  },
+                  0,
+                ],
+              },
+
+              quantity: "$$item.quantity",
+              label: "$$item.label",
+            },
+          },
+        },
+      },
+    },
+    {
+      $unset: "_includedProducts",
+    },
+
     ...(branchId && mongoose.Types.ObjectId.isValid(branchId)
       ? [
           {
