@@ -105,6 +105,7 @@ export const auth = betterAuth({
           image: profile.picture,
         };
       },
+      prompt: "select_account",
     },
   },
 
