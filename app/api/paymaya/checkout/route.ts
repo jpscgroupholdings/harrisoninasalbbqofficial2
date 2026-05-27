@@ -384,7 +384,7 @@ export async function POST(request: NextRequest) {
     await assertStoreIsOpen(session);
 
     // 2. Auth (optional customer)
-    const customer = await requireBetterAuth();
+    const customer = await requireBetterAuth(request);
     const customerId = customer?._id ?? null;
 
     // 3. Parse & validate body

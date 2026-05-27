@@ -68,7 +68,7 @@ export async function PATCH(
       );
     }
 
-    const customer = await requireBetterAuth();
+    const customer = await requireBetterAuth(request);
 
     // Parse and validate request body
     const body = await request.json();

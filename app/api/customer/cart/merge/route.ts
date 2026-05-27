@@ -15,7 +15,7 @@ import { CartItem } from "@/types/MenuTypes";
 import { requireBetterAuth } from "@/lib/getAuth";
 
 export async function POST(req: Request) {
-  const customer = await requireBetterAuth();
+  const customer = await requireBetterAuth(req);
 
   const body = await req.json();
   const guestItems: CartItem[] = Array.isArray(body?.guestItems)

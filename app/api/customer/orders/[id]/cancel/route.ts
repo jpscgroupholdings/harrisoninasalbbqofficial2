@@ -31,7 +31,7 @@ export async function PATCH(
       );
     }
 
-    const customer = await requireBetterAuth();
+    const customer = await requireBetterAuth(request);
 
     const order = await Order.findById(id).session(session);
 

@@ -20,7 +20,7 @@ export async function GET(request: Request) {
 export async function PUT(request: NextRequest) {
   try {
     await connectDB();
-    const customer = await requireBetterAuth();
+    const customer = await requireBetterAuth(request);
     const { items = [] } = await request.json();
 
     await Cart.findOneAndUpdate(

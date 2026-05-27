@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   try {
     await connectDB();
 
-    const customer = await requireBetterAuth();
+    const customer = await requireBetterAuth(request);
 
     const counts = await Order.aggregate([
       { $match: { customerId: customer._id } },
