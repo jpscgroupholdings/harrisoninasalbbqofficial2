@@ -33,6 +33,7 @@ interface ResolvedCartItem {
     name: string;
     price: number;
     description: string;
+    info?: string;
     image: string;
     category: string;
     quantity: number;
@@ -43,6 +44,7 @@ interface ResolvedCartItem {
     quantity: number;
     code: string;
     description: string;
+    info?: string;
     amount: { value: number };
     totalAmount: { value: number; currency: string };
   };
@@ -124,6 +126,7 @@ async function resolveCartItem(
       name: product.name,
       price: product.price,
       description: product.description,
+      info: product.info,
       image: product.image.url,
       category: product.category,
       quantity: cartItem.quantity,
@@ -134,6 +137,7 @@ async function resolveCartItem(
       quantity: cartItem.quantity,
       code: String(product._id),
       description: product.description,
+      info: product.info,
       amount: { value: product.price },
       totalAmount: {
         value: product.price * cartItem.quantity,
