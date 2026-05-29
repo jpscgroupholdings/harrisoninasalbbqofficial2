@@ -7,6 +7,7 @@ import "@/lib/registerModels";
 import {
   assertStoreIsOpen,
   assertValidPayload,
+  assertCanUsePromoCardDiscount,
   computeTax,
   dispatchOrderCreatedEvent,
   fetchBranch,
@@ -35,6 +36,10 @@ export async function POST(request: NextRequest) {
     const body: CreateOrderPayload = await request.json();
     assertValidPayload(body);
 
+    if (body.applyPromoCardDiscount === true) {
+      await assertCanUsePromoCardDiscount(customerId, session);
+    }
+
     // 4. Resolve branch
     const branch = await fetchBranch(body.branchId, session);
 
@@ -45,12 +50,12 @@ export async function POST(request: NextRequest) {
       session,
     );
 
-    if (totalPrice < MINIMUM_AMOUNT) {
+    // 6. Tax breakdown
+    const tax = computeTax(totalPrice, body.applyPromoCardDiscount === true);
+
+    if (tax.totalAmount < MINIMUM_AMOUNT) {
       throw new Error(`Minimum order amount is ₱${MINIMUM_AMOUNT}`);
     }
-
-    // 6. Tax breakdown
-    const tax = computeTax(totalPrice);
     const referenceNumber = `ORDER-${Date.now()}`;
 
     // COD has no checkout gateway — pass empty string for checkoutId
