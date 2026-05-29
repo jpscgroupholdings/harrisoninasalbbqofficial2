@@ -2,6 +2,9 @@ import Link from "next/link";
 
 export const HeaderNavLinks = () => (
   <div className="gap-6 hidden lg:flex">
+    <Link href="/promo-card" className="hover:text-brand-color-500">
+      Promo Card
+    </Link>
     <Link href="/catering" className="hover:text-brand-color-500">
       Catering
     </Link>
