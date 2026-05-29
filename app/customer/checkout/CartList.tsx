@@ -9,10 +9,14 @@ import { CustomerSchema, OrderFormState, ShippingSchema } from "./FormSchema";
 import useFormErrors from "./useFormErrors";
 import { usePathname, useRouter } from "next/navigation";
 import { CheckoutStep } from "@/contexts/CheckoutContext";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Modal from "@/components/ui/Modal";
 import { CreateOrderPayload } from "@/types/OrderTypes";
 import { authClient } from "@/lib/auth-client";
+import { apiClient } from "@/lib/apiClient";
+import { PROMO_CARD } from "@/lib/promoCard";
+import { CartItem } from "@/types/MenuTypes";
+import { useQuery } from "@tanstack/react-query";
 
 const createCodOrder = async (payload: CreateOrderPayload) => {
   const res = await fetch("/api/customer/cod-checkout", {
@@ -40,7 +44,7 @@ const CartRow = ({
   onRemove,
   onUpdate,
 }: {
-  item: any;
+  item: CartItem;
   onRemove: (id: string) => void;
   onUpdate: (id: string, qty: number) => void;
 }) => (
@@ -178,6 +182,15 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
   const isShipping = pathname === CheckoutStep.SHIPPING;
 
   const { data: session } = authClient.useSession();
+  const { data: promoCardStatus } = useQuery({
+    queryKey: ["customer", "promo-card", "status"],
+    queryFn: () =>
+      apiClient.get<{ hasPaidPromoCard: boolean }>("/customer/promo-card/status"),
+    enabled: Boolean(session?.user),
+    staleTime: 60_000,
+  });
+  const canUsePromoCardDiscount =
+    promoCardStatus?.hasPaidPromoCard === true;
 
   const { mutateAsync: createOrder, isPending } = useCreateOrder();
   const { validateAll, customerErrors, shippingErrors } =
@@ -194,9 +207,23 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
     updateQuantity,
     vatableSales,
     vatAmount,
+    subtotalPrice,
+    promoCardDiscount,
     totalPrice,
+    applyPromoCardDiscount,
+    setApplyPromoCardDiscount,
     clearCart,
   } = useCart();
+
+  useEffect(() => {
+    if (!canUsePromoCardDiscount && applyPromoCardDiscount) {
+      setApplyPromoCardDiscount(false);
+    }
+  }, [
+    applyPromoCardDiscount,
+    canUsePromoCardDiscount,
+    setApplyPromoCardDiscount,
+  ]);
 
   const [showPaymentOptions, setShowPaymentOptions] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<"maya" | "cod">(
@@ -267,6 +294,7 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
       customerPhone: customerPhone || "",
       paymentMethod: selectedPayment,
       notes,
+      applyPromoCardDiscount,
       items: cartItems
         .filter((item) => item.quantity > 0)
         .map((item) => ({ _id: item._id, quantity: item.quantity })),
@@ -371,6 +399,37 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
 
         {/* Order Totals */}
         <div className="px-5 py-4 bg-slate-50 border-t border-slate-100 space-y-2">
+          <label className="flex items-start gap-3 rounded-xl border border-brand-color-500/20 bg-white p-3 text-sm">
+            <input
+              type="checkbox"
+              checked={applyPromoCardDiscount}
+              onChange={(event) =>
+                setApplyPromoCardDiscount(event.target.checked)
+              }
+              disabled={!canUsePromoCardDiscount}
+              className="mt-1 h-4 w-4 accent-brand-color-500"
+            />
+            <span className="flex-1">
+              <span className="block font-semibold text-slate-800">
+                Apply {PROMO_CARD.name}
+              </span>
+              <span className="block text-xs text-slate-500">
+                {canUsePromoCardDiscount
+                  ? `Enjoy ${(PROMO_CARD.discountRate * 100).toFixed(0)}% off this order.`
+                  : "Purchase and pay for a promo card to unlock this discount."}
+              </span>
+            </span>
+          </label>
+          <div className="flex justify-between text-sm text-slate-500">
+            <span>Subtotal</span>
+            <span>₱{subtotalPrice.toFixed(2)}</span>
+          </div>
+          {promoCardDiscount > 0 && (
+            <div className="flex justify-between text-sm font-semibold text-green-600">
+              <span>Promo card discount</span>
+              <span>-₱{promoCardDiscount.toFixed(2)}</span>
+            </div>
+          )}
           <div className="flex justify-between text-sm text-slate-500">
             <span>VATable Sales</span>
             <span>₱{vatableSales.toFixed(2)}</span>
