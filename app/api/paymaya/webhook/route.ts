@@ -5,6 +5,7 @@ import { connectDB } from "@/lib/mongodb";
 import { EMAIL_FROM, resend } from "@/lib/resend";
 import { Inventory } from "@/models/Inventory";
 import { Order } from "@/models/Orders";
+import { PromoCardPurchase } from "@/models/PromoCardPurchase";
 import { ORDER_STATUSES, OrderStatus } from "@/types/orderConstants";
 import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
@@ -17,6 +18,14 @@ const PAYMENT_STATUS_MAP: Record<string, string> = {
   PAYMENT_EXPIRED: "expired",
   PAYMENT_CANCELLED: "cancelled",
   AUTHORIZED: "authorized", // Card payments only (hold/capture flow)
+};
+
+const PROMO_CARD_STATUS_MAP: Record<string, string> = {
+  PAYMENT_SUCCESS: "paid",
+  PAYMENT_FAILED: "failed",
+  PAYMENT_EXPIRED: "expired",
+  PAYMENT_CANCELLED: "cancelled",
+  AUTHORIZED: "pending",
 };
 
 export function getStatusSubject(
@@ -76,6 +85,8 @@ export async function POST(request: NextRequest) {
         paymentStatus,
         requestReferenceNumber,
       });
+      await session.abortTransaction();
+      session.endSession();
       return ack; // Still 200 — we received it, we just can't process it
     }
 
@@ -90,6 +101,61 @@ export async function POST(request: NextRequest) {
     ];
     if (!knownStatuses.includes(paymentStatus)) {
       console.warn(`[Maya Webhook] Unhandled paymentStatus: ${paymentStatus}`);
+      await session.abortTransaction();
+      session.endSession();
+      return ack;
+    }
+
+    if (String(requestReferenceNumber).startsWith("PROMO-CARD-")) {
+      const promoStatus = PROMO_CARD_STATUS_MAP[paymentStatus];
+      const existingPurchase = await PromoCardPurchase.findOne({
+        referenceNumber: requestReferenceNumber,
+      }).session(session);
+
+      if (!existingPurchase) {
+        console.error(
+          `[Maya Webhook] No promo card purchase found for referenceNumber: ${requestReferenceNumber}`,
+        );
+        await session.abortTransaction();
+        session.endSession();
+        return ack;
+      }
+
+      if (
+        ["paid", "failed", "expired", "cancelled"].includes(
+          existingPurchase.status,
+        )
+      ) {
+        console.log(
+          `[Maya Webhook] Promo card already processed: ${requestReferenceNumber}`,
+        );
+        await session.abortTransaction();
+        session.endSession();
+        return ack;
+      }
+
+      await PromoCardPurchase.findOneAndUpdate(
+        { referenceNumber: requestReferenceNumber },
+        {
+          $set: {
+            status: promoStatus,
+            paymentId: paymentId ?? null,
+            paymentStatus,
+            ...(paymentStatus === "PAYMENT_SUCCESS" && { paidAt: new Date() }),
+            ...(paymentStatus === "PAYMENT_FAILED" && { failedAt: new Date() }),
+            ...(paymentStatus === "PAYMENT_EXPIRED" && {
+              expiredAt: new Date(),
+            }),
+            ...(paymentStatus === "PAYMENT_CANCELLED" && {
+              cancelledAt: new Date(),
+            }),
+          },
+        },
+        { new: true, session },
+      );
+
+      await session.commitTransaction();
+      session.endSession();
       return ack;
     }
 
@@ -103,6 +169,8 @@ export async function POST(request: NextRequest) {
       console.error(
         `[Maya Webhook] No order found for referenceNumber: ${requestReferenceNumber}`,
       );
+      await session.abortTransaction();
+      session.endSession();
       return ack;
     }
 
