@@ -7,7 +7,6 @@ import { Branch } from "@/models/Branch";
 import { Inventory } from "@/models/Inventory";
 import { Order } from "@/models/Orders";
 import { Product } from "@/models/Product";
-import { PromoCardPurchase } from "@/models/PromoCardPurchase";
 import { ORDER_STATUSES } from "@/types/orderConstants";
 import { CreateOrderPayload } from "@/types/OrderTypes";
 import mongoose, { ClientSession } from "mongoose";
@@ -21,6 +20,10 @@ import {
   calculatePromoCardTotal,
   PROMO_CARD,
 } from "@/lib/promoCard";
+import {
+  getPaidPromoCardBenefit,
+  redeemCustomerVoucher,
+} from "@/services/promoCardBenefits";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -63,6 +66,7 @@ interface TaxBreakdown {
   totalAmount: number;
   subtotalAmount: number;
   discountAmount: number;
+  voucherDiscountAmount: number;
   discountCode?: string;
 }
 
@@ -221,13 +225,19 @@ export async function reserveInventory(
 export function computeTax(
   subtotalAmount: number,
   applyPromoCardDiscount = false,
+  discountRate: number = PROMO_CARD.discountRate,
+  discountCode: string = PROMO_CARD.sku,
+  voucherDiscountAmount = 0,
 ): TaxBreakdown {
   const discountAmount = applyPromoCardDiscount
-    ? calculatePromoCardDiscount(subtotalAmount)
+    ? calculatePromoCardDiscount(subtotalAmount, discountRate)
     : 0;
-  const totalAmount = applyPromoCardDiscount
-    ? calculatePromoCardTotal(subtotalAmount)
+  const promoTotalAmount = applyPromoCardDiscount
+    ? calculatePromoCardTotal(subtotalAmount, discountRate)
     : subtotalAmount;
+  const totalAmount = Number(
+    Math.max(promoTotalAmount - voucherDiscountAmount, 0).toFixed(2),
+  );
   const vatableSales = parseFloat((totalAmount / (1 + TAX_RATE)).toFixed(2));
   const vatAmount = parseFloat((totalAmount - vatableSales).toFixed(2));
 
@@ -237,26 +247,29 @@ export function computeTax(
     totalAmount,
     subtotalAmount,
     discountAmount,
-    ...(discountAmount > 0 && { discountCode: PROMO_CARD.sku }),
+    voucherDiscountAmount,
+    ...(discountAmount > 0 && { discountCode }),
   };
 }
 
 export async function assertCanUsePromoCardDiscount(
   customerId: string | null,
   session: ClientSession,
-): Promise<void> {
+): Promise<{ discountRate: number; discountCode: string }> {
   if (!customerId) {
     throw new Error("Login is required to use the promo card discount.");
   }
 
-  const paidPromoCard = await PromoCardPurchase.exists({
-    customerId,
-    status: "paid",
-  }).session(session);
+  const paidPromoCard = await getPaidPromoCardBenefit(customerId, session);
 
   if (!paidPromoCard) {
     throw new Error("A paid promo card is required to use this discount.");
   }
+
+  return {
+    discountRate: paidPromoCard.discountRate,
+    discountCode: paidPromoCard.discountCode,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -272,13 +285,23 @@ function buildMayaPayload(
   const { firstName, lastName, customerEmail, customerPhone, shippingAddress } =
     body;
   const { line1, line2, city, province, zipCode } = shippingAddress ?? {};
-  const { vatableSales, vatAmount, totalAmount, discountAmount } = tax;
+  const {
+    vatableSales,
+    vatAmount,
+    totalAmount,
+    discountAmount,
+    voucherDiscountAmount,
+  } = tax;
 
   return {
     totalAmount: {
       value: totalAmount,
       currency: "PHP",
-      details: { discount: discountAmount, vatAmount, vatableSales },
+      details: {
+        discount: Number((discountAmount + voucherDiscountAmount).toFixed(2)),
+        vatAmount,
+        vatableSales,
+      },
     },
     items: mayaItems,
     buyer: {
@@ -360,6 +383,7 @@ export async function persistOrder(
     subtotalAmount,
     discountAmount,
     discountCode,
+    voucherDiscountAmount,
   } = tax;
 
   const order = await Order.create(
@@ -392,6 +416,7 @@ export async function persistOrder(
           subtotalAmount,
           discountAmount,
           discountCode,
+          voucherDiscountAmount,
         },
         notes,
       },
@@ -453,9 +478,10 @@ export async function POST(request: NextRequest) {
     const body: CreateOrderPayload = await request.json();
     assertValidPayload(body);
 
-    if (body.applyPromoCardDiscount === true) {
-      await assertCanUsePromoCardDiscount(customerId, session);
-    }
+    const promoCardDiscount =
+      body.applyPromoCardDiscount === true
+        ? await assertCanUsePromoCardDiscount(customerId, session)
+        : null;
 
     // 4. Resolve branch
     const branch = await fetchBranch(body.branchId, session);
@@ -468,7 +494,18 @@ export async function POST(request: NextRequest) {
     );
 
     // 6. Tax breakdown
-    const tax = computeTax(totalPrice, body.applyPromoCardDiscount === true);
+    const voucherDiscountAmount = await redeemCustomerVoucher(
+      customerId,
+      Math.max(0, Number(body.voucherAmount ?? 0)),
+      session,
+    );
+    const tax = computeTax(
+      totalPrice,
+      body.applyPromoCardDiscount === true,
+      promoCardDiscount?.discountRate,
+      promoCardDiscount?.discountCode,
+      voucherDiscountAmount,
+    );
 
     if (tax.totalAmount < MINIMUM_AMOUNT)
       throw new Error(`Minimum order amount is ₱${MINIMUM_AMOUNT}`);
