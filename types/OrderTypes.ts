@@ -82,6 +82,7 @@ export interface OrderType {
     subtotalAmount?: number;
     discountAmount?: number;
     discountCode?: string;
+    voucherDiscountAmount?: number;
   };
   estimatedTime: string;
 
@@ -149,6 +150,7 @@ export interface CreateOrderPayload {
 
   paymentMethod: string,
   applyPromoCardDiscount?: boolean;
+  voucherAmount?: number;
 
   shippingAddress: {
     line1: string;
