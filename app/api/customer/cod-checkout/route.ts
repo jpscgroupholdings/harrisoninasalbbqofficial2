@@ -16,6 +16,7 @@ import {
   resolveCart,
   sendOrderConfirmationEmail,
 } from "../../paymaya/checkout/route";
+import { redeemCustomerVoucher } from "@/services/promoCardBenefits";
 
 const MINIMUM_AMOUNT = 100;
 
@@ -36,9 +37,10 @@ export async function POST(request: NextRequest) {
     const body: CreateOrderPayload = await request.json();
     assertValidPayload(body);
 
-    if (body.applyPromoCardDiscount === true) {
-      await assertCanUsePromoCardDiscount(customerId, session);
-    }
+    const promoCardDiscount =
+      body.applyPromoCardDiscount === true
+        ? await assertCanUsePromoCardDiscount(customerId, session)
+        : null;
 
     // 4. Resolve branch
     const branch = await fetchBranch(body.branchId, session);
@@ -51,7 +53,18 @@ export async function POST(request: NextRequest) {
     );
 
     // 6. Tax breakdown
-    const tax = computeTax(totalPrice, body.applyPromoCardDiscount === true);
+    const voucherDiscountAmount = await redeemCustomerVoucher(
+      customerId,
+      Math.max(0, Number(body.voucherAmount ?? 0)),
+      session,
+    );
+    const tax = computeTax(
+      totalPrice,
+      body.applyPromoCardDiscount === true,
+      promoCardDiscount?.discountRate,
+      promoCardDiscount?.discountCode,
+      voucherDiscountAmount,
+    );
 
     if (tax.totalAmount < MINIMUM_AMOUNT) {
       throw new Error(`Minimum order amount is ₱${MINIMUM_AMOUNT}`);
