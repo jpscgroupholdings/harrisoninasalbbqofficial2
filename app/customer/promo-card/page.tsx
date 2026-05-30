@@ -3,7 +3,11 @@
 import { DynamicIcon } from "@/components/ui/DynamicIcon";
 import { apiClient } from "@/lib/apiClient";
 import { authClient } from "@/lib/auth-client";
-import { PROMO_CARD } from "@/lib/promoCard";
+import {
+  DEFAULT_PROMO_CARD_DISCOUNT_RULES,
+  PROMO_CARD,
+  PromoCardDay,
+} from "@/lib/promoCard";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
@@ -28,6 +32,16 @@ type PromoCardStatus = {
     createdAt: string;
     paidAt?: string;
   } | null;
+  config: {
+    name: string;
+    discountRate: number;
+    purchasePrice: number;
+    sku: string;
+    discountRules: {
+      days: PromoCardDay[];
+      discountRate: number;
+    }[];
+  };
 };
 
 const initialForm: PromoCardForm = {
@@ -84,8 +98,10 @@ export default function PromoCardPage() {
   }, [session?.user]);
 
   const discountPercent = useMemo(
-    () => (PROMO_CARD.discountRate * 100).toFixed(0),
-    [],
+    () =>
+      ((promoCardStatus?.config.discountRate ?? PROMO_CARD.discountRate) * 100)
+        .toFixed(0),
+    [promoCardStatus?.config.discountRate],
   );
 
   const updateField = (field: keyof PromoCardForm, value: string) => {
@@ -133,6 +149,10 @@ export default function PromoCardPage() {
   };
 
   const currentPromoCard = promoCardStatus?.promoCard;
+  const currentConfig = promoCardStatus?.config ?? {
+    ...PROMO_CARD,
+    discountRules: DEFAULT_PROMO_CARD_DISCOUNT_RULES,
+  };
   const hasActivePromoCard =
     currentPromoCard?.status === "paid" ||
     currentPromoCard?.status === "pending";
@@ -153,7 +173,7 @@ export default function PromoCardPage() {
             Upcoming promo
           </p>
           <h1 className="mt-3 text-4xl font-bold text-slate-950 md:text-5xl">
-            {PROMO_CARD.name}
+            {currentConfig.name}
           </h1>
           <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
             Purchase the promo card online and enjoy {discountPercent}% discount
@@ -172,7 +192,7 @@ export default function PromoCardPage() {
             <div className="rounded-lg border border-slate-200 bg-white p-4">
               <DynamicIcon name="CreditCard" size={22} className="text-brand-color-500" />
               <p className="mt-3 text-2xl font-bold text-slate-950">
-                ₱{PROMO_CARD.purchasePrice.toFixed(2)}
+                ₱{currentConfig.purchasePrice.toFixed(2)}
               </p>
               <p className="text-sm text-slate-500">Promo card price</p>
             </div>
