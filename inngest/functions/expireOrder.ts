@@ -4,6 +4,7 @@ import { Order } from "@/models/Orders";
 import { Inventory } from "@/models/Inventory";
 import { ORDER_STATUSES } from "@/types/orderConstants";
 import { PAYMENT_STATUSES } from "@/types/paymentConstants";
+import { refundCustomerVoucher } from "@/services/promoCardBenefits";
 
 export const expireOrder = inngest.createFunction(
   { id: "expire-pending-order", triggers: { event: "order/created" } },
@@ -13,7 +14,7 @@ export const expireOrder = inngest.createFunction(
     // Wait 30 minutes before doing anything
     await step.sleep("wait-for-payment-window", sleepDuration);
 
-    // After 30 mins, check and expire if still pending
+    // After the payment/order window, check and expire if still awaiting action.
     await step.run("check-and-expire-order", async () => {
       await connectDB();
 
@@ -23,8 +24,13 @@ export const expireOrder = inngest.createFunction(
         return { skipped: true, reason: "Order not found" };
       }
 
-      // Only expire if still PENDING (not paid, cancelled, etc.)
-      if (order.status !== ORDER_STATUSES.PENDING) {
+      const expirableStatus =
+        order.paymentInfo?.paymentMethod === "maya"
+          ? ORDER_STATUSES.PENDING_PAYMENT
+          : ORDER_STATUSES.PENDING;
+
+      // Only expire if still waiting (not paid, cancelled, etc.)
+      if (order.status !== expirableStatus) {
         return { skipped: true, reason: `Order is already ${order.status}` };
       }
 
@@ -42,6 +48,11 @@ export const expireOrder = inngest.createFunction(
       await Inventory.updateMany(
         { branchId: order.branchId, "reservations.orderId": order._id },
         { $pull: { reservations: { orderId: order._id } } },
+      );
+
+      await refundCustomerVoucher(
+        order.customerId,
+        order.total?.voucherDiscountAmount ?? 0,
       );
 
       // Mark order as expired
