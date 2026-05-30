@@ -24,11 +24,13 @@ export function useOrderState(order: OrdersApiResponse["data"][number] | null) {
   const needsReview = isCompleted && !order.isReviewed;
 
   const needPayment =
-    order.status === ORDER_STATUSES.PENDING &&
+    order.status === ORDER_STATUSES.PENDING_PAYMENT &&
     order.paymentInfo?.paymentMethod === "maya" &&
     order.paymentInfo?.paymentStatus !== PAYMENT_STATUSES.PAYMENT_SUCCESS;
 
-  const canCancel = status === ORDER_STATUSES.PENDING && !isMayaPaid; // COD pending OR Maya not yet paid
+  const canCancel =
+    status === ORDER_STATUSES.PENDING_PAYMENT ||
+    (status === ORDER_STATUSES.PENDING && !isMayaPaid); // COD pending OR Maya not yet paid
 
   const canBuyAgain = isCancelled || isCompleted;
 

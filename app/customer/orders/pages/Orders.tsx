@@ -29,7 +29,11 @@ type Tab = {
 /* ─── Tab config ─────────────────────────────────────────────────────── */
 const TABS: Tab[] = [
   { key: "all", label: "All" },
-  { key: ORDER_STATUSES.PENDING, label: "Pending" },
+  {
+    key: ORDER_STATUSES.PENDING,
+    label: "Pending",
+    statuses: [ORDER_STATUSES.PENDING_PAYMENT, ORDER_STATUSES.PENDING],
+  },
   { key: ORDER_STATUSES.PREPARING, label: "Preparing" },
   { key: ORDER_STATUSES.READY, label: "To receive" },
   { key: ORDER_STATUSES.COMPLETED, label: "Completed" },
@@ -46,6 +50,7 @@ const TABS: Tab[] = [
 
 /* ─── Status pill ────────────────────────────────────────────────────── */
 const STATUS_STYLES: Record<string, string> = {
+  [ORDER_STATUSES.PENDING_PAYMENT]: "bg-amber-50 text-amber-800",
   [ORDER_STATUSES.PENDING]: "bg-amber-50 text-amber-800",
   [ORDER_STATUSES.PREPARING]: "bg-blue-50 text-blue-800",
   [ORDER_STATUSES.READY]: "bg-purple-50 text-purple-800",
@@ -56,6 +61,7 @@ const STATUS_STYLES: Record<string, string> = {
 };
 
 const STATUS_LABELS: Record<string, string> = {
+  [ORDER_STATUSES.PENDING_PAYMENT]: "Awaiting payment",
   [ORDER_STATUSES.PENDING]: "Pending",
   [ORDER_STATUSES.PREPARING]: "Preparing",
   [ORDER_STATUSES.READY]: "Ready",

@@ -13,8 +13,13 @@ export function StatusBadge({ status }: { status: OrderStatus }) {
     OrderStatus,
     { label: string; color: string; icon: React.JSX.Element }
   > = {
+    pending_payment: {
+      label: "Awaiting Payment",
+      color: "bg-yellow-100 text-yellow-700 border border-yellow-200",
+      icon: <CreditCard size={14} />,
+    },
     pending: {
-      label: "Pending Payment",
+      label: "Pending",
       color: "bg-yellow-100 text-yellow-700 border border-yellow-200",
       icon: <CreditCard size={14} />,
     },

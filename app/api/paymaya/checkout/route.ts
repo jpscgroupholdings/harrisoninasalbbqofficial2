@@ -397,7 +397,10 @@ export async function persistOrder(
           address: branch.address,
           contactNumber: branch.contactNumber,
         },
-        status: ORDER_STATUSES.PENDING,
+        status:
+          paymentMethod === "maya"
+            ? ORDER_STATUSES.PENDING_PAYMENT
+            : ORDER_STATUSES.PENDING,
         items: orderItems,
         paymentInfo: {
           checkoutId,
@@ -477,6 +480,9 @@ export async function POST(request: NextRequest) {
     // 3. Parse & validate body
     const body: CreateOrderPayload = await request.json();
     assertValidPayload(body);
+    if (body.paymentMethod !== "maya") {
+      throw new Error("Invalid payment method for Maya checkout.");
+    }
 
     const promoCardDiscount =
       body.applyPromoCardDiscount === true
@@ -546,7 +552,13 @@ export async function POST(request: NextRequest) {
     ]);
 
     return NextResponse.json(
-      { referenceNumber, checkoutId, redirectUrl },
+      {
+        orderId: order._id.toString(),
+        referenceNumber,
+        checkoutId,
+        redirectUrl,
+        status: order.status,
+      },
       { status: 201 },
     );
   } catch (error) {

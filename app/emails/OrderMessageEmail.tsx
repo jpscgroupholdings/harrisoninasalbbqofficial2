@@ -25,6 +25,7 @@ function getAccentColor(status: OrderStatus): string {
     case "preparing":
     case "completed":
       return "#1D9E75";
+    case "pending_payment":
     case "pending":
       return "#ef4501";
     case "failed":
@@ -48,6 +49,16 @@ function getStatusContent(
   const isCOD = paymentMethod === "cod";
 
   switch (status) {
+    case "pending_payment":
+      return {
+        preview: "Complete your payment to confirm your order",
+        heading: "Payment needed",
+        message:
+          "Your order has been reserved. Complete your payment before the reservation expires so we can confirm it.",
+        ctaLabel: "Pay now",
+        ctaHref: `${publicUrl}/orders?referenceNumber=${referenceNumber}`,
+      };
+
     case "pending":
       return {
         preview: isMaya
