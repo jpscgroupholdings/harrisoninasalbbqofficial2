@@ -33,7 +33,9 @@ export async function POST(
         value: order.total.totalAmount,
         currency: "PHP",
         details: {
-          discount: order.total.discountAmount ?? 0,
+          discount:
+            (order.total.discountAmount ?? 0) +
+            (order.total.voucherDiscountAmount ?? 0),
           vatAmount: order.total.vatAmount,
           subTotal: order.total.vatableSales,
         },
