@@ -14,7 +14,13 @@ import Modal from "@/components/ui/Modal";
 import { CreateOrderPayload } from "@/types/OrderTypes";
 import { authClient } from "@/lib/auth-client";
 import { apiClient } from "@/lib/apiClient";
-import { PROMO_CARD } from "@/lib/promoCard";
+import {
+  getPromoCardDay,
+  getPromoCardDiscountRateForDay,
+  PROMO_CARD,
+  DEFAULT_PROMO_CARD_DISCOUNT_RULES,
+  PromoCardDay,
+} from "@/lib/promoCard";
 import { CartItem } from "@/types/MenuTypes";
 import { useQuery } from "@tanstack/react-query";
 
@@ -185,12 +191,35 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
   const { data: promoCardStatus } = useQuery({
     queryKey: ["customer", "promo-card", "status"],
     queryFn: () =>
-      apiClient.get<{ hasPaidPromoCard: boolean }>("/customer/promo-card/status"),
+      apiClient.get<{
+        hasPaidPromoCard: boolean;
+        voucherBalance: number;
+        config: {
+          name: string;
+          discountRate: number;
+          purchasePrice: number;
+          sku: string;
+          discountRules: {
+            days: PromoCardDay[];
+            discountRate: number;
+          }[];
+        };
+      }>("/customer/promo-card/status"),
     enabled: Boolean(session?.user),
     staleTime: 60_000,
   });
   const canUsePromoCardDiscount =
     promoCardStatus?.hasPaidPromoCard === true;
+  const promoCardConfig = promoCardStatus?.config ?? {
+    ...PROMO_CARD,
+    discountRules: DEFAULT_PROMO_CARD_DISCOUNT_RULES,
+  };
+  const availableVoucherBalance = promoCardStatus?.voucherBalance ?? 0;
+  const activeDiscountRate = getPromoCardDiscountRateForDay(
+    promoCardConfig.discountRules,
+    getPromoCardDay(),
+    promoCardConfig.discountRate,
+  );
 
   const { mutateAsync: createOrder, isPending } = useCreateOrder();
   const { validateAll, customerErrors, shippingErrors } =
@@ -212,17 +241,30 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
     totalPrice,
     applyPromoCardDiscount,
     setApplyPromoCardDiscount,
+    setPromoCardDiscountRate,
     clearCart,
   } = useCart();
+  const [voucherAmount, setVoucherAmount] = useState("");
+  const parsedVoucherAmount = Math.min(
+    Math.max(0, Number(voucherAmount || 0)),
+    availableVoucherBalance,
+    totalPrice,
+  );
+  const displayTotalPrice = Number(
+    Math.max(totalPrice - parsedVoucherAmount, 0).toFixed(2),
+  );
 
   useEffect(() => {
     if (!canUsePromoCardDiscount && applyPromoCardDiscount) {
       setApplyPromoCardDiscount(false);
     }
+    setPromoCardDiscountRate(activeDiscountRate);
   }, [
+    activeDiscountRate,
     applyPromoCardDiscount,
     canUsePromoCardDiscount,
     setApplyPromoCardDiscount,
+    setPromoCardDiscountRate,
   ]);
 
   const [showPaymentOptions, setShowPaymentOptions] = useState(false);
@@ -278,7 +320,7 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
 
     const MINIMUM_AMOUNT = 100;
 
-    if (totalPrice < MINIMUM_AMOUNT) {
+    if (displayTotalPrice < MINIMUM_AMOUNT) {
       toast.warning("Minimum Order Amount", {
         description: `The minimum amount for online payment is ₱${MINIMUM_AMOUNT.toFixed(2)}.`,
         duration: 6000,
@@ -295,6 +337,7 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
       paymentMethod: selectedPayment,
       notes,
       applyPromoCardDiscount,
+      voucherAmount: parsedVoucherAmount,
       items: cartItems
         .filter((item) => item.quantity > 0)
         .map((item) => ({ _id: item._id, quantity: item.quantity })),
@@ -411,11 +454,11 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
             />
             <span className="flex-1">
               <span className="block font-semibold text-slate-800">
-                Apply {PROMO_CARD.name}
+                Apply {promoCardConfig.name}
               </span>
               <span className="block text-xs text-slate-500">
                 {canUsePromoCardDiscount
-                  ? `Enjoy ${(PROMO_CARD.discountRate * 100).toFixed(0)}% off this order.`
+                  ? `Enjoy ${(activeDiscountRate * 100).toFixed(0)}% off this order today.`
                   : "Purchase and pay for a promo card to unlock this discount."}
               </span>
             </span>
@@ -428,6 +471,32 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
             <div className="flex justify-between text-sm font-semibold text-green-600">
               <span>Promo card discount</span>
               <span>-₱{promoCardDiscount.toFixed(2)}</span>
+            </div>
+          )}
+          {availableVoucherBalance > 0 && (
+            <label className="block rounded-xl border border-green-200 bg-white p-3 text-sm">
+              <span className="block font-semibold text-slate-800">
+                Use voucher balance
+              </span>
+              <span className="mt-1 block text-xs text-slate-500">
+                Available: ₱{availableVoucherBalance.toFixed(2)}
+              </span>
+              <input
+                type="number"
+                min={0}
+                max={Math.min(availableVoucherBalance, totalPrice)}
+                step={0.01}
+                value={voucherAmount}
+                onChange={(event) => setVoucherAmount(event.target.value)}
+                className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-color-500"
+                placeholder="Enter voucher amount"
+              />
+            </label>
+          )}
+          {parsedVoucherAmount > 0 && (
+            <div className="flex justify-between text-sm font-semibold text-green-600">
+              <span>Voucher discount</span>
+              <span>-₱{parsedVoucherAmount.toFixed(2)}</span>
             </div>
           )}
           <div className="flex justify-between text-sm text-slate-500">
@@ -443,7 +512,7 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
               Total (VAT Inc)
             </span>
             <span className="text-lg font-bold text-brand-color-500">
-              ₱{totalPrice.toFixed(2)}
+              ₱{displayTotalPrice.toFixed(2)}
             </span>
           </div>
         </div>
