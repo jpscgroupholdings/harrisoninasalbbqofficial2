@@ -36,6 +36,9 @@ export async function POST(request: NextRequest) {
     // 3. Parse & validate body
     const body: CreateOrderPayload = await request.json();
     assertValidPayload(body);
+    if (body.paymentMethod !== "cod") {
+      throw new Error("Invalid payment method for COD checkout.");
+    }
 
     const promoCardDiscount =
       body.applyPromoCardDiscount === true
