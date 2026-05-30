@@ -6,6 +6,10 @@ import { EMAIL_FROM, resend } from "@/lib/resend";
 import { Inventory } from "@/models/Inventory";
 import { Order } from "@/models/Orders";
 import { PromoCardPurchase } from "@/models/PromoCardPurchase";
+import {
+  awardPromoCardVoucherForOrder,
+  refundCustomerVoucher,
+} from "@/services/promoCardBenefits";
 import { ORDER_STATUSES, OrderStatus } from "@/types/orderConstants";
 import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
@@ -239,6 +243,7 @@ export async function POST(request: NextRequest) {
           { session },
         );
       }
+      await awardPromoCardVoucherForOrder(existingOrder, session);
     }
 
     // Step 7: failed/expired/cancelled: just release reservation, stock never left
@@ -257,6 +262,11 @@ export async function POST(request: NextRequest) {
           { new: true, session },
         );
       }
+      await refundCustomerVoucher(
+        existingOrder.customerId,
+        existingOrder.total?.voucherDiscountAmount ?? 0,
+        session,
+      );
     }
 
     const { error: emailError } = await resend.emails.send({
