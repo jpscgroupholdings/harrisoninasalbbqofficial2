@@ -1,7 +1,7 @@
 import { getAuthHeader } from "@/lib/getAuthHeader";
 import { requireBetterAuth } from "@/lib/getAuth";
 import { connectDB } from "@/lib/mongodb";
-import { PROMO_CARD } from "@/lib/promoCard";
+import { getPromoCardConfig } from "@/lib/promoCardConfig";
 import { PromoCardPurchase } from "@/models/PromoCardPurchase";
 import { NextRequest, NextResponse } from "next/server";
 import "@/lib/registerModels";
@@ -67,6 +67,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const promoCardConfig = await getPromoCardConfig();
     const baseUrl = process.env.NEXT_PUBLIC_URL ?? request.nextUrl.origin;
     const referenceNumber = `PROMO-CARD-${Date.now()}`;
     const promoCardPurchase = await PromoCardPurchase.create({
@@ -78,29 +79,31 @@ export async function POST(request: NextRequest) {
       lastName: body.lastName,
       customerEmail: body.customerEmail,
       customerPhone: body.customerPhone,
-      purchasePrice: PROMO_CARD.purchasePrice,
-      discountRate: PROMO_CARD.discountRate,
+      purchasePrice: promoCardConfig.purchasePrice,
+      discountRate: promoCardConfig.discountRate,
+      discountRules: promoCardConfig.discountRules,
+      voucherRule: promoCardConfig.voucherRule,
     });
 
     const payload = {
       totalAmount: {
-        value: PROMO_CARD.purchasePrice,
+        value: promoCardConfig.purchasePrice,
         currency: "PHP",
         details: {
           discount: 0,
           vatAmount: 0,
-          vatableSales: PROMO_CARD.purchasePrice,
+          vatableSales: promoCardConfig.purchasePrice,
         },
       },
       items: [
         {
-          name: PROMO_CARD.name,
+          name: promoCardConfig.name,
           quantity: 1,
-          code: PROMO_CARD.sku,
-          description: `${(PROMO_CARD.discountRate * 100).toFixed(0)}% discount card`,
-          amount: { value: PROMO_CARD.purchasePrice },
+          code: promoCardConfig.sku,
+          description: `${(promoCardConfig.discountRate * 100).toFixed(0)}% discount card`,
+          amount: { value: promoCardConfig.purchasePrice },
           totalAmount: {
-            value: PROMO_CARD.purchasePrice,
+            value: promoCardConfig.purchasePrice,
             currency: "PHP",
           },
         },
