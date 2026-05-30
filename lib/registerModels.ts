@@ -2,9 +2,11 @@ import "@/models/Branch"
 import "@/models/Bundle"
 import "@/models/Category"
 import "@/models/CheckoutSession"
+import "@/models/CustomerVoucher";
 import "@/models/Inventory"
 import "@/models/Orders"
 import "@/models/Product"
+import "@/models/PromoCardConfig";
 import "@/models/PromoCardPurchase";
 import "@/models/Staff"
 import "@/models/SubCategory"
