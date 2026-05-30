@@ -141,7 +141,7 @@ export async function redeemCustomerVoucher(
 export async function refundCustomerVoucher(
   customerId: string | mongoose.Types.ObjectId | null,
   amount: number,
-  session: ClientSession,
+  session?: ClientSession,
 ): Promise<void> {
   if (!customerId || amount <= 0) return;
 
@@ -155,6 +155,6 @@ export async function refundCustomerVoucher(
         status: "active",
       },
     ],
-    { session },
+    session ? { session } : undefined,
   );
 }
