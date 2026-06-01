@@ -1,6 +1,5 @@
 import {
   DEFAULT_PROMO_CARD_DISCOUNT_RULES,
-  DEFAULT_PROMO_CARD_USAGE_RULE,
   DEFAULT_PROMO_CARD_VALIDITY_RULE,
   DEFAULT_PROMO_CARD_VOUCHER_RULE,
   PROMO_CARD,
@@ -9,7 +8,8 @@ import {
 import { PromoCardConfigModel } from "@/models/PromoCardConfig";
 
 export async function getPromoCardConfig(): Promise<PromoCardConfig> {
-  const config = await PromoCardConfigModel.findOne().lean<PromoCardConfig>();
+  const config =
+    await PromoCardConfigModel.findOne().lean<PromoCardConfig>();
 
   return {
     name: config?.name ?? PROMO_CARD.name,
@@ -20,14 +20,17 @@ export async function getPromoCardConfig(): Promise<PromoCardConfig> {
       config?.discountRules?.length
         ? config.discountRules
         : DEFAULT_PROMO_CARD_DISCOUNT_RULES,
-    voucherRule: config?.voucherRule ?? DEFAULT_PROMO_CARD_VOUCHER_RULE,
+    voucherRule: {
+      ...DEFAULT_PROMO_CARD_VOUCHER_RULE,
+      ...config?.voucherRule,
+      usageRule: {
+        ...DEFAULT_PROMO_CARD_VOUCHER_RULE.usageRule,
+        ...config?.voucherRule?.usageRule,
+      },
+    },
     validityRule: {
       ...DEFAULT_PROMO_CARD_VALIDITY_RULE,
       ...config?.validityRule,
-    },
-    usageRule: {
-      ...DEFAULT_PROMO_CARD_USAGE_RULE,
-      ...config?.usageRule,
     },
   };
 }
