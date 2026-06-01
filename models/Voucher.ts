@@ -2,7 +2,7 @@ import {
   DEFAULT_VOUCHER_USAGE_RULE,
   VOUCHER_SOURCE_TYPES,
   VOUCHER_STATUSES,
-} from "@/lib/voucher";
+} from "@/types/voucher.types";
 import { model, models, Schema } from "mongoose";
 
 const VoucherUsageRuleSchema = new Schema(
