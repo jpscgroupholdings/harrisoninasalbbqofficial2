@@ -1,12 +1,17 @@
 import { requireAdmin } from "@/lib/getAuth";
 import { connectDB } from "@/lib/mongodb";
 import {
+  DEFAULT_PROMO_CARD_VALIDITY_RULE,
   PROMO_CARD,
   PROMO_CARD_DAYS,
+  PROMO_CARD_VALIDITY_UNITS,
   PromoCardDay,
   PromoCardDiscountRule,
+  PromoCardValidityRule,
+  PromoCardValidityUnit,
   PromoCardVoucherRule,
 } from "@/lib/promoCard";
+import { DEFAULT_VOUCHER_USAGE_RULE } from "@/types/voucher.types";
 import { getPromoCardConfig } from "@/lib/promoCardConfig";
 import { PromoCardConfigModel } from "@/models/PromoCardConfig";
 import { PromoCardPurchase } from "@/models/PromoCardPurchase";
@@ -92,6 +97,11 @@ export async function PATCH(request: NextRequest) {
         discountPercent?: number;
       }[];
       voucherRule?: PromoCardVoucherRule;
+      validityRule?: {
+        duration?: number;
+        unit?: PromoCardValidityUnit;
+        expiresAt?: string | Date | null;
+      };
     };
 
     const name = body.name?.trim();
@@ -100,6 +110,8 @@ export async function PATCH(request: NextRequest) {
       ? body.discountRules
       : [];
     const voucherRule = body.voucherRule;
+    const validityRule = body.validityRule;
+    const usageRule = voucherRule?.usageRule;
 
     if (!name) {
       return NextResponse.json(
@@ -166,10 +178,28 @@ export async function PATCH(request: NextRequest) {
       });
     }
 
+    const isOneTimeUse = Boolean(
+      usageRule?.isOneTimeUse ?? DEFAULT_VOUCHER_USAGE_RULE.isOneTimeUse,
+    );
+    const isConsumable = Boolean(
+      usageRule?.isConsumable ?? DEFAULT_VOUCHER_USAGE_RULE.isConsumable,
+    );
+
+    if (isOneTimeUse === isConsumable) {
+      return NextResponse.json(
+        { error: "Choose either one-time use or consumable vouchers." },
+        { status: 400 },
+      );
+    }
+
     const normalizedVoucherRule: PromoCardVoucherRule = {
       enabled: Boolean(voucherRule?.enabled),
       voucherAmount: Number(voucherRule?.voucherAmount ?? 0),
       minimumPurchase: Number(voucherRule?.minimumPurchase ?? 0),
+      usageRule: {
+        isOneTimeUse,
+        isConsumable,
+      },
     };
 
     if (
@@ -183,6 +213,44 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
+    const validityDuration = Number(
+      validityRule?.duration ?? DEFAULT_PROMO_CARD_VALIDITY_RULE.duration,
+    );
+    const validityUnit =
+      validityRule?.unit ?? DEFAULT_PROMO_CARD_VALIDITY_RULE.unit;
+
+    if (
+      !Number.isInteger(validityDuration) ||
+      validityDuration < 1 ||
+      !PROMO_CARD_VALIDITY_UNITS.includes(validityUnit)
+    ) {
+      return NextResponse.json(
+        { error: "Promo card validity must be a positive duration." },
+        { status: 400 },
+      );
+    }
+
+    let expiresAt: Date | null = DEFAULT_PROMO_CARD_VALIDITY_RULE.expiresAt;
+
+    if (validityRule?.expiresAt) {
+      const parsedExpiresAt = new Date(validityRule.expiresAt);
+
+      if (Number.isNaN(parsedExpiresAt.getTime())) {
+        return NextResponse.json(
+          { error: "Promo card expiration date is invalid." },
+          { status: 400 },
+        );
+      }
+
+      expiresAt = parsedExpiresAt;
+    }
+
+    const normalizedValidityRule: PromoCardValidityRule = {
+      duration: validityDuration,
+      unit: validityUnit,
+      expiresAt,
+    };
+
     const config = await PromoCardConfigModel.findOneAndUpdate(
       {},
       {
@@ -191,6 +259,7 @@ export async function PATCH(request: NextRequest) {
           discountRate: discountRules[0].discountRate,
           discountRules,
           voucherRule: normalizedVoucherRule,
+          validityRule: normalizedValidityRule,
           purchasePrice: Number(purchasePrice.toFixed(2)),
           sku: PROMO_CARD.sku,
         },
