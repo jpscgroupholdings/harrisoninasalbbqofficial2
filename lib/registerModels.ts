@@ -12,4 +12,5 @@ import "@/models/Staff"
 import "@/models/SubCategory"
 import "@/models/Setting";
 import "@/models/User";
+import "@/models/Voucher";
 import "@/models/Cart"
