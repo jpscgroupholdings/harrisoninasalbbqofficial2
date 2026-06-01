@@ -1,5 +1,7 @@
 import {
   DEFAULT_PROMO_CARD_DISCOUNT_RULES,
+  DEFAULT_PROMO_CARD_USAGE_RULE,
+  DEFAULT_PROMO_CARD_VALIDITY_RULE,
   DEFAULT_PROMO_CARD_VOUCHER_RULE,
   PROMO_CARD,
   PromoCardConfig,
@@ -19,5 +21,13 @@ export async function getPromoCardConfig(): Promise<PromoCardConfig> {
         ? config.discountRules
         : DEFAULT_PROMO_CARD_DISCOUNT_RULES,
     voucherRule: config?.voucherRule ?? DEFAULT_PROMO_CARD_VOUCHER_RULE,
+    validityRule: {
+      ...DEFAULT_PROMO_CARD_VALIDITY_RULE,
+      ...config?.validityRule,
+    },
+    usageRule: {
+      ...DEFAULT_PROMO_CARD_USAGE_RULE,
+      ...config?.usageRule,
+    },
   };
 }

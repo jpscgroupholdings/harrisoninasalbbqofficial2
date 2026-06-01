@@ -1,10 +1,13 @@
 import {
   DEFAULT_PROMO_CARD_DISCOUNT_RULES,
+  DEFAULT_PROMO_CARD_USAGE_RULE,
+  DEFAULT_PROMO_CARD_VALIDITY_RULE,
   DEFAULT_PROMO_CARD_VOUCHER_RULE,
   PROMO_CARD,
   PROMO_CARD_DAYS,
+  PROMO_CARD_VALIDITY_UNITS,
 } from "@/lib/promoCard";
-import mongoose, { model, models, Schema } from "mongoose";
+import { model, models, Schema } from "mongoose";
 
 const DiscountRuleSchema = new Schema(
   {
@@ -36,6 +39,42 @@ const VoucherRuleSchema = new Schema(
       type: Number,
       default: DEFAULT_PROMO_CARD_VOUCHER_RULE.minimumPurchase,
       min: 0,
+    },
+  },
+  { _id: false },
+);
+
+const ValidityRuleSchema = new Schema(
+  {
+    duration: {
+      type: Number,
+      required: true,
+      default: DEFAULT_PROMO_CARD_VALIDITY_RULE.duration,
+      min: 1,
+    },
+    unit: {
+      type: String,
+      enum: PROMO_CARD_VALIDITY_UNITS,
+      required: true,
+      default: DEFAULT_PROMO_CARD_VALIDITY_RULE.unit,
+    },
+    expiresAt: {
+      type: Date,
+      default: DEFAULT_PROMO_CARD_VALIDITY_RULE.expiresAt,
+    },
+  },
+  { _id: false },
+);
+
+const UsageRuleSchema = new Schema(
+  {
+    isOneTimeUse: {
+      type: Boolean,
+      default: DEFAULT_PROMO_CARD_USAGE_RULE.isOneTimeUse,
+    },
+    isConsumable: {
+      type: Boolean,
+      default: DEFAULT_PROMO_CARD_USAGE_RULE.isConsumable,
     },
   },
   { _id: false },
@@ -80,6 +119,14 @@ const PromoCardConfigSchema = new Schema(
     voucherRule: {
       type: VoucherRuleSchema,
       default: DEFAULT_PROMO_CARD_VOUCHER_RULE,
+    },
+    validityRule: {
+      type: ValidityRuleSchema,
+      default: DEFAULT_PROMO_CARD_VALIDITY_RULE,
+    },
+    usageRule: {
+      type: UsageRuleSchema,
+      default: DEFAULT_PROMO_CARD_USAGE_RULE,
     },
   },
   { timestamps: true },

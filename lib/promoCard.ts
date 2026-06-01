@@ -12,6 +12,8 @@ export type PromoCardConfig = {
   sku: string;
   discountRules: PromoCardDiscountRule[];
   voucherRule: PromoCardVoucherRule;
+  validityRule: PromoCardValidityRule;
+  usageRule: PromoCardUsageRule;
 };
 
 export type PromoCardDay =
@@ -34,6 +36,19 @@ export type PromoCardVoucherRule = {
   minimumPurchase: number;
 };
 
+export type PromoCardValidityUnit = "day" | "month" | "year";
+
+export type PromoCardValidityRule = {
+  duration: number;
+  unit: PromoCardValidityUnit;
+  expiresAt: Date | null;
+};
+
+export type PromoCardUsageRule = {
+  isOneTimeUse: boolean;
+  isConsumable: boolean;
+};
+
 export const PROMO_CARD_DAYS: PromoCardDay[] = [
   "Mon",
   "Tue",
@@ -44,6 +59,12 @@ export const PROMO_CARD_DAYS: PromoCardDay[] = [
   "Sun",
 ];
 
+export const PROMO_CARD_VALIDITY_UNITS: PromoCardValidityUnit[] = [
+  "day",
+  "month",
+  "year",
+];
+
 export const DEFAULT_PROMO_CARD_DISCOUNT_RULES: PromoCardDiscountRule[] = [
   { days: PROMO_CARD_DAYS, discountRate: PROMO_CARD.discountRate },
 ];
@@ -52,6 +73,17 @@ export const DEFAULT_PROMO_CARD_VOUCHER_RULE: PromoCardVoucherRule = {
   enabled: false,
   voucherAmount: 1000,
   minimumPurchase: 3000,
+};
+
+export const DEFAULT_PROMO_CARD_VALIDITY_RULE: PromoCardValidityRule = {
+  duration: 1,
+  unit: "year",
+  expiresAt: null,
+};
+
+export const DEFAULT_PROMO_CARD_USAGE_RULE: PromoCardUsageRule = {
+  isOneTimeUse: false,
+  isConsumable: true,
 };
 
 export function calculatePromoCardDiscount(
