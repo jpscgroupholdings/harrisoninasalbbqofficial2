@@ -1,6 +1,9 @@
 "use client";
 
 import LoadingPage from "@/components/ui/LoadingPage";
+import { formatCurrency } from "@/helper/formatCurrency";
+import { formatDate } from "@/helper/formatDate";
+import { formatDateInputValue } from "@/helper/formatDateInputValue";
 import { apiClient } from "@/lib/apiClient";
 import {
   DEFAULT_ORDER_DISCOUNT_PROMOTION,
@@ -61,35 +64,6 @@ type PromotionPayload = {
   endTime: string;
   maximumRedemptions: number | null;
 };
-
-function formatCurrency(value: number) {
-  return `PHP ${value.toLocaleString("en-PH", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-}
-
-function formatDate(value?: string | Date | null) {
-  if (!value) return "No end date";
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Invalid date";
-
-  return date.toLocaleDateString("en-PH", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function formatDateInputValue(value?: string | Date | null) {
-  if (!value) return "";
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-
-  return date.toISOString().slice(0, 10);
-}
 
 function getCreateDefault(): OrderDiscountPromotionConfig {
   return {
@@ -728,7 +702,7 @@ function PromotionList({
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px] text-left text-sm">
+          <table className="w-full min-w-225 text-left text-sm">
             <thead>
               <tr className="border-b border-stone-100 text-xs uppercase text-stone-500">
                 <th className="px-3 py-3 font-bold">Name</th>
@@ -754,8 +728,8 @@ function PromotionList({
                       {promotion.name}
                     </p>
                     <p className="text-xs text-stone-500">
-                      {formatDate(promotion.startsAt)} -{" "}
-                      {formatDate(promotion.endsAt)}
+                      {formatDate(promotion.startsAt)} - {" "}
+                      {formatDate(promotion.endsAt, "No end Date")}
                     </p>
                   </td>
                   <td className="px-3 py-4 font-medium text-stone-700">

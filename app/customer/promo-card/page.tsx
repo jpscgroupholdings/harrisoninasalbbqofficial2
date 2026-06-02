@@ -1,6 +1,7 @@
 "use client";
 
 import { DynamicIcon } from "@/components/ui/DynamicIcon";
+import { formatDate } from "@/helper/formatDate";
 import { apiClient } from "@/lib/apiClient";
 import { authClient } from "@/lib/auth-client";
 import {
@@ -96,16 +97,6 @@ function formatCurrency(value: number) {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
-}
-
-function formatDate(value?: string) {
-  if (!value) return "Not yet paid";
-
-  return new Date(value).toLocaleDateString("en-PH", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
 }
 
 function formatCardNumber(referenceNumber?: string) {
@@ -280,7 +271,7 @@ export default function PromoCardPage() {
             </div>
 
             <div className="mt-10">
-              <p className="break-words font-mono text-lg tracking-wider sm:text-2xl sm:tracking-widest">
+              <p className="wrap-break-word font-mono text-lg tracking-wider sm:text-2xl sm:tracking-widest">
                 {formatCardNumber(currentPromoCard?.referenceNumber)}
               </p>
               <div className="mt-6 grid grid-cols-2 gap-4">
@@ -297,7 +288,7 @@ export default function PromoCardPage() {
                     Paid date
                   </p>
                   <p className="mt-1 text-sm font-semibold">
-                    {formatDate(currentPromoCard?.paidAt)}
+                    {formatDate(currentPromoCard?.paidAt, "Not yet paid")}
                   </p>
                 </div>
               </div>

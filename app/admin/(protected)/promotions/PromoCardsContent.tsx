@@ -9,6 +9,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { formatDate } from "@/helper/formatDate";
+import { formatDateInputValue } from "@/helper/formatDateInputValue";
 import { apiClient } from "@/lib/apiClient";
 import {
   DEFAULT_PROMO_CARD_DISCOUNT_RULES,
@@ -123,24 +125,6 @@ const statusStyles: Record<PromoCardPurchaseStatus, string> = {
   expired: "bg-red-100 text-red-700",
   cancelled: "bg-slate-100 text-slate-600",
 };
-
-function formatDate(value?: string) {
-  if (!value) return "--";
-  return new Date(value).toLocaleDateString("en-PH", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function formatDateInputValue(value?: string | null | Date) {
-  if (!value) return "";
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-
-  return date.toISOString().slice(0, 10);
-}
 
 type PromoCardsPageProps = {
   view?: "list" | "settings";
@@ -937,8 +921,8 @@ export default function PromoCardsContent({
                         {purchase.status}
                       </span>
                     </TableCell>
-                    <TableCell>{formatDate(purchase.createdAt)}</TableCell>
-                    <TableCell>{formatDate(purchase.paidAt)}</TableCell>
+                    <TableCell>{formatDate(purchase.createdAt, "--")}</TableCell>
+                    <TableCell>{formatDate(purchase.paidAt, "--")}</TableCell>
                   </TableRow>
                 ))
               )}
