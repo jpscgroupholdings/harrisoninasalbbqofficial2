@@ -16,13 +16,12 @@ interface SidebarProps {
 
 type NavItem = {
   name: string;
-  path: string;
+  path: string | null;
   icon: string;
   permission: string;
   children?: {
     name: string;
     path: string;
-    icon: string;
   }[];
 };
 
@@ -41,20 +40,22 @@ const navItems: NavItem[] = [
     permission: "orders.read",
   },
   {
-    name: "Marketing",
-    path: "/promo-cards",
-    icon: "BadgePercent",
+    name: "Promotion",
+    path: null,
+    icon: "TicketPercent",
     permission: "promo-cards.read",
     children: [
       {
+        name: "Product Discount",
+        path: "/product-discount",
+      },
+      {
         name: "Purchased Cards",
         path: "/promo-cards",
-        icon: "ListChecks",
       },
       {
         name: "Card Settings",
         path: "/promo-cards/settings",
-        icon: "SlidersHorizontal",
       },
     ],
   },
@@ -108,15 +109,16 @@ const navItems: NavItem[] = [
   },
 ];
 
-const getActiveParentPath = (currentPath: string) => {
-  return (
-    navItems.find(
-      (item) =>
-        item.children?.length &&
-        (currentPath === item.path ||
-          item.children.some((child) => child.path === currentPath)),
-    )?.path ?? null
+const getNavItemKey = (item: NavItem) => item.path ?? item.name;
+
+const getActiveParentKey = (currentPath: string) => {
+  const activeParent = navItems.find(
+    (item) =>
+      item.children?.length &&
+      item.children.some((child) => child.path === currentPath),
   );
+
+  return activeParent ? getNavItemKey(activeParent) : null;
 };
 
 const Sidebar = ({ isMobileOpen, onClose }: SidebarProps) => {
@@ -124,8 +126,8 @@ const Sidebar = ({ isMobileOpen, onClose }: SidebarProps) => {
   const pathname = usePathname();
   const { data: placedOrders } = useAdminOrders();
   const logout = useLogoutAdmin();
-  const [expandedItemPath, setExpandedItemPath] = useState<string | null>(
-    () => getActiveParentPath(pathname),
+  const [expandedItemKey, setExpandedItemKey] = useState<string | null>(() =>
+    getActiveParentKey(pathname),
   );
 
   const pendingCount =
@@ -141,12 +143,12 @@ const Sidebar = ({ isMobileOpen, onClose }: SidebarProps) => {
   );
 
   useEffect(() => {
-    setExpandedItemPath(getActiveParentPath(pathname));
+    setExpandedItemKey(getActiveParentKey(pathname));
   }, [pathname]);
 
-  const toggleExpandedItem = (path: string) => {
-    setExpandedItemPath((currentPath) => {
-      return currentPath === path ? null : path;
+  const toggleExpandedItem = (key: string) => {
+    setExpandedItemKey((currentKey) => {
+      return currentKey === key ? null : key;
     });
   };
 
@@ -177,41 +179,60 @@ const Sidebar = ({ isMobileOpen, onClose }: SidebarProps) => {
         <nav className="py-6 px-3 overflow-y-auto h-[calc(100vh-80px)]">
           <ul className="space-y-2">
             {visibleNavItems.map((item) => {
-              const hasChildren = Boolean(item.children?.length);
+              const hasChildren = Boolean(item.children?.length); // Check if current path matches item or any of its children
               const hasActiveChild = item.children?.some(
                 (child) => child.path === pathname,
-              );
-              const isActive = pathname === item.path || Boolean(hasActiveChild);
-              const isExpanded = expandedItemPath === item.path;
+              ); // Determine if item is active based on current path
+              const itemKey = getNavItemKey(item);
+
+              const isActive =
+                pathname === item.path || Boolean(hasActiveChild);
+              const isExpanded = expandedItemKey === itemKey;
 
               return (
-                <li key={item.path} className="relative">
+                <li key={itemKey} className="relative">
                   <div
                     className={`flex items-center rounded-xl transition-all duration-200 group ${isActive ? "bg-brand-color-500/80 text-white" : "text-gray-600 hover:bg-slate-100 hover:text-brand-color-500"}`}
                   >
-                    <Link
-                      href={item.path}
-                      onClick={() => {
-                        setExpandedItemPath(hasChildren ? item.path : null);
-
-                        onClose();
-                      }}
-                      className="flex min-w-0 flex-1 items-center gap-3 px-4 py-3"
-                    >
-                      <DynamicIcon name={item.icon} size={18} />
-                      <span className="truncate text-sm font-semibold">
-                        {item.name}
-                      </span>
-                      {isActive && !hasChildren && (
-                        <span className="ml-auto h-2 w-2 rounded-full bg-white" />
-                      )}
-                    </Link>
+                    {hasChildren ? (
+                      <button
+                        type="button"
+                        aria-expanded={isExpanded}
+                        onClick={() => toggleExpandedItem(itemKey)}
+                        className="flex min-w-0 flex-1 items-center gap-3 px-4 py-3 text-left"
+                      >
+                        <DynamicIcon name={item.icon} size={18} />
+                        <span className="truncate text-sm font-semibold">
+                          {item.name}
+                        </span>
+                      </button>
+                    ) : (
+                      item.path && (
+                        <Link
+                          href={item.path}
+                          onClick={() => {
+                            setExpandedItemKey(null);
+                            onClose();
+                          }}
+                          className="flex min-w-0 flex-1 items-center gap-3 px-4 py-3"
+                        >
+                          <DynamicIcon name={item.icon} size={18} />
+                          <span className="truncate text-sm font-semibold">
+                            {item.name}
+                          </span>
+                          {/** Dot active indicator for non-children items */}
+                          {isActive && (
+                            <span className="ml-auto h-2 w-2 rounded-full bg-white" />
+                          )}
+                        </Link>
+                      )
+                    )}
                     {hasChildren && (
                       <button
                         type="button"
                         aria-label={`${isExpanded ? "Collapse" : "Expand"} ${item.name}`}
                         aria-expanded={isExpanded}
-                        onClick={() => toggleExpandedItem(item.path)}
+                        onClick={() => toggleExpandedItem(itemKey)}
                         className="mr-2 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-black/5"
                       >
                         <DynamicIcon
@@ -221,12 +242,15 @@ const Sidebar = ({ isMobileOpen, onClose }: SidebarProps) => {
                         />
                       </button>
                     )}
+
+                    {/** Pending order indicator */}
                     {item.name === "Orders" && pendingCount > 0 && (
                       <div className="absolute -top-1 right-0 flex items-center justify-center w-5 h-5 text-xs bg-red-600 text-white rounded-full">
                         {pendingCount}
                       </div>
                     )}
                   </div>
+                  {/**  */}
                   {hasChildren && isExpanded && (
                     <ul className="mt-1 space-y-1 pl-6">
                       {item.children?.map((child) => (
@@ -240,7 +264,6 @@ const Sidebar = ({ isMobileOpen, onClose }: SidebarProps) => {
                                 : "text-gray-500 hover:bg-slate-100 hover:text-brand-color-500"
                             }`}
                           >
-                            <DynamicIcon name={child.icon} size={15} />
                             <span>{child.name}</span>
                           </Link>
                         </li>
