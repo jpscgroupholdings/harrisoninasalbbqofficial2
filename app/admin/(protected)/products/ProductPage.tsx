@@ -318,17 +318,22 @@ const ProductFormPage = ({ editProduct = null }: ProductFormPageProps) => {
         productType: editProduct.productType || ITEM_TYPES.SOLO,
         paxCount: editProduct.paxCount?.toString() || "",
         includedItems:
-          editProduct.includedItems?.map((item) => ({
-            product:
+          editProduct.includedItems?.map((item) => {
+            const includedProduct =
+              typeof item.product === "object" ? item.product : null;
+            const productId =
               typeof item.product === "string"
                 ? item.product
-                : item.product._id,
-            quantity: item.quantity,
-            label: item.label,
-            _name: typeof item.product === "object" ? item.product.name : "",
-            _price:
-              typeof item.product === "object" ? item.product.price : null,
-          })) || [],
+                : item.product._id;
+
+            return {
+              product: productId,
+              quantity: item.quantity,
+              label: item.label,
+              _name: includedProduct?.name ?? "",
+              _price: includedProduct?.price ?? null,
+            };
+          }) || [],
       });
       if (imageUrl.includes("cloudinary.com")) {
         setSelectedGalleryUrl(imageUrl);
