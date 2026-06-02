@@ -26,11 +26,18 @@ export const categories_api = {
 };
 
 export const subcategories_api = {
+  getAll: () => apiClient.get<SubCategory[]>("/subcategories"),
   getByCategory: (categoryId: string) =>
     apiClient.get<SubCategory[]>(`/subcategories?category=${categoryId}`),
   create: async (data: { name: string; categoryId: string }) =>
     apiClient.post<SubCategory>("/subcategories", data),
-  update: async ({ id, data }: { id: string; data: { name?: string } }) =>
+  update: async ({
+    id,
+    data,
+  }: {
+    id: string;
+    data: { name?: string; categoryId?: string };
+  }) =>
     apiClient.patch(`/subcategories/${id}`, data),
   delete: async (id: string) => apiClient.delete(`/subcategories/${id}`),
   reorder: async (subcategories: { id: string; position: number }[]) =>
