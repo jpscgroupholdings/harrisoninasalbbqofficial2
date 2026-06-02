@@ -196,7 +196,6 @@ const SubcategoriesPage = () => {
       setEditingId(null);
       toast.success("Subcategory updated!");
     },
-    onError: () => toast.error("Failed to update subcategory"),
   });
 
   const deleteMutation = useMutation({
