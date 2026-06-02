@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
     const filter = categoryId ? { category: categoryId } : {};
 
     const subcategories = await SubCategory.find(filter)
+      .populate("category", "name position image")
       .sort({ position: 1 })
       .lean();
 
