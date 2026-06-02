@@ -16,6 +16,7 @@ import { DynamicIcon } from "@/components/ui/DynamicIcon";
 import { useRouter } from "next/navigation";
 import { categories_api, subcategories_api } from "../categories/hooks/api";
 import { fileToBase64 } from "@/utils/fileUtils";
+import { apiClient } from "@/lib/apiClient";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -29,6 +30,14 @@ interface CloudinaryImage {
   format: string;
   bytes: number;
   created_at: string;
+}
+
+interface CloudinaryImagesResponse {
+  resources: CloudinaryImage[];
+}
+
+interface ProductSearchResponse {
+  data: Product[];
 }
 
 interface IncludedItem {
@@ -338,8 +347,7 @@ const ProductFormPage = ({ editProduct = null }: ProductFormPageProps) => {
 
   const fetchCategories = async () => {
     try {
-      const res = await fetch(`/api/categories`);
-      const data = await res.json();
+      const data = await apiClient.get<Category[]>("/categories");
       setCategories(data || []);
     } catch {
       toast.error("Failed to load categories");
@@ -361,8 +369,9 @@ const ProductFormPage = ({ editProduct = null }: ProductFormPageProps) => {
   const fetchSubcategories = async (categoryId: string) => {
     setLoadingSubcategories(true);
     try {
-      const res = await fetch(`/api/subcategories?category=${categoryId}`);
-      const data = await res.json();
+      const data = await apiClient.get<SubCategory[]>(
+        `/subcategories?category=${categoryId}`,
+      );
       setFilteredSubcategories(data || []);
     } catch {
       toast.error("Failed to load subcategories");
@@ -377,10 +386,10 @@ const ProductFormPage = ({ editProduct = null }: ProductFormPageProps) => {
     setLoadingGallery(true);
     setGalleryError(null);
     try {
-      const res = await fetch("/api/cloudinary/images");
-      if (!res.ok) throw new Error("Failed to fetch images");
-      const data = await res.json();
-      setCloudinaryImages(data?.resources || data || []);
+      const data = await apiClient.get<
+        CloudinaryImagesResponse | CloudinaryImage[]
+      >("/cloudinary/images");
+      setCloudinaryImages(Array.isArray(data) ? data : data.resources || []);
     } catch {
       setGalleryError("Could not load gallery. Check your API route.");
     } finally {
@@ -412,11 +421,10 @@ const ProductFormPage = ({ editProduct = null }: ProductFormPageProps) => {
     searchDebounceRef.current = setTimeout(async () => {
       setLoadingSearch(true);
       try {
-        const res = await fetch(
-          `/api/products?search=${encodeURIComponent(itemSearch)}&limit=20&productType=${ITEM_TYPES.SOLO}`
+        const data = await apiClient.get<ProductSearchResponse | Product[]>(
+          `/products?search=${encodeURIComponent(itemSearch)}&limit=20&productType=${ITEM_TYPES.SOLO}`,
         );
-        const data = await res.json();
-        const results: Product[] = data?.data || data || [];
+        const results = Array.isArray(data) ? data : data.data || [];
 
         // Filter out already-added items client-side (small list, safe)
         const addedIds = new Set(formData.includedItems.map((i) => i.product));
