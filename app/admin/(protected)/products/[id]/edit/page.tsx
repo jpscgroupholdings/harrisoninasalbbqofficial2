@@ -11,13 +11,14 @@ const EditProductPage = async ( context : {params: Promise<{id: string}>}) => {
 
   if (!isValidObjectId(id)) return notFound();
 
-  const product = await ProductModel.findById(id).lean();
+  const product = await ProductModel.findById(id).populate({
+    path: "includedItems.product",
+    select: "name price",
+  });
 
   if (!product) return notFound();
 
   const serialized = JSON.parse(JSON.stringify(product));
-
-  console.log(serialized)
 
   return <ProductFormPage editProduct={serialized} />;
 };
