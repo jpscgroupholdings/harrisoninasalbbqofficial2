@@ -1,7 +1,9 @@
 "use client";
 
 import SectionHeader from "@/app/admin/components/SectionHeader";
+import { InputField } from "@/components/ui/InputField";
 import LoadingPage from "@/components/ui/LoadingPage";
+import { SelectField } from "@/components/ui/SelectField";
 import {
   Table,
   TableBody,
@@ -275,112 +277,86 @@ function OrderDiscountPromotionEditor({
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <label className="space-y-2">
-            <span className="text-sm font-semibold text-stone-700">
-              Promotion name
-            </span>
-            <input
-              value={form.name}
-              onChange={(event) =>
-                setForm((current) => ({
-                  ...current,
-                  name: event.target.value,
-                }))
-              }
-              className="w-full rounded-lg border border-stone-200 px-3 py-2.5 text-sm outline-none focus:border-brand-color-500"
-              required
-            />
-          </label>
+          <InputField
+            label="Promotion Name"
+            value={form.name}
+            onChange={(event) =>
+              setForm((current) => ({
+                ...current,
+                name: event.target.value,
+              }))
+            }
+            required
+          />
 
-          <label className="space-y-2">
-            <span className="text-sm font-semibold text-stone-700">
-              Discount type
-            </span>
-            <select
-              value={form.discountType}
-              onChange={(event) =>
-                setForm((current) => ({
-                  ...current,
-                  discountType: event.target.value as OrderDiscountType,
-                  maximumDiscountAmount:
-                    event.target.value === "percentage"
-                      ? current.maximumDiscountAmount
-                      : "",
-                }))
-              }
-              className="w-full rounded-lg border border-stone-200 px-3 py-2.5 text-sm outline-none focus:border-brand-color-500"
-            >
-              <option value="percentage">Percentage</option>
-              <option value="fixed">Fixed amount</option>
-            </select>
-          </label>
+          <SelectField
+            label="Discount Type"
+            options={[
+              { value: "percentage", label: "Percentage" },
+              { value: "fixed", label: "Fixed Amount" },
+            ]}
+            value={form.discountType}
+            onChange={(event) =>
+              setForm((current) => ({
+                ...current,
+                discountType: event.target.value as OrderDiscountType,
+                maximumDiscountAmount:
+                  event.target.value === "percentage"
+                    ? current.maximumDiscountAmount
+                    : "",
+              }))
+            }
+          />
         </div>
 
         <div className="mt-4 grid gap-4 md:grid-cols-3">
-          <label className="space-y-2">
-            <span className="text-sm font-semibold text-stone-700">
-              {form.discountType === "percentage"
-                ? "Discount percentage"
-                : "Discount amount"}
-            </span>
-            <input
-              type="number"
-              min={0.01}
-              max={form.discountType === "percentage" ? 100 : undefined}
-              step={0.01}
-              value={form.discountValue}
-              onChange={(event) =>
-                setForm((current) => ({
-                  ...current,
-                  discountValue: event.target.value,
-                }))
-              }
-              className="w-full rounded-lg border border-stone-200 px-3 py-2.5 text-sm outline-none focus:border-brand-color-500"
-              required
-            />
-          </label>
+          <InputField
+            label={`${form.discountType === "percentage" ? "Discount percentage" : "Discount Amount"}`}
+            type="number"
+            min={0.01}
+            max={form.discountType === "percentage" ? 100 : undefined}
+            step={0.01}
+            value={form.discountValue}
+            onChange={(event) =>
+              setForm((current) => ({
+                ...current,
+                discountValue: event.target.value,
+              }))
+            }
+            required
+          />
 
           {showPercentageCap && (
-            <label className="space-y-2">
-              <span className="text-sm font-semibold text-stone-700">
-                Maximum discount amount
-              </span>
-              <input
-                type="number"
-                min={0}
-                step={0.01}
-                value={form.maximumDiscountAmount}
-                onChange={(event) =>
-                  setForm((current) => ({
-                    ...current,
-                    maximumDiscountAmount: event.target.value,
-                  }))
-                }
-                className="w-full rounded-lg border border-stone-200 px-3 py-2.5 text-sm outline-none focus:border-brand-color-500"
-                placeholder="No limit"
-              />
-            </label>
-          )}
-
-          <label className="space-y-2">
-            <span className="text-sm font-semibold text-stone-700">
-              Minimum order amount
-            </span>
-            <input
+            <InputField
+              label="Maximum discount amount"
               type="number"
               min={0}
-              step={0.01}
-              value={form.minimumOrderAmount}
+              step={10}
+              value={form.maximumDiscountAmount}
               onChange={(event) =>
                 setForm((current) => ({
                   ...current,
-                  minimumOrderAmount: event.target.value,
+                  maximumDiscountAmount: event.target.value,
                 }))
               }
-              className="w-full rounded-lg border border-stone-200 px-3 py-2.5 text-sm outline-none focus:border-brand-color-500"
-              required
+              placeholder="No limit"
             />
-          </label>
+          )}
+
+          <InputField
+            label="Minimum order amount"
+            type="number"
+            min={0}
+            step={10}
+            value={form.minimumOrderAmount}
+            onChange={(event) =>
+              setForm((current) => ({
+                ...current,
+                minimumOrderAmount: event.target.value,
+              }))
+            }
+            required
+          />
         </div>
       </div>
 
@@ -393,78 +369,57 @@ function OrderDiscountPromotionEditor({
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <label className="space-y-2">
-            <span className="text-sm font-semibold text-stone-700">
-              Start date
-            </span>
-            <input
-              type="date"
-              value={form.startsAt}
-              onChange={(event) =>
-                setForm((current) => ({
-                  ...current,
-                  startsAt: event.target.value,
-                }))
-              }
-              className="w-full rounded-lg border border-stone-200 px-3 py-2.5 text-sm outline-none focus:border-brand-color-500"
-              required
-            />
-          </label>
+          <InputField
+            label="Start Date"
+            type="date"
+            value={form.startsAt}
+            onChange={(event) =>
+              setForm((current) => ({
+                ...current,
+                startsAt: event.target.value,
+              }))
+            }
+            required
+          />
 
-          <label className="space-y-2">
-            <span className="text-sm font-semibold text-stone-700">
-              End date
-            </span>
-            <input
-              type="date"
-              value={form.endsAt}
-              onChange={(event) =>
-                setForm((current) => ({
-                  ...current,
-                  endsAt: event.target.value,
-                }))
-              }
-              className="w-full rounded-lg border border-stone-200 px-3 py-2.5 text-sm outline-none focus:border-brand-color-500"
-            />
-          </label>
+          <InputField
+            label="End Date"
+            type="date"
+            value={form.endsAt}
+            onChange={(event) =>
+              setForm((current) => ({
+                ...current,
+                endsAt: event.target.value,
+              }))
+            }
+          />
         </div>
 
         <div className="mt-4 grid gap-4 md:grid-cols-2">
-          <label className="space-y-2">
-            <span className="text-sm font-semibold text-stone-700">
-              Start time
-            </span>
-            <input
-              type="time"
-              value={form.startTime}
-              onChange={(event) =>
-                setForm((current) => ({
-                  ...current,
-                  startTime: event.target.value,
-                }))
-              }
-              className="w-full rounded-lg border border-stone-200 px-3 py-2.5 text-sm outline-none focus:border-brand-color-500"
-              required
-            />
-          </label>
-
-          <label className="space-y-2">
-            <span className="text-sm font-semibold text-stone-700">
-              End time
-            </span>
-            <input
-              type="time"
-              value={form.endTime}
-              onChange={(event) =>
-                setForm((current) => ({
-                  ...current,
-                  endTime: event.target.value,
-                }))
-              }
-              className="w-full rounded-lg border border-stone-200 px-3 py-2.5 text-sm outline-none focus:border-brand-color-500"
-              required
-            />
-          </label>
+          <InputField
+            label="Start time"
+            type="time"
+            value={form.startTime}
+            onChange={(event) =>
+              setForm((current) => ({
+                ...current,
+                startTime: event.target.value,
+              }))
+            }
+            required
+          />
+          <InputField
+            label="End time"
+            type="time"
+            value={form.endTime}
+            onChange={(event) =>
+              setForm((current) => ({
+                ...current,
+                endTime: event.target.value,
+              }))
+            }
+            required
+          />
         </div>
 
         <div className="mt-5">
@@ -540,11 +495,9 @@ function OrderDiscountPromotionEditor({
           )}
         </div>
 
-        <label className="mt-5 block space-y-2">
-          <span className="text-sm font-semibold text-stone-700">
-            Maximum redemptions
-          </span>
-          <input
+        <div className="mt-5">
+          <InputField
+            label="Maximum redemptions"
             type="number"
             min={1}
             step={1}
@@ -555,10 +508,9 @@ function OrderDiscountPromotionEditor({
                 maximumRedemptions: event.target.value,
               }))
             }
-            className="w-full rounded-lg border border-stone-200 px-3 py-2.5 text-sm outline-none focus:border-brand-color-500"
             placeholder="No limit"
           />
-        </label>
+        </div>
       </div>
 
       <div className="rounded-xl border border-stone-100 bg-white p-6 shadow-sm">
