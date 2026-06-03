@@ -8,7 +8,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatCurrency } from "@/helper/formatCurrency";
-import { formatDate } from "@/helper/formatDate";
+import { formatDate, formatDateOnly } from "@/helper/formatDate";
 import { useRouter } from "next/navigation";
 import { useDeleteOrderDiscountPromotion } from "../../hooks/useOrderDiscountPromotions";
 import { getDiscountLabel } from "../helpers/getDiscountLabel";
@@ -18,6 +18,7 @@ import {
   promotionStatusStyles,
 } from "../helpers/getPromotionStatus";
 import { OrderDiscountPromotion } from "../types";
+import { formatTime } from "@/helper/formatTime";
 
 type PromotionListProps = {
   promotions: OrderDiscountPromotion[];
@@ -75,8 +76,8 @@ export function PromotionList({ promotions }: PromotionListProps) {
                         {promotion.name}
                       </p>
                       <p className="text-xs text-stone-500">
-                        {formatDate(promotion.startsAt)} -{" "}
-                        {formatDate(promotion.endsAt, "No end Date")}
+                        {formatDateOnly(promotion.startsAt)} {formatTime(promotion.startTime)} - {" "}
+                        {formatDateOnly(promotion.endsAt, "No end Date")} {formatTime(promotion.endTime)}
                       </p>
                     </td>
                     <td className="px-3 py-4 font-medium text-stone-700">
