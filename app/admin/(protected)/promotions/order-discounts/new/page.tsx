@@ -1,9 +1,9 @@
 "use client";
 
 import {
-  getCreateDefault,
   OrderDiscountPromotionEditor,
-} from "../OrderDiscountPromotionEditor";
+} from "../components/OrderDiscountPromotionEditor";
+import { getCreateDefaultPromotion } from "../helpers/getCreateDefaultPromotion";
 
 export default function CreateOrderDiscountPromotionPage() {
   return (
@@ -19,7 +19,7 @@ export default function CreateOrderDiscountPromotionPage() {
       </div>
       <OrderDiscountPromotionEditor
         mode="create"
-        promotion={getCreateDefault()}
+        promotion={getCreateDefaultPromotion()}
       />
     </section>
   );
