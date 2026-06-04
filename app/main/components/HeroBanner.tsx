@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 
 const images = [
   "/images/slider3.jpg",
-  "/images/banner_slider.png",
+  "/images/BANNER 2.png",
+  "/images/BANNER 3.png",
 ];
 
 export default function CarouselBanner() {
