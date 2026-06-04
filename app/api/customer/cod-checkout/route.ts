@@ -17,6 +17,11 @@ import {
   sendOrderConfirmationEmail,
 } from "../../paymaya/checkout/route";
 import { redeemCustomerVoucher } from "@/services/promoCardBenefits";
+import { calculatePromoCardTotal } from "@/lib/promoCard";
+import {
+  incrementOrderDiscountRedemption,
+  resolveOrderDiscountPromotion,
+} from "@/lib/order-promotions/order-promotion.application";
 
 const MINIMUM_AMOUNT = 100;
 
@@ -56,9 +61,26 @@ export async function POST(request: NextRequest) {
     );
 
     // 6. Tax breakdown
+    const promoAdjustedTotal = body.applyPromoCardDiscount
+      ? calculatePromoCardTotal(
+          totalPrice,
+          promoCardDiscount?.discountRate,
+        )
+      : totalPrice;
+    const orderDiscountPromotion = await resolveOrderDiscountPromotion(
+      totalPrice,
+      promoAdjustedTotal,
+      session,
+    );
     const voucherDiscountAmount = await redeemCustomerVoucher(
       customerId,
-      Math.max(0, Number(body.voucherAmount ?? 0)),
+      Math.min(
+        Math.max(0, Number(body.voucherAmount ?? 0)),
+        Math.max(
+          promoAdjustedTotal - (orderDiscountPromotion?.discountAmount ?? 0),
+          0,
+        ),
+      ),
       session,
     );
     const tax = computeTax(
@@ -67,11 +89,15 @@ export async function POST(request: NextRequest) {
       promoCardDiscount?.discountRate,
       promoCardDiscount?.discountCode,
       voucherDiscountAmount,
+      orderDiscountPromotion,
     );
 
     if (tax.totalAmount < MINIMUM_AMOUNT) {
       throw new Error(`Minimum order amount is ₱${MINIMUM_AMOUNT}`);
     }
+
+    await incrementOrderDiscountRedemption(orderDiscountPromotion, session);
+
     const referenceNumber = `ORDER-${Date.now()}`;
 
     // COD has no checkout gateway — pass empty string for checkoutId

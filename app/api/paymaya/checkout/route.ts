@@ -24,6 +24,13 @@ import {
   getPaidPromoCardBenefit,
   redeemCustomerVoucher,
 } from "@/services/promoCardBenefits";
+import {
+  incrementOrderDiscountRedemption,
+  resolveOrderDiscountPromotion,
+} from "@/lib/order-promotions/order-promotion.application";
+import type {
+  AppliedOrderDiscountPromotion,
+} from "@/lib/order-promotions/order-promotion.application";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -66,6 +73,9 @@ interface TaxBreakdown {
   totalAmount: number;
   subtotalAmount: number;
   discountAmount: number;
+  orderDiscountAmount: number;
+  orderDiscountPromotionId?: string;
+  orderDiscountPromotionName?: string;
   voucherDiscountAmount: number;
   discountCode?: string;
 }
@@ -228,15 +238,23 @@ export function computeTax(
   discountRate: number = PROMO_CARD.discountRate,
   discountCode: string = PROMO_CARD.sku,
   voucherDiscountAmount = 0,
+  orderDiscountPromotion: AppliedOrderDiscountPromotion | null = null,
 ): TaxBreakdown {
-  const discountAmount = applyPromoCardDiscount
+  const promoCardDiscountAmount = applyPromoCardDiscount
     ? calculatePromoCardDiscount(subtotalAmount, discountRate)
     : 0;
   const promoTotalAmount = applyPromoCardDiscount
     ? calculatePromoCardTotal(subtotalAmount, discountRate)
     : subtotalAmount;
+  const orderDiscountAmount = orderDiscountPromotion?.discountAmount ?? 0;
+  const discountAmount = Number(
+    (promoCardDiscountAmount + orderDiscountAmount).toFixed(2),
+  );
   const totalAmount = Number(
-    Math.max(promoTotalAmount - voucherDiscountAmount, 0).toFixed(2),
+    Math.max(
+      promoTotalAmount - orderDiscountAmount - voucherDiscountAmount,
+      0,
+    ).toFixed(2),
   );
   const vatableSales = parseFloat((totalAmount / (1 + TAX_RATE)).toFixed(2));
   const vatAmount = parseFloat((totalAmount - vatableSales).toFixed(2));
@@ -247,8 +265,13 @@ export function computeTax(
     totalAmount,
     subtotalAmount,
     discountAmount,
+    orderDiscountAmount,
+    ...(orderDiscountPromotion && {
+      orderDiscountPromotionId: orderDiscountPromotion.promotionId.toString(),
+      orderDiscountPromotionName: orderDiscountPromotion.name,
+    }),
     voucherDiscountAmount,
-    ...(discountAmount > 0 && { discountCode }),
+    ...(promoCardDiscountAmount > 0 && { discountCode }),
   };
 }
 
@@ -382,6 +405,9 @@ export async function persistOrder(
     totalAmount,
     subtotalAmount,
     discountAmount,
+    orderDiscountAmount,
+    orderDiscountPromotionId,
+    orderDiscountPromotionName,
     discountCode,
     voucherDiscountAmount,
   } = tax;
@@ -418,6 +444,9 @@ export async function persistOrder(
           totalAmount,
           subtotalAmount,
           discountAmount,
+          orderDiscountAmount,
+          orderDiscountPromotionId,
+          orderDiscountPromotionName,
           discountCode,
           voucherDiscountAmount,
         },
@@ -500,9 +529,26 @@ export async function POST(request: NextRequest) {
     );
 
     // 6. Tax breakdown
+    const promoAdjustedTotal = body.applyPromoCardDiscount
+      ? calculatePromoCardTotal(
+          totalPrice,
+          promoCardDiscount?.discountRate,
+        )
+      : totalPrice;
+    const orderDiscountPromotion = await resolveOrderDiscountPromotion(
+      totalPrice,
+      promoAdjustedTotal,
+      session,
+    );
     const voucherDiscountAmount = await redeemCustomerVoucher(
       customerId,
-      Math.max(0, Number(body.voucherAmount ?? 0)),
+      Math.min(
+        Math.max(0, Number(body.voucherAmount ?? 0)),
+        Math.max(
+          promoAdjustedTotal - (orderDiscountPromotion?.discountAmount ?? 0),
+          0,
+        ),
+      ),
       session,
     );
     const tax = computeTax(
@@ -511,10 +557,13 @@ export async function POST(request: NextRequest) {
       promoCardDiscount?.discountRate,
       promoCardDiscount?.discountCode,
       voucherDiscountAmount,
+      orderDiscountPromotion,
     );
 
     if (tax.totalAmount < MINIMUM_AMOUNT)
       throw new Error(`Minimum order amount is ₱${MINIMUM_AMOUNT}`);
+
+    await incrementOrderDiscountRedemption(orderDiscountPromotion, session);
 
     // 7. Maya checkout
     const referenceNumber = `ORDER-${Date.now()}`;
