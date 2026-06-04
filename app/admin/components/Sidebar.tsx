@@ -25,6 +25,8 @@ type NavItem = {
   }[];
 };
 
+const PromotionBaseUrl = "/promotions"
+
 // Define navigation items with required permissions
 const navItems: NavItem[] = [
   {
@@ -40,26 +42,26 @@ const navItems: NavItem[] = [
     permission: "orders.read",
   },
   {
-    name: "Promotion",
+    name: "Promotions",
     path: null,
     icon: "TicketPercent",
     permission: "promotions.read",
     children: [
-      // {
-      //   name: "Product Discount",
-      //   path: "/product-discount",
-      // },
+      {
+        name: "Product Discount",
+        path: `${PromotionBaseUrl}/product-discounts`,
+      },
       {
         name: "Order Discounts",
-        path: "/promotions/order-discounts",
+        path: `${PromotionBaseUrl}/order-discounts`,
       },
       {
         name: "Purchased Cards",
-        path: "/promotions/purchased-cards",
+        path: `${PromotionBaseUrl}/purchased-cards`,
       },
       {
         name: "Card Settings",
-        path: "/promotions/promo-card-settings",
+        path: `${PromotionBaseUrl}/promo-card-settings`,
       },
     ],
   },

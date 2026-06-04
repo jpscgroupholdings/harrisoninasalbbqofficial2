@@ -59,6 +59,7 @@ export function PromotionList({ promotions }: PromotionListProps) {
                 <TableHead>Schedule</TableHead>
                 <TableHead>Redemptions</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>CreatedAt</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -106,6 +107,9 @@ export function PromotionList({ promotions }: PromotionListProps) {
                       >
                         {promotionStatusLabels[status]}
                       </span>
+                    </td>
+                    <td className="px-3 py-4 text-stone-600">
+                      {formatDate(promotion.createdAt)}
                     </td>
                     <td className="px-3 py-4">
                       <div className="flex justify-end gap-2">
