@@ -22,6 +22,7 @@ import {
   PromoCardDay,
 } from "@/lib/promoCard";
 import { CartItem } from "@/types/MenuTypes";
+import type { ActivePromotionsResponse } from "@/types/promotions.type";
 import { useQuery } from "@tanstack/react-query";
 
 const createCodOrder = async (payload: CreateOrderPayload) => {
@@ -220,6 +221,11 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
     getPromoCardDay(),
     promoCardConfig.discountRate,
   );
+  const { data: activePromotions } = useQuery({
+    queryKey: ["promotions", "active"],
+    queryFn: () => apiClient.get<ActivePromotionsResponse>("/promotions/active"),
+    staleTime: 60_000,
+  });
 
   const { mutateAsync: createOrder, isPending } = useCreateOrder();
   const { validateAll, customerErrors, shippingErrors } =
@@ -234,8 +240,6 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
     cartItems,
     removeFromCart,
     updateQuantity,
-    vatableSales,
-    vatAmount,
     subtotalPrice,
     promoCardDiscount,
     totalPrice,
@@ -244,15 +248,41 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
     setPromoCardDiscountRate,
     clearCart,
   } = useCart();
+  const orderDiscountPromotion = activePromotions?.data
+    ?.filter((promotion) => subtotalPrice >= promotion.minimumOrderAmount)
+    .map((promotion) => {
+      const discountAmount =
+        promotion.discountType === "fixed"
+          ? Math.min(promotion.discountValue, totalPrice)
+          : Math.min(
+              Number(
+                (totalPrice * (promotion.discountValue / 100)).toFixed(2),
+              ),
+              promotion.maximumDiscountAmount ?? Number.POSITIVE_INFINITY,
+            );
+
+      return {
+        name: promotion.name,
+        discountAmount,
+      };
+    })
+    .filter((promotion) => promotion.discountAmount > 0)
+    .sort((a, b) => b.discountAmount - a.discountAmount)[0];
+  const orderDiscountAmount = orderDiscountPromotion?.discountAmount ?? 0;
+  const discountAdjustedTotal = Number(
+    Math.max(totalPrice - orderDiscountAmount, 0).toFixed(2),
+  );
   const [voucherAmount, setVoucherAmount] = useState("");
   const parsedVoucherAmount = Math.min(
     Math.max(0, Number(voucherAmount || 0)),
     availableVoucherBalance,
-    totalPrice,
+    discountAdjustedTotal,
   );
   const displayTotalPrice = Number(
-    Math.max(totalPrice - parsedVoucherAmount, 0).toFixed(2),
+    Math.max(discountAdjustedTotal - parsedVoucherAmount, 0).toFixed(2),
   );
+  const displayVatableSales = displayTotalPrice / 1.12;
+  const displayVatAmount = displayTotalPrice - displayVatableSales;
 
   useEffect(() => {
     if (!canUsePromoCardDiscount && applyPromoCardDiscount) {
@@ -473,6 +503,14 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
               <span>-₱{promoCardDiscount.toFixed(2)}</span>
             </div>
           )}
+          {orderDiscountAmount > 0 && (
+            <div className="flex justify-between gap-3 text-sm font-semibold text-green-600">
+              <span className="min-w-0 truncate">
+                {orderDiscountPromotion?.name}
+              </span>
+              <span>-₱{orderDiscountAmount.toFixed(2)}</span>
+            </div>
+          )}
           {availableVoucherBalance > 0 && (
             <label className="block rounded-xl border border-green-200 bg-white p-3 text-sm">
               <span className="block font-semibold text-slate-800">
@@ -484,7 +522,7 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
               <input
                 type="number"
                 min={0}
-                max={Math.min(availableVoucherBalance, totalPrice)}
+                max={Math.min(availableVoucherBalance, discountAdjustedTotal)}
                 step={0.01}
                 value={voucherAmount}
                 onChange={(event) => setVoucherAmount(event.target.value)}
@@ -501,11 +539,11 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
           )}
           <div className="flex justify-between text-sm text-slate-500">
             <span>VATable Sales</span>
-            <span>₱{vatableSales.toFixed(2)}</span>
+            <span>₱{displayVatableSales.toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-sm text-slate-500">
             <span>VAT (12%)</span>
-            <span>₱{vatAmount.toFixed(2)}</span>
+            <span>₱{displayVatAmount.toFixed(2)}</span>
           </div>
           <div className="  flex justify-between items-baseline pt-2 border-t border-slate-200">
             <span className="text-sm font-semibold text-slate-900">
