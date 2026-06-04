@@ -8,7 +8,7 @@ const MainIntro = () => {
   const mapUrl = useSubdomainPath("/?modal=map", "food")
 
   return (
-    <div className="max-w-5xl mx-auto text-center mt-24 px-4 space-y-6">
+    <div className="max-w-5xl mx-auto text-center my-24 px-4 space-y-6">
       {/* Headline */}
       <h1 className="text-4xl md:text-5xl font-bold leading-tight">
         Welcome to{" "}
