@@ -1,32 +1,24 @@
 import LocationsSection from "../../components/Location";
-import About from "./components/About";
 import CTA from "./components/CTA";
 import CarouselBanner from "./components/HeroBanner";
-import MainIntro from "./components/MainIntro";
+import MissionVision from "./components/MissionVision";
 import BookYourTable from "./components/newdesign/BookYourTable";
 import FAQs from "./components/newdesign/FAQs";
-import FoundersNote from "./components/newdesign/FoundersNote";
 import MenuSection from "./components/newdesign/MenuSection";
 import Subscribe from "./components/newdesign/Subscribe";
-import Promotion from "./components/Promotion";
-import WhatWeServe from "./components/WhatWeServe";
 
 const MainPage = () => {
   return (
-    <>
+    <main>
       <CarouselBanner />
-      {/* <MainIntro /> */}
-      {/* <About /> */}
       <MenuSection />
+      <MissionVision />
       <BookYourTable />
-      <FoundersNote />
-      <FAQs />
-      {/* <WhatWeServe /> */}
-      {/* <Promotion /> */}
       <LocationsSection />
+      <FAQs />
       <Subscribe />
       <CTA />
-    </>
+    </main>
   );
 };
 
