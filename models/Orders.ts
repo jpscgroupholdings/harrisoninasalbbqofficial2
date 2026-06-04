@@ -174,6 +174,12 @@ const OrderSchema = new Schema(
       subtotalAmount: { type: Number },
       discountAmount: { type: Number, default: 0 },
       discountCode: { type: String },
+      orderDiscountAmount: { type: Number, default: 0 },
+      orderDiscountPromotionId: {
+        type: Schema.Types.ObjectId,
+        ref: "OrderDiscountPromotion",
+      },
+      orderDiscountPromotionName: { type: String },
       voucherDiscountAmount: { type: Number, default: 0 },
     },
 
