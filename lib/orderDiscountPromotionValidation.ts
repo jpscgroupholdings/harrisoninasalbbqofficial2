@@ -74,6 +74,7 @@ export function normalizeOrderDiscountPromotionPayload(
       : Number(body.maximumRedemptions);
 
   return {
+    promotionType: "order_discount",
     enabled: Boolean(body.enabled),
     name,
     discountType,
