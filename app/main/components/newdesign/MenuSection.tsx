@@ -5,7 +5,10 @@ import { useSubdomainPath } from "@/hooks/useSubdomainUrl";
 import Link from "next/link";
 
 const MenuSection = () => {
-  const {data: menuProducts} = useProducts({limit: 10, sort:"price:desc"});
+  const { data: menuProducts, isLoading } = useProducts({
+    limit: 10,
+    sort: "price:desc",
+  });
   const menuUrl = useSubdomainPath("/", "food");
 
   return (
@@ -24,13 +27,21 @@ const MenuSection = () => {
 
             {/* Description */}
             <div className="w-full space-y-6 text-white p-4 text-xl">
-              {menuProducts?.data.map((item) => (
-                <div key={item.name} className="flex items-center gap-4">
-                  <span className="whitespace-nowrap">{item.name}</span>
-                  <div className="flex-1 border-b border-dotted mx-2"></div>
-                  <span className="whitespace-nowrap">{item.price}</span>
-                </div>
-              ))}
+              {isLoading
+                ? Array.from({ length: 10 }, (_, i) => (
+                    <div key={i} className="flex items-center gap-4">
+                      <span className="h-2 w-12 rounded-xl bg-gray-50 animate-pulse"></span>
+                      <div className="flex-1 border-b border-dotted mx-2 animate-pulse"></div>
+                      <span className="h-2 w-8 rounded-xl bg-gray-50 animate-pulse"></span>
+                    </div>
+                  ))
+                : menuProducts?.data.map((item) => (
+                    <div key={item.name} className="flex items-center gap-4">
+                      <span className="whitespace-nowrap">{item.name}</span>
+                      <div className="flex-1 border-b border-dotted mx-2"></div>
+                      <span className="whitespace-nowrap">{item.price}</span>
+                    </div>
+                  ))}
             </div>
 
             <Link
