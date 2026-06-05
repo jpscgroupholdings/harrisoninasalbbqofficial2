@@ -1,17 +1,34 @@
-import React from "react";
+"use client";
 
-const page = () => {
+import SectionHeader from "@/app/admin/components/SectionHeader";
+import { useRouter } from "next/navigation";
+import { useProductDiscountPromotions } from "../hooks/useProductDiscountPromotions";
+import { ProductDiscountPromotionList } from "./components/ProductDiscountPromotionList";
+
+export default function ProductDiscountPromotionsPage() {
+  const router = useRouter();
+  const { data, isError, isLoading } = useProductDiscountPromotions();
+  const promotions = data?.data ?? [];
+
   return (
-    <div>
-      Product discount (currently on progress)
-      <p>
-        This page is for creating a specific product discount - 
-      </p>
-      <p>e.g Get 10%
-        discount on Pecho valid until June 20, 2026 with minimum spend of 600
-        PHP capped at 1000</p>
-    </div>
-  );
-};
+    <section className="space-y-6">
+      <SectionHeader
+        title="Product Discounts"
+        subTitle="Create and manage discounts for selected products."
+        btnTxt="Create Product Discount"
+        onClick={() => router.push("/promotions/product-discounts/new")}
+        permission="promotions.read"
+      />
 
-export default page;
+      {isLoading && <p className="text-sm text-stone-500">Loading...</p>}
+      {isError && (
+        <p className="text-sm font-semibold text-red-600">
+          Failed to load product discount promotions.
+        </p>
+      )}
+      {!isLoading && !isError && (
+        <ProductDiscountPromotionList promotions={promotions} />
+      )}
+    </section>
+  );
+}
