@@ -6,7 +6,10 @@ const IncludedItemsSchema = new Schema({
 
   // Override display name if needed - e.g "Drink (choice of Coke or Water)"
   // Falls back to product.name if null
-  label: {type: String,  default: null}
+  label: {type: String,  default: null},
+
+  // Historical fallback when the referenced product is later deleted.
+  snapshotName: {type: String, default: null}
 }, {_id: false});
 
 const ProductSchema = new Schema(
