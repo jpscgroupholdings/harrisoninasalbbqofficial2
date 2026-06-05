@@ -4,11 +4,13 @@ import { InputField } from "@/components/ui/InputField";
 import { SelectField } from "@/components/ui/SelectField";
 import {
   DEFAULT_ORDER_DISCOUNT_PROMOTION,
-  ORDER_DISCOUNT_DAYS,
-  OrderDiscountDay,
-  OrderDiscountPromotionConfig,
-  OrderDiscountType,
-} from "@/types/order-discount.type";
+  type OrderDiscountPromotionConfig,
+} from "@/types/promotions/order-discount.type";
+import {
+  PROMOTION_DISCOUNT_DAYS,
+  type PromotionDiscountDay,
+  type PromotionDiscountType,
+} from "@/types/promotions/promotion-constant";
 import { useRouter } from "next/navigation";
 import { FormEvent, useMemo, useState } from "react";
 import { useSaveOrderDiscountPromotion } from "../../hooks/useOrderDiscountPromotions";
@@ -50,7 +52,7 @@ export function OrderDiscountPromotionEditor({
     onSuccess: goBackToList,
   });
 
-  const toggleDay = (day: OrderDiscountDay) => {
+  const toggleDay = (day: PromotionDiscountDay) => {
     setForm((current) => {
       const hasDay = current.days.includes(day);
 
@@ -122,7 +124,7 @@ export function OrderDiscountPromotionEditor({
             onChange={(event) =>
               setForm((current) => ({
                 ...current,
-                discountType: event.target.value as OrderDiscountType,
+                discountType: event.target.value as PromotionDiscountType,
                 maximumDiscountAmount:
                   event.target.value === "percentage"
                     ? current.maximumDiscountAmount
@@ -300,7 +302,7 @@ export function OrderDiscountPromotionEditor({
 
           {form.dayMode === "specific_days" && (
             <div className="mt-3 flex flex-wrap gap-2">
-              {ORDER_DISCOUNT_DAYS.map((day) => {
+              {PROMOTION_DISCOUNT_DAYS.map((day) => {
                 const isSelected = form.days.includes(day);
 
                 return (

@@ -1,4 +1,4 @@
-import { DEFAULT_ORDER_DISCOUNT_PROMOTION } from "@/types/order-discount.type";
+import { DEFAULT_ORDER_DISCOUNT_PROMOTION } from "@/types/promotions/order-discount.type";
 import {
   OrderDiscountPromotionForm,
   OrderDiscountPromotionSavePayload,
