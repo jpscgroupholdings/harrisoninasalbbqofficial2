@@ -1,29 +1,28 @@
 import { Types } from "mongoose";
 import type { ClientSession } from "mongoose";
+import type {
+  PromotionDiscountDay,
+  PromotionDiscountDayMode,
+  PromotionDiscountType,
+} from "@/types/promotions/promotion-constant";
 import { getStoreStatus } from "@/lib/storeStatus";
 import { OrderDiscountPromotion } from "@/models/OrderDiscountPromotion";
 import { Settings } from "@/models/Setting";
-import type {
-  OrderDiscountDay,
-  OrderDiscountDayMode,
-  OrderDiscountType,
-} from "@/types/order-discount.type";
-import { isOrderPromotionScheduleActive } from "./order-promotion.schedule";
-import { calculateOrderDiscountAmount } from "./order-promotion.calculation";
 
-type OperatingHours = Parameters<typeof getStoreStatus>[0];
+import { calculateOrderDiscountAmount } from "./order-promotion.calculation";
+import { isPromotionScheduleActive } from "../promotions/promotions.service";
 
 type OrderDiscountPromotionRecord = {
   _id: Types.ObjectId;
   name: string;
-  discountType: OrderDiscountType;
+  discountType: PromotionDiscountType;
   discountValue: number;
   maximumDiscountAmount?: number | null;
   minimumOrderAmount: number;
   startsAt: Date;
   endsAt?: Date | null;
-  dayMode: OrderDiscountDayMode;
-  days: OrderDiscountDay[];
+  dayMode: PromotionDiscountDayMode;
+  days: PromotionDiscountDay[];
   startTime: string;
   endTime: string;
   maximumRedemptions?: number | null;
@@ -71,7 +70,7 @@ export async function resolveOrderDiscountPromotion(
 
   const bestPromotion = promotions
     .filter((promotion) =>
-      isOrderPromotionScheduleActive(promotion, operatingHours, now),
+      isPromotionScheduleActive(promotion, operatingHours, now),
     )
     .map((promotion) => ({
       promotionId: promotion._id,
