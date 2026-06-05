@@ -30,9 +30,10 @@ const getIncludedItemsText = (
 ): string[] =>
   (includedItems ?? []).map((i) => {
     const name =
-      i.label ??
-      (typeof i.product === "string" ? i.product : i.product?.name) ??
-      "Item";
+      i.label ||
+      (typeof i.product === "string" ? "" : i.product?.name) ||
+      i.snapshotName ||
+      "Unavailable item";
     return i.quantity > 1 ? `${i.quantity}x ${name}` : name;
   });
 
