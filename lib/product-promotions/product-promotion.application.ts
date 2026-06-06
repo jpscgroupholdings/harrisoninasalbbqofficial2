@@ -35,6 +35,17 @@ export type ProductDiscountCartLine = {
   quantity: number;
 };
 
+export type ActiveProductDiscountPreview = {
+  promotionId: string;
+  name: string;
+  discountType: PromotionDiscountType;
+  discountValue: number;
+  originalPrice: number;
+  discountedPrice: number;
+  discountAmount: number;
+  label: string;
+};
+
 export type AppliedProductDiscountPromotion = {
   promotionId: Types.ObjectId;
   name: string;
@@ -52,18 +63,22 @@ export type ProductDiscountResolution = {
 
 type ProductDiscountStrategy = (
   promotion: ProductDiscountPromotionRecord,
-  lineSubtotal: number,
+  line: ProductDiscountCartLine,
 ) => number;
 
 const productDiscountStrategies: Record<
   PromotionDiscountType,
   ProductDiscountStrategy
 > = {
-  percentage(promotion, lineSubtotal) {
+  percentage(promotion, line) {
+    const lineSubtotal = getLineSubtotal(line);
     return roundMoney(lineSubtotal * (promotion.discountValue / 100));
   },
-  fixed(promotion, lineSubtotal) {
-    return roundMoney(Math.min(promotion.discountValue, lineSubtotal));
+  fixed(promotion, line) {
+    const lineSubtotal = getLineSubtotal(line);
+    return roundMoney(
+      Math.min(promotion.discountValue * line.quantity, lineSubtotal),
+    );
   },
 };
 
@@ -80,7 +95,6 @@ function resolveBestLinePromotion(
   promotions: ProductDiscountPromotionRecord[],
 ) {
   const productKey = getProductKey(line.productId);
-  const lineSubtotal = getLineSubtotal(line);
 
   return promotions
     .filter((promotion) =>
@@ -95,11 +109,105 @@ function resolveBestLinePromotion(
       productName: line.name,
       discountAmount: productDiscountStrategies[promotion.discountType](
         promotion,
-        lineSubtotal,
+        line,
       ),
     }))
     .filter((promotion) => promotion.discountAmount > 0)
     .sort((left, right) => right.discountAmount - left.discountAmount)[0];
+}
+
+function getProductDiscountLabel(promotion: ProductDiscountPromotionRecord) {
+  if (promotion.discountType === "fixed") {
+    return `PHP ${promotion.discountValue.toFixed(2)} off`;
+  }
+
+  return `${promotion.discountValue}% off`;
+}
+
+async function getActiveProductDiscountPromotionRecords(
+  productIds: Types.ObjectId[],
+  session?: ClientSession,
+) {
+  if (productIds.length === 0) return [];
+
+  const now = new Date();
+  const settingsQuery = Settings.findOne().select({ operatingHours: 1 });
+  if (session) settingsQuery.session(session);
+
+  const settings = await settingsQuery;
+  const operatingHours = settings?.operatingHours ?? null;
+  const promotionsQuery = ProductDiscountPromotion.find({
+    enabled: true,
+    "products.product": { $in: productIds },
+    startsAt: { $lte: now },
+    $or: [{ endsAt: null }, { endsAt: { $gte: now } }],
+    $and: [
+      {
+        $or: [
+          { maximumRedemptions: null },
+          {
+            $expr: {
+              $lt: ["$redemptionCount", "$maximumRedemptions"],
+            },
+          },
+        ],
+      },
+    ],
+  }).lean<ProductDiscountPromotionRecord[]>();
+
+  if (session) promotionsQuery.session(session);
+
+  const promotions = await promotionsQuery;
+  return promotions.filter((promotion) =>
+    isPromotionScheduleActive(promotion, operatingHours, now),
+  );
+}
+
+export async function getActiveProductDiscountPreviews(
+  lines: ProductDiscountCartLine[],
+): Promise<Map<string, ActiveProductDiscountPreview>> {
+  const productIds = lines.map((line) => line.productId);
+  const activePromotions =
+    await getActiveProductDiscountPromotionRecords(productIds);
+  const previews = new Map<string, ActiveProductDiscountPreview>();
+
+  for (const line of lines) {
+    const unitLine = { ...line, quantity: 1 };
+    const bestPromotion = resolveBestLinePromotion(
+      unitLine,
+      activePromotions,
+    );
+
+    if (!bestPromotion) continue;
+
+    const originalPrice = roundMoney(line.price);
+    const discountAmount = roundMoney(
+      Math.min(bestPromotion.discountAmount, originalPrice),
+    );
+
+    if (discountAmount <= 0) continue;
+
+    const promotion = activePromotions.find(
+      (activePromotion) =>
+        activePromotion._id.toString() ===
+        bestPromotion.promotionId.toString(),
+    );
+
+    if (!promotion) continue;
+
+    previews.set(getProductKey(line.productId), {
+      promotionId: promotion._id.toString(),
+      name: promotion.name,
+      discountType: promotion.discountType,
+      discountValue: promotion.discountValue,
+      originalPrice,
+      discountedPrice: roundMoney(Math.max(originalPrice - discountAmount, 0)),
+      discountAmount,
+      label: getProductDiscountLabel(promotion),
+    });
+  }
+
+  return previews;
 }
 
 export async function resolveProductDiscountPromotions(
@@ -119,36 +227,10 @@ export async function resolveProductDiscountPromotions(
     };
   }
 
-  const now = new Date();
-  const settings = await Settings.findOne()
-    .select({ operatingHours: 1 })
-    .session(session);
-  const operatingHours = settings?.operatingHours ?? null;
   const productIds = lines.map((line) => line.productId);
-
-  const promotions = await ProductDiscountPromotion.find({
-    enabled: true,
-    "products.product": { $in: productIds },
-    startsAt: { $lte: now },
-    $or: [{ endsAt: null }, { endsAt: { $gte: now } }],
-    $and: [
-      {
-        $or: [
-          { maximumRedemptions: null },
-          {
-            $expr: {
-              $lt: ["$redemptionCount", "$maximumRedemptions"],
-            },
-          },
-        ],
-      },
-    ],
-  })
-    .session(session)
-    .lean<ProductDiscountPromotionRecord[]>();
-
-  const activePromotions = promotions.filter((promotion) =>
-    isPromotionScheduleActive(promotion, operatingHours, now),
+  const activePromotions = await getActiveProductDiscountPromotionRecords(
+    productIds,
+    session,
   );
   const appliedPromotions = lines
     .map((line) => resolveBestLinePromotion(line, activePromotions))
