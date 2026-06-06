@@ -14,7 +14,7 @@ import {
   PromoCardSettingsForm,
   PromoCardSettingsPayload,
 } from "../types/promo-card.type";
-import type { PromoCardDay } from "@/lib/promoCard";
+import { PromotionDiscountDay } from "@/types/promotions/promotion-constant";
 
 export function getDefaultPromoCardSettingsForm(): PromoCardSettingsForm {
   return {
@@ -135,7 +135,7 @@ export function hasPromoCardSettingsChanges(
 export function togglePromoCardRuleDay(
   form: PromoCardSettingsForm,
   ruleIndex: number,
-  day: PromoCardDay,
+  day: PromotionDiscountDay,
 ): PromoCardSettingsForm {
   return {
     ...form,

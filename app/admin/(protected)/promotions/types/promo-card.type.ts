@@ -1,7 +1,7 @@
 import type {
-  PromoCardDay,
   PromoCardValidityUnit,
 } from "@/lib/promoCard";
+import { PromotionDiscountDay } from "@/types/promotions/promotion-constant";
 import type { VoucherValidityUnit } from "@/types/voucher.types";
 
 export type PromoCardPurchaseStatus =
@@ -32,7 +32,7 @@ export type PromoCardSettings = {
   purchasePrice: number;
   sku: string;
   discountRules: {
-    days: PromoCardDay[];
+    days: PromotionDiscountDay[];
     discountRate: number;
   }[];
   voucherRule: {
@@ -70,7 +70,7 @@ export type PromoCardSettingsForm = {
   name: string;
   purchasePrice: string;
   discountRules: {
-    days: PromoCardDay[];
+    days: PromotionDiscountDay[];
     discountPercent: string;
   }[];
   voucherRule: {
@@ -94,7 +94,7 @@ export type PromoCardSettingsPayload = {
   name: string;
   purchasePrice: number;
   discountRules: {
-    days: PromoCardDay[];
+    days: PromotionDiscountDay[];
     discountPercent: number;
   }[];
   voucherRule: {

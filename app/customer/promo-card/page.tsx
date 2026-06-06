@@ -8,8 +8,8 @@ import {
   DEFAULT_PROMO_CARD_DISCOUNT_RULES,
   DEFAULT_PROMO_CARD_VOUCHER_RULE,
   PROMO_CARD,
-  PromoCardDay,
 } from "@/lib/promoCard";
+import { PromotionDiscountDay } from "@/types/promotions/promotion-constant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
@@ -61,7 +61,7 @@ type PromoCardStatus = {
     purchasePrice: number;
     sku: string;
     discountRules: {
-      days: PromoCardDay[];
+      days: PromotionDiscountDay[];
       discountRate: number;
     }[];
     voucherRule: {
@@ -109,7 +109,7 @@ function formatCardNumber(referenceNumber?: string) {
     .toUpperCase();
 }
 
-function formatRuleDays(days: PromoCardDay[]) {
+function formatRuleDays(days: PromotionDiscountDay[]) {
   return days.length === 7 ? "Every day" : days.join(", ");
 }
 

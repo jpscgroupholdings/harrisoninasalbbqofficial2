@@ -10,12 +10,12 @@ import {
   togglePromoCardRuleDay,
 } from "../helpers/promoCardSettingsForm";
 import { PROMO_CARDS_QUERY_KEY } from "./usePromoCards";
-import type { PromoCardDay } from "@/lib/promoCard";
 import type {
   PromoCardSettings,
   PromoCardSettingsForm,
   PromoCardSettingsPayload,
 } from "../types/promo-card.type";
+import { PromotionDiscountDay } from "@/types/promotions/promotion-constant";
 
 export function usePromoCardSettings(config?: PromoCardSettings) {
   const queryClient = useQueryClient();
@@ -52,7 +52,7 @@ export function usePromoCardSettings(config?: PromoCardSettings) {
     ? hasPromoCardSettingsChanges(settingsForm, config)
     : false;
 
-  const toggleRuleDay = (ruleIndex: number, day: PromoCardDay) => {
+  const toggleRuleDay = (ruleIndex: number, day: PromotionDiscountDay) => {
     setSettingsForm((current) =>
       togglePromoCardRuleDay(current, ruleIndex, day),
     );

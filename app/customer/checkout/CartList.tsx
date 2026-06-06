@@ -19,7 +19,6 @@ import {
   getPromoCardDiscountRateForDay,
   PROMO_CARD,
   DEFAULT_PROMO_CARD_DISCOUNT_RULES,
-  PromoCardDay,
 } from "@/lib/promoCard";
 import {
   getBestOrderDiscountEstimate,
@@ -28,6 +27,7 @@ import {
 import { CartItem } from "@/types/MenuTypes";
 import type { ActivePromotionsResponse } from "@/types/promotions.type";
 import { useQuery } from "@tanstack/react-query";
+import { PromotionDiscountDay } from "@/types/promotions/promotion-constant";
 
 const createCodOrder = async (payload: CreateOrderPayload) => {
   const res = await fetch("/api/customer/cod-checkout", {
@@ -205,7 +205,7 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
           purchasePrice: number;
           sku: string;
           discountRules: {
-            days: PromoCardDay[];
+            days: PromotionDiscountDay[];
             discountRate: number;
           }[];
         };

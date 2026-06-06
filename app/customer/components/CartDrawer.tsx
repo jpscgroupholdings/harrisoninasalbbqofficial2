@@ -12,7 +12,6 @@ import {
   getPromoCardDay,
   getPromoCardDiscountRateForDay,
   PROMO_CARD,
-  PromoCardDay,
 } from "@/lib/promoCard";
 import {
   getBestOrderDiscountEstimate,
@@ -20,6 +19,7 @@ import {
 } from "@/lib/order-promotions/order-promotion.estimate";
 import type { ActivePromotionsResponse } from "@/types/promotions.type";
 import { useQuery } from "@tanstack/react-query";
+import { PromotionDiscountDay } from "@/types/promotions/promotion-constant";
 
 const CartDrawer = () => {
   const router = useRouter();
@@ -36,7 +36,7 @@ const CartDrawer = () => {
           purchasePrice: number;
           sku: string;
           discountRules: {
-            days: PromoCardDay[];
+            days: PromotionDiscountDay[];
             discountRate: number;
           }[];
         };
