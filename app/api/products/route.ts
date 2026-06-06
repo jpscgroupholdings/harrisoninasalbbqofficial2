@@ -8,6 +8,7 @@ import "@/models/SubCategory";
 import { extractPublicId } from "@/utils/extractImagePublicId";
 import { requireAdmin, requireSuperAdmin } from "@/lib/getAuth";
 import { buildPaginationMeta, parseRequestQuery } from "@/utils/query-helpers";
+import { getActiveProductDiscountPreviews } from "@/lib/product-promotions/product-promotion.application";
 
 // ─── Zod Schemas ──────────────────────────────────────────────────────────────
 
@@ -184,6 +185,21 @@ export async function GET(request: NextRequest) {
     ]);
 
     const total = countResult[0]?.total ?? 0;
+    const discountPreviews = await getActiveProductDiscountPreviews(
+      products
+        .filter(
+          (product) =>
+            product._id &&
+            Number.isFinite(product.price) &&
+            product.price > 0,
+        )
+        .map((product) => ({
+          productId: product._id,
+          name: product.name,
+          price: product.price,
+          quantity: 1,
+        })),
+    );
     const normalizedProducts = products.map((product) => ({
       ...product,
       _id: product._id?.toString(),
@@ -217,6 +233,8 @@ export async function GET(request: NextRequest) {
           label: item.label,
           snapshotName: item.snapshotName,
         })) || [],
+      activeProductDiscount:
+        discountPreviews.get(product._id.toString()) ?? null,
     }));
 
     // Return paginated envelope instead of bare array
