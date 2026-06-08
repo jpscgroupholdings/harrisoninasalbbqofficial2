@@ -19,8 +19,6 @@ export type ProductDiscountPromotionConfig = PromotionConfig & {
   categoryIds: string[];
 };
 
-export const DEFAULT_PRODUCT_DISCOUNT_DURATION_DAYS = 180;
-
 export const DEFAULT_PRODUCT_DISCOUNT_PROMOTION: ProductDiscountPromotionConfig =
   {
     ...DEFAULT_PROMOTION_RULES,

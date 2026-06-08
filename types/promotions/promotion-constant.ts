@@ -86,3 +86,5 @@ export const DEFAULT_PROMOTION_DISCOUNT: PromotionDiscountConfig = {
   discountType: "percentage",
   discountValue: 10,
 };
+
+export const DEFAULT_PROMOTION_DISCOUNT_DURATION_DAYS = 180

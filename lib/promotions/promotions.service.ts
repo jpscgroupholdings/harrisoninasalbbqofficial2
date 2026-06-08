@@ -1,4 +1,5 @@
 import {
+  DEFAULT_PROMOTION_DISCOUNT_DURATION_DAYS,
   PromotionDiscountDay,
   PromotionScheduleConfig,
 } from "@/types/promotions/promotion-constant";
@@ -56,4 +57,12 @@ export function isPromotionScheduleActive(
     promotion.endTime,
     date,
   );
+}
+
+export function getDefaultPromotionEndDate(startsAt: Date | null) {
+  if (!startsAt) return null;
+
+  const endsAt = new Date(startsAt);
+  endsAt.setDate(endsAt.getDate() + DEFAULT_PROMOTION_DISCOUNT_DURATION_DAYS);
+  return endsAt;
 }

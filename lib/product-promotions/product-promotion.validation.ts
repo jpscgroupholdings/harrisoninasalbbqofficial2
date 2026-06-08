@@ -1,5 +1,4 @@
 import {
-  DEFAULT_PRODUCT_DISCOUNT_DURATION_DAYS,
   DEFAULT_PRODUCT_DISCOUNT_PROMOTION,
   type ProductDiscountPromotionConfig,
   type ProductDiscountProductSnapshot,
@@ -15,19 +14,12 @@ import {
   type PromotionPayload,
 } from "@/types/promotions/promotion-constant";
 import mongoose from "mongoose";
+import { getDefaultPromotionEndDate } from "../promotions/promotions.service";
 
 export type ProductDiscountPromotionPayload = PromotionPayload & {
   productIds?: string[];
   categoryIds?: string[];
 };
-
-function getDefaultEndDate(startsAt: Date | null) {
-  if (!startsAt) return null;
-
-  const endsAt = new Date(startsAt);
-  endsAt.setDate(endsAt.getDate() + DEFAULT_PRODUCT_DISCOUNT_DURATION_DAYS);
-  return endsAt;
-}
 
 export function normalizeProductDiscountPromotionPayload(
   body: ProductDiscountPromotionPayload,
@@ -42,7 +34,7 @@ export function normalizeProductDiscountPromotionPayload(
   );
   const startsAt = parseOptionalPromotionDate(body.startsAt);
   const endsAt =
-    parseOptionalPromotionDate(body.endsAt) ?? getDefaultEndDate(startsAt);
+    parseOptionalPromotionDate(body.endsAt) ?? getDefaultPromotionEndDate(startsAt);
   const dayMode = body.dayMode ?? DEFAULT_PRODUCT_DISCOUNT_PROMOTION.dayMode;
   const days = Array.isArray(body.days) ? body.days : [];
   const startTime =
