@@ -1,11 +1,8 @@
 import { apiClient } from "@/lib/apiClient";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import type {
-  OrderDiscountPromotionMutationResponse,
-  OrderDiscountPromotionsResponse,
-  OrderDiscountPromotionSavePayload,
-} from "../order-discounts/types";
+import { OrderDiscountPromotionMutationResponse,   OrderDiscountPromotionsResponse,
+  OrderDiscountPromotionSavePayload,} from "../(pages)/order-discounts/types";
 
 export const ORDER_DISCOUNT_PROMOTIONS_QUERY_KEY = [
   "admin",
