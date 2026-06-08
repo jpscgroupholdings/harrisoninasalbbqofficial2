@@ -1,7 +1,7 @@
 "use client";
 
-import PromoCardsContent from "../../PromoCardsContent";
+import PromoCardSettings from "./PromoCardSettings";
 
 export default function PromoCardSettingsPage() {
-  return <PromoCardsContent view="settings" />;
+  return <PromoCardSettings />;
 }

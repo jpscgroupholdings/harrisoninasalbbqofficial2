@@ -1,7 +1,7 @@
 "use client";
 
-import PromoCardsContent from "../../PromoCardsContent";
+import PurchasedCards from "./PurchasedCards";
 
 export default function PromoCardsPage() {
-  return <PromoCardsContent view="list" />;
+  return <PurchasedCards />
 }
