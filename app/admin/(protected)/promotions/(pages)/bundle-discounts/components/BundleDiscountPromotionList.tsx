@@ -17,22 +17,11 @@ import {
   promotionStatusStyles,
 } from "../../product-discounts/helpers/getPromotionStatus";
 import { BundleDiscountPromotion } from "../type";
+import { getCreatorName } from "../../../helpers/getCreatorName";
 
 type BundleDiscountPromotionListProps = {
   promotions: BundleDiscountPromotion[];
 };
-
-function getCreatorName(promotion: BundleDiscountPromotion) {
-  const creator = promotion.createdBy;
-  if (!creator) return "Unknown";
-
-  const fullName = [creator.firstName, creator.lastName]
-    .filter(Boolean)
-    .join(" ")
-    .trim();
-
-  return fullName || creator.email || "Unknown";
-}
 
 function getBundleQuantity(promotion: BundleDiscountPromotion) {
   return promotion.products.reduce(
