@@ -1,4 +1,5 @@
 import { getAuthHeader } from "@/lib/getAuthHeader";
+import { getMayaCheckoutUrl } from "@/lib/mayaConfig";
 import { requireBetterAuth } from "@/lib/getAuth";
 import { connectDB } from "@/lib/mongodb";
 import { Order } from "@/models/Orders";
@@ -113,7 +114,7 @@ export async function POST(
     };
 
     const response = await fetch(
-      "https://pg-sandbox.paymaya.com/checkout/v1/checkouts",
+      getMayaCheckoutUrl(),
       {
         method: "POST",
         headers: {

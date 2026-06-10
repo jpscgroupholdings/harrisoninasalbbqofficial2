@@ -1,4 +1,5 @@
 import OrderMessageEmail from "@/app/emails/OrderMessageEmail";
+import { getMayaCheckoutUrl } from "@/lib/mayaConfig";
 import { requireBetterAuth } from "@/lib/getAuth";
 import { getAuthHeader } from "@/lib/getAuthHeader";
 import { connectDB } from "@/lib/mongodb";
@@ -384,7 +385,7 @@ async function createMayaCheckout(
   if (!process.env.MAYA_PUBLIC_KEY) throw new Error("Maya key not configured");
 
   const response = await fetch(
-    "https://pg-sandbox.paymaya.com/checkout/v1/checkouts",
+    getMayaCheckoutUrl(),
     {
       method: "POST",
       headers: {
