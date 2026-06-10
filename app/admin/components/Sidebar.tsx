@@ -26,7 +26,7 @@ type NavItem = {
   }[];
 };
 
-const PromotionBaseUrl = "/promotions"
+const PromotionBaseUrl = "/promotions";
 
 // Define navigation items with required permissions
 const navItems: NavItem[] = [
@@ -58,7 +58,7 @@ const navItems: NavItem[] = [
       },
       {
         name: "Bundle Discounts",
-        path: `${PromotionBaseUrl}/bundle-discounts`
+        path: `${PromotionBaseUrl}/bundle-discounts`,
       },
       {
         name: "Purchased Cards",
@@ -90,13 +90,13 @@ const navItems: NavItem[] = [
     children: [
       {
         name: "Categories",
-        path: "/categories"
+        path: "/categories",
       },
       {
         name: "SubCategories",
-        path: "/subcategories"
-      }
-    ]
+        path: "/subcategories",
+      },
+    ],
   },
   {
     name: "Customers",
@@ -148,15 +148,17 @@ const getActiveParentKey = (currentPath: string) => {
 const Sidebar = ({ isMobileOpen, onClose }: SidebarProps) => {
   const currentUser = useStaffContext();
   const pathname = usePathname();
-  const { data: placedOrders } = useAdminOrders();
+  const { data: placedOrders } = useAdminOrders({
+    status: ORDER_STATUSES.PENDING,
+    limit: 1,
+  });
+  
   const logout = useLogoutAdmin();
   const [expandedItemKey, setExpandedItemKey] = useState<string | null>(() =>
     getActiveParentKey(pathname),
   );
 
-  const pendingCount =
-    placedOrders?.data.filter((order) => order.status === ORDER_STATUSES.PENDING).length ??
-    0;
+  const pendingCount = placedOrders?.pagination?.total ?? 0;
   // const lowProductStock = products.filter((order) => order.stock <= 10).length;
 
   const [logoutModal, setLogoutModal] = useState(false);
