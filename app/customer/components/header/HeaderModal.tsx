@@ -1,4 +1,4 @@
-import AuthModal from "../AuthModal";
+import AuthModal from "../../(authmodal)/AuthModal";
 import LogoutModal from "@/components/ui/LogoutModal";
 import Modal from "@/components/ui/Modal";
 import MapPage from "@/app/customer/map/page";
