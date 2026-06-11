@@ -52,7 +52,8 @@ const PromoCardSettings = () => {
                   Not Ready for Publishing
                 </h3>
                 <p className="mt-1 text-xs leading-5 text-red-800">
-                  Do not enable this promotion until marketing has completed their review.
+                  This promotion is currently disabled. Discuss it to the
+                  marketing
                 </p>
               </div>
             </div>
@@ -96,6 +97,7 @@ const PromoCardSettings = () => {
                     enabled: event.target.checked,
                   }))
                 }
+                disabled
                 className="h-4 w-4 accent-brand-color-500"
               />
               <span className="text-xs font-bold text-stone-800">
@@ -449,7 +451,8 @@ const PromoCardSettings = () => {
           </p>
           <button
             type="submit"
-            disabled={saveSettings.isPending || !hasSettingsChanges}
+            // disabled={saveSettings.isPending || !hasSettingsChanges}
+            disabled
             className="rounded-lg bg-brand-color-500 px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#c13500] disabled:cursor-not-allowed disabled:bg-stone-300"
           >
             {saveSettings.isPending ? "Saving..." : "Save settings"}
