@@ -27,7 +27,7 @@ export function getDateRange(range: DashboardRange) {
 export async function getDashboardStats() {
   await connectDB();
 
-  const totalOrders = await Order.countDocuments();
+  const totalOrders = await Order.countDocuments({status: ORDER_STATUSES.COMPLETED});
 
   const revenueResult = await Order.aggregate([
     {
