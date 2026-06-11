@@ -78,7 +78,7 @@ export const useCreateOrder = () => {
 export type OrderSummary = {
   pending: number;
   preparing: number;
-  dispatched: number;
+  dispatch: number;
   completed: number;
   cancelled: number;
   total: number;

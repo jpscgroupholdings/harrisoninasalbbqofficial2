@@ -14,7 +14,7 @@ export const ORDER_STATUSES = {
   PENDING_PAYMENT: "pending_payment",
   PENDING: "pending",
   PREPARING: "preparing",
-  READY: "ready",
+  DISPATCH: "dispatch",
   COMPLETED: "completed",
   CANCELLED: "cancelled",
   FAILED: "failed",
@@ -32,7 +32,7 @@ export const ORDER_STATUS_FILTER_LIST = [
   ORDER_STATUSES.PENDING_PAYMENT,
   ORDER_STATUSES.PENDING,
   ORDER_STATUSES.PREPARING,
-  ORDER_STATUSES.READY,
+  ORDER_STATUSES.DISPATCH,
   ORDER_STATUSES.COMPLETED,
   ORDER_STATUSES.CANCELLED,
   ORDER_STATUSES.FAILED,
@@ -59,7 +59,7 @@ export const STATUS_PRIORITY: Record<OrderStatus, number> = {
   [ORDER_STATUSES.PENDING_PAYMENT]: 1, // Awaiting external payment
   [ORDER_STATUSES.PENDING]: 2, // Awaiting staff action
   [ORDER_STATUSES.PREPARING]: 3, // In kitchen
-  [ORDER_STATUSES.READY]: 4, // Ready for pickup/delivery
+  [ORDER_STATUSES.DISPATCH]: 4, // Ready for pickup/delivery
   [ORDER_STATUSES.COMPLETED]: 5, // Done
   [ORDER_STATUSES.CANCELLED]: 6, // Cancelled
   [ORDER_STATUSES.FAILED]: 7, // Payment failed
@@ -88,8 +88,8 @@ export const STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[] | null> = {
     ORDER_STATUSES.PREPARING,
     ORDER_STATUSES.CANCELLED,
   ], // Accept order for cod
-  [ORDER_STATUSES.PREPARING]: [ORDER_STATUSES.READY], // Food ready
-  [ORDER_STATUSES.READY]: [ORDER_STATUSES.COMPLETED], // Dispatch to customer
+  [ORDER_STATUSES.PREPARING]: [ORDER_STATUSES.DISPATCH], // Food ready/dispatch
+  [ORDER_STATUSES.DISPATCH]: [ORDER_STATUSES.COMPLETED], // Dispatch to customer
   [ORDER_STATUSES.COMPLETED]: null, // Terminal state
   [ORDER_STATUSES.CANCELLED]: null, // Terminal state
   [ORDER_STATUSES.FAILED]: null, // Terminal state (payment failed)
@@ -145,15 +145,15 @@ export const ORDER_ACTION_CONFIG: Record<
   },
 
   [ORDER_STATUSES.PREPARING]: {
-    [ORDER_STATUSES.READY]: {
-      label: "Mark as Ready",
+    [ORDER_STATUSES.DISPATCH]: {
+      label: "Dispatch / Ready",
       variant: "bg-green-700 hover:bg-green-800",
       roles: ["admin"],
     },
   },
 
 
-  [ORDER_STATUSES.READY]: {
+  [ORDER_STATUSES.DISPATCH]: {
     [ORDER_STATUSES.COMPLETED]: {
       label: "Mark Completed",
       variant: "bg-amber-500 hover:bg-amber-600",
@@ -179,7 +179,7 @@ export const TIMELINE_FIELD_MAP: Record<
   OrderStatus,
   | "paidAt"
   | "preparingAt"
-  | "readyAt"
+  | "dispatchedAt"
   | "dispatchedAt"
   | "completedAt"
   | "cancelledAt"
@@ -190,7 +190,7 @@ export const TIMELINE_FIELD_MAP: Record<
   [ORDER_STATUSES.PENDING]: null, // No timestamp on pending
   [ORDER_STATUSES.PENDING_PAYMENT]: null, // No timestamp until terminal/paid
   [ORDER_STATUSES.PREPARING]: "preparingAt",
-  [ORDER_STATUSES.READY]: "readyAt",
+  [ORDER_STATUSES.DISPATCH]: "dispatchedAt",
   [ORDER_STATUSES.COMPLETED]: "completedAt",
   [ORDER_STATUSES.CANCELLED]: "cancelledAt",
   [ORDER_STATUSES.FAILED]: "failedAt",

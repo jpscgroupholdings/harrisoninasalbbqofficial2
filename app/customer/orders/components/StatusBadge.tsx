@@ -28,8 +28,8 @@ export function StatusBadge({ status }: { status: OrderStatus }) {
       color: "bg-blue-100 text-blue-700 border border-blue-200",
       icon: <Package size={14} />,
     },
-    ready: {
-      label: "Ready to pickup",
+    dispatch: {
+      label: "Ready to pickup/receive",
       color: "bg-orange-100 text-orange-700 border border-orange-200",
       icon: <Hamburger size={14} />,
     },

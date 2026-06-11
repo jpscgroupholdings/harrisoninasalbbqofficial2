@@ -16,7 +16,7 @@ export const HeaderCartActions = ({ mounted }: Props) => {
   const activeOrdersCount =
     (orderSummary?.pending ?? 0) +
     (orderSummary?.preparing ?? 0) +
-    (orderSummary?.dispatched ?? 0) + 
+    (orderSummary?.dispatch ?? 0) + 
     (orderSummary?.completed ?? 0);
 
   return (
