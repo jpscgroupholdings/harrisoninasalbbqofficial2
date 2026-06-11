@@ -48,12 +48,12 @@ const BookYourTable = () => {
                 <span className="font-bold text-brand-color-500">Viber</span>{" "}
                 and we'll get your table sorted in no time. We're open everyday
               </p>
-              {!isLoading && (
+              {!isLoading && days.length > 0 && (
                 <>
                   <p className="font-bold text-brand-color-500">
                     <span className="font-semibold">{formatDays(days)}</span>
                   </p>
-                  {days.length > 0 && openTime && closeTime && (
+                  {openTime && closeTime && (
                     <span className="text-brand-color-500">
                       {openTime} – {closeTime}
                     </span>

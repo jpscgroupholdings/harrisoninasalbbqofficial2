@@ -1,6 +1,5 @@
 "use client";
 
-import About from "./About";
 import {
   useIntersectionAnimation,
   useIntersectionAnimationList,
@@ -44,7 +43,7 @@ export default function MissionVision() {
   const fade = animationStyle; // alias for brevity
 
   return (
-    <div className="max-w-7xl bg-white px-4 sm:px-6 lg:px-8 mx-auto font-sans mt-0 lg:mt-10 lg:mb-14">
+    <div className="max-w-7xl bg-white px-4 sm:px-6 lg:px-8 mx-auto font-sans my-10">
       <div className="mx-auto space-y-12">
         <section
           ref={missionvisionRef}
