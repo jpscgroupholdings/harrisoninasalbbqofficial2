@@ -1,3 +1,4 @@
+import { getValidObjectIds } from "@/helper/getValidObjectIds";
 import "@/lib/registerModels";
 import { Product } from "@/models/Product";
 import type { ProductDiscountProductSnapshot } from "@/types/promotions/product-discount.type";
@@ -12,12 +13,6 @@ type ProductSnapshotRecord = {
   };
   category?: mongoose.Types.ObjectId | null;
 };
-
-function getValidObjectIds(ids: string[] | undefined) {
-  if (!Array.isArray(ids)) return [];
-
-  return [...new Set(ids)].filter((id) => mongoose.Types.ObjectId.isValid(id));
-}
 
 export async function getProductDiscountSnapshots(productIds: string[] = []) {
   const validProductIds = getValidObjectIds(productIds);
