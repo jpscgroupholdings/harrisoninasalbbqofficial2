@@ -1,8 +1,8 @@
 import {
+  BUNDLE_TYPE,
   BundleDiscountProductSnapshot,
   DEFAULT_BUNDLE_PROMOTION_DISCOUNT,
   type BundleType,
-  BUNDLE_TYPE
 } from "@/types/promotions/bundle-discount.type";
 import {
   PROMOTION_DAY_MODE,
@@ -16,6 +16,7 @@ type BundleDiscountPromotionDocument = {
   bundleType: BundleType;
   requiredQuantity?: number | null;
   products: BundleDiscountProductSnapshot[];
+  categoryIds?: unknown[];
   invalidate(path: string, message: string): void;
 };
 
@@ -184,9 +185,23 @@ const BundleDiscountPromotionSchema = new Schema(
 BundleDiscountPromotionSchema.pre(
   "validate",
   function validateBundleRules(this: BundleDiscountPromotionDocument) {
-    if (requiresGlobalQuantity(this.bundleType)) {
-      if (
-        this.requiredQuantity == null ||
+  if (requiresGlobalQuantity(this.bundleType)) {
+    if (
+      this.bundleType === BUNDLE_TYPE.SAME_ITEMS &&
+      this.products.length !== 1
+    ) {
+      this.invalidate(
+        "products",
+        "Same-item bundle discounts must target exactly one product.",
+      );
+    }
+
+    if (this.bundleType === BUNDLE_TYPE.SAME_ITEMS) {
+      this.categoryIds = [];
+    }
+
+    if (
+      this.requiredQuantity == null ||
         !Number.isInteger(this.requiredQuantity) ||
         this.requiredQuantity < 2
       ) {
