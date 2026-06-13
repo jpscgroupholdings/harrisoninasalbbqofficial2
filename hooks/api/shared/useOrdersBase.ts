@@ -28,6 +28,7 @@ export type OrderParams = {
   sort?: string;
   search?: string;
   status?: OrderStatus | OrderStatus[];
+  branchId?: "all" | string;
   productType?: string;
 };
 

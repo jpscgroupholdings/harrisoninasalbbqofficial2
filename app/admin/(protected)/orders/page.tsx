@@ -6,6 +6,7 @@ import Pagination from "@/components/ui/Pagination";
 import { SearchBar } from "@/components/ui/SearchBar";
 import { useAdminOrders } from "@/hooks/api/admin/useAdminOrders";
 import { OrderStatus } from "@/types/orderConstants";
+import { useAdminBranchContext } from "@/contexts/AdminBranchContext";
 
 type statusFilterType = "all" | OrderStatus;
 
@@ -16,6 +17,8 @@ const OrdersPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [limit, setLimit] = useState(10);
 
+  const { selectedBranchId } = useAdminBranchContext();
+
   // ✅ pass all filters to the server
   const { data, isPending } = useAdminOrders(
     {
@@ -23,6 +26,7 @@ const OrdersPage = () => {
       limit,
       search: appliedSearch,
       status: statusFilter === "all" ? undefined : statusFilter,
+      branchId: selectedBranchId === "all" ? undefined : selectedBranchId,
     },
   );
 
@@ -39,6 +43,10 @@ const OrdersPage = () => {
     setStatusFilter(e.target.value as statusFilterType);
     setCurrentPage(1);
   };
+
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedBranchId]);
 
   return (
     <section className="space-y-6">
