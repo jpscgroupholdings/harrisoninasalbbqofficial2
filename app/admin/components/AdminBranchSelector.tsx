@@ -1,7 +1,8 @@
 import { DynamicIcon } from "@/components/ui/DynamicIcon";
 import { SelectField } from "@/components/ui/SelectField";
 import { useAdminBranchContext } from "@/contexts/AdminBranchContext";
-import React from "react";
+import { useStaffContext } from "@/contexts/StaffContext";
+import { STAFF_ROLES } from "@/types/staff";
 
 const AdminBranchSelector = () => {
   const {
@@ -11,6 +12,11 @@ const AdminBranchSelector = () => {
     selectedBranchId,
     setSelectedBranchId,
   } = useAdminBranchContext();
+
+  const admin = useStaffContext();
+
+  if (admin.role !== STAFF_ROLES.SUPERADMIN) return null;
+
 
   return (
     <div className="space-y-2">
