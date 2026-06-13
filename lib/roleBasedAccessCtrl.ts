@@ -50,6 +50,8 @@ export const adminPermission: Record<StaffRole, Set<string>> = {
 
     "settings.read",
     "settings.update",
+
+    "reviews.read"
   ]),
 
   admin: new Set([

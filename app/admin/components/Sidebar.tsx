@@ -58,6 +58,12 @@ const navSections: NavSection[] = [
         icon: "ChartLine",
         permission: "reports.read",
       },
+      { name: "Reviews", path: null, icon: "Star", permission: "reviews.read",
+        children: [
+          { name: "Order Reviews", path: "/reviews/orders" },
+          { name: "Product Reviews", path: "/reviews/products" },
+        ],
+      },
     ],
   },
 
