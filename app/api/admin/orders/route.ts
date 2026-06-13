@@ -12,6 +12,9 @@ import { STAFF_ROLES } from "@/types/staff";
 import { queryOrders } from "@/services/order/order.service";
 import { parseRequestQuery } from "@/utils/query-helpers";
 import { ORDER_STATUSES } from "@/types/orderConstants";
+import { Types } from "mongoose";
+import { getValidObjectId } from "@/helper/getValidObjectIds";
+
 
 export async function GET(request: NextRequest) {
   try {
@@ -38,16 +41,38 @@ export async function GET(request: NextRequest) {
       filter.status = { $ne: ORDER_STATUSES.PENDING_PAYMENT };
     }
 
-    if (
-      admin.role !== STAFF_ROLES.SUPERADMIN &&
-      admin.role !== STAFF_ROLES.CASHIER
-    ) {
+    const requestedBranchId = request.nextUrl.searchParams.get("branchId");
+
+    if (admin.role === STAFF_ROLES.SUPERADMIN) {
+      if (requestedBranchId && requestedBranchId !== "all") {
+        const branchObjectId = getValidObjectId(requestedBranchId);
+
+        if (!branchObjectId) {
+          return NextResponse.json(
+            { error: "Invalid branch id" },
+            { status: 400 },
+          );
+        }
+
+        filter.branchId = branchObjectId;
+      }
+    } else {
       if (!admin.branch)
         return NextResponse.json(
           { error: "No branch assigned" },
           { status: 403 },
         );
-      filter.branchId = admin.branch;
+
+      const assignedBranchId = getValidObjectId(admin.branch);
+
+      if (!assignedBranchId) {
+        return NextResponse.json(
+          { error: "Invalid assigned branch" },
+          { status: 403 },
+        );
+      }
+
+      filter.branchId = assignedBranchId;
     }
 
     const result = await queryOrders({
