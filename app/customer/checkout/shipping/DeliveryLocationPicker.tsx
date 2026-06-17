@@ -8,10 +8,17 @@ import { userIcon } from "@/app/customer/map/markerIcon";
 import {
   BaseLeafletMap,
   DraggableMapMarker,
+  MapCircle,
   MapClickHandler,
   RecenterMap,
   type MapCoordinates,
 } from "@/components/leaflet";
+import {
+  isWithinMetroManilaDeliveryArea,
+  METRO_MANILA_CENTER,
+  METRO_MANILA_DELIVERY_RADIUS_METERS,
+  OUTSIDE_DELIVERY_AREA_MESSAGE,
+} from "@/lib/deliveryArea";
 
 type DeliveryCoordinates = MapCoordinates;
 
@@ -22,19 +29,28 @@ type SearchResult = {
 };
 
 export type ResolvedDeliveryAddress = {
+  placeName?: string;
+  line2?: string;
   city?: string;
   province?: string;
   zipCode?: string;
 };
 
 type ReverseGeocodeResponse = {
+  name?: string;
+  display_name?: string;
   address?: {
+    road?: string;
+    quarter?: string;
+    neighbourhood?: string;
     city?: string;
     town?: string;
     municipality?: string;
     village?: string;
     suburb?: string;
+    city_district?: string;
     county?: string;
+    state_district?: string;
     state?: string;
     region?: string;
     postcode?: string;
@@ -49,7 +65,22 @@ type DeliveryLocationPickerProps = {
   onAddressResolved?: (address: ResolvedDeliveryAddress) => void;
 };
 
-const METRO_MANILA_CENTER: [number, number] = [14.5995, 120.9842];
+const getUniqueAddressParts = (
+  parts: Array<string | undefined>,
+): string[] => {
+  const seen = new Set<string>();
+
+  return parts.filter((part): part is string => {
+    const normalized = part?.trim();
+    if (!normalized) return false;
+
+    const key = normalized.toLowerCase();
+    if (seen.has(key)) return false;
+
+    seen.add(key);
+    return true;
+  });
+};
 
 const DeliveryLocationPicker = ({
   value,
@@ -85,14 +116,31 @@ const DeliveryLocationPicker = ({
         const address = data.address;
         if (!address) return;
 
+        const line2 =
+          address.quarter ??
+          address.neighbourhood ??
+          address.suburb ??
+          address.village ??
+          address.city_district;
+        const city = address.city ?? address.town ?? address.municipality;
+        const province =
+          address.state ??
+          address.region ??
+          address.state_district ??
+          address.county;
+        const placeName = getUniqueAddressParts([
+          data.name ?? address.road,
+          line2,
+          city,
+        ])
+          .slice(0, 3)
+          .join(", ");
+
         onAddressResolved({
-          city:
-            address.city ??
-            address.town ??
-            address.municipality ??
-            address.village ??
-            address.suburb,
-          province: address.state ?? address.region ?? address.county,
+          placeName: placeName || data.display_name,
+          line2,
+          city,
+          province,
           zipCode: address.postcode,
         });
       } catch {
@@ -104,11 +152,17 @@ const DeliveryLocationPicker = ({
 
   const selectCoordinates = useCallback(
     (coordinates: DeliveryCoordinates) => {
-      setLocationError(null);
       const nextCoordinates = {
         lat: Number(coordinates.lat.toFixed(6)),
         lng: Number(coordinates.lng.toFixed(6)),
       };
+
+      if (!isWithinMetroManilaDeliveryArea(nextCoordinates)) {
+        setLocationError(OUTSIDE_DELIVERY_AREA_MESSAGE);
+        return;
+      }
+
+      setLocationError(null);
       onChange(nextCoordinates);
       resolveAddressFromCoordinates(nextCoordinates);
       setTimeout(() => markerRef.current?.openPopup(), 300);
@@ -277,6 +331,17 @@ const DeliveryLocationPicker = ({
         center={value ? [value.lat, value.lng] : METRO_MANILA_CENTER}
         zoom={value ? 16 : 12}
       >
+        <MapCircle
+          center={{ lat: METRO_MANILA_CENTER[0], lng: METRO_MANILA_CENTER[1] }}
+          radius={METRO_MANILA_DELIVERY_RADIUS_METERS}
+          pathOptions={{
+            color: "#16a34a",
+            fillColor: "#22c55e",
+            fillOpacity: 0.08,
+            weight: 2,
+            dashArray: "6 4",
+          }}
+        />
         <MapClickHandler onClick={selectCoordinates} />
         <RecenterMap value={value} />
 
@@ -305,8 +370,9 @@ const DeliveryLocationPicker = ({
       <div className="flex items-start gap-2 text-xs text-slate-500">
         <DynamicIcon name="MapPinned" size={15} className="mt-0.5 shrink-0" />
         <p>
-          Click the map to place your delivery pin, drag the pin to fine-tune
-          it, or allow location access to start from your current position.
+          Click inside the highlighted Metro Manila service area to place your
+          delivery pin, drag the pin to fine-tune it, or allow location access
+          to start from your current position.
         </p>
       </div>
 
