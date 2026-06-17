@@ -9,6 +9,7 @@ export const adminPermission: Record<StaffRole, Set<string>> = {
     "dashboard.read",
 
     "orders.read",
+    "orders.update",
 
     "products.read",
     "products.create",
