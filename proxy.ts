@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { canAccess } from "./lib/roleBasedAccessCtrl";
-import { StaffRole } from "./types/staff";
+import { STAFF_ROLES, StaffRole } from "./types/staff";
 import { blockNonMaya, isMayaCallbackPath } from "./lib/mayaGuard";
 import { isRouteBlocked } from "./utils/pageStatus";
-import { COOKIE_NAMES, getAdminAuth, requireAdmin } from "./lib/getAuth";
+import { COOKIE_NAMES, getAdminAuth } from "./lib/getAuth";
+
+const getAdminLandingPath = (role?: StaffRole) =>
+  role === STAFF_ROLES.CASHIER ? "/orders" : "/dashboard";
 
 export async function proxy(request: NextRequest) {
   const url = request.nextUrl.clone();
@@ -51,13 +54,18 @@ export async function proxy(request: NextRequest) {
     // redirect root to dashboard if logged in, else to login
     if (isRoot) {
       return NextResponse.redirect(
-        new URL(admin ? "/dashboard" : "/auth/login", request.url),
+        new URL(
+          admin ? getAdminLandingPath(admin.role as StaffRole) : "/auth/login",
+          request.url,
+        ),
       );
     }
 
     // redirect logged-in admin away from auth pages
     if (isPublic && admin) {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
+      return NextResponse.redirect(
+        new URL(getAdminLandingPath(admin.role as StaffRole), request.url),
+      );
     }
 
     // redirect unauthenticated admin away from protected pages
@@ -86,7 +94,9 @@ export async function proxy(request: NextRequest) {
       const segment = pathname.split("/")[1];
 
       if (!canAccess(role, `${segment}.read`)) {
-        return NextResponse.redirect(new URL("/dashboard", request.url));
+        return NextResponse.redirect(
+          new URL(getAdminLandingPath(role), request.url),
+        );
       }
     }
 
