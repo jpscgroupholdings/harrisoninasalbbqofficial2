@@ -31,6 +31,7 @@ import {
   awardPromoCardVoucherForOrder,
   refundCustomerVoucher,
 } from "@/services/promoCardBenefits";
+import { canAccess } from "@/lib/roleBasedAccessCtrl";
 
 // ============================================
 // GET /api/orders/[id]
@@ -47,6 +48,9 @@ export async function GET(
   try {
     await connectDB();
     const staff = await requireAdmin(request);
+    if (!canAccess(staff.role, "orders.read")) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     const { id } = await context.params;
 
@@ -154,7 +158,10 @@ export async function PATCH(
     );
   }
 
-  await requireAdmin(request);
+  const staff = await requireAdmin(request);
+  if (!canAccess(staff.role, "orders.update")) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   const body = await request.json();
   const { status: newStatus } = body;
@@ -186,6 +193,17 @@ export async function PATCH(
 
   if (!order) {
     return NextResponse.json({ error: "Order not found" }, { status: 404 });
+  }
+
+  if (
+    staff.role !== STAFF_ROLES.SUPERADMIN &&
+    staff.role !== STAFF_ROLES.CASHIER &&
+    order.branchId?.toString() !== staff.branch?.toString()
+  ) {
+    return NextResponse.json(
+      { error: "Access denied. This order does not belong to your branch." },
+      { status: 403 },
+    );
   }
 
   const currentStatus = order.status as OrderStatus;
