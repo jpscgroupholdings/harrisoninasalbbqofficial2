@@ -39,6 +39,10 @@ import {
   type AppliedProductDiscountPromotion,
   type ProductDiscountResolution,
 } from "@/lib/product-promotions/product-promotion.application";
+import {
+  isWithinMetroManilaDeliveryArea,
+  OUTSIDE_DELIVERY_AREA_MESSAGE,
+} from "@/lib/deliveryArea";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -104,12 +108,17 @@ export async function assertStoreIsOpen(session: ClientSession): Promise<void> {
 
 export function assertValidPayload(body: CreateOrderPayload): void {
   const { branchId, firstName, lastName, customerPhone, items } = body;
+  const coordinates = body.shippingAddress?.coordinates;
 
   if (!branchId) throw new Error("Branch is required.");
   if (!firstName || !lastName || !customerPhone)
     throw new Error("Customer details are required.");
   if (!items || !Array.isArray(items) || items.length === 0)
     throw new Error("Cart is empty.");
+  if (!coordinates) throw new Error("Pin your delivery location on the map.");
+  if (!isWithinMetroManilaDeliveryArea(coordinates)) {
+    throw new Error(OUTSIDE_DELIVERY_AREA_MESSAGE);
+  }
 }
 
 // ---------------------------------------------------------------------------
