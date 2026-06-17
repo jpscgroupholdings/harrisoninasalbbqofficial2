@@ -9,6 +9,10 @@ const ShippingAddressSchema = new Schema(
     zipCode:   { type: String, default: "" },
     country:   { type: String, default: "Philippines" },
     landmark:  { type: String, default: "" },
+    coordinates: {
+      lat: Number,
+      lng: Number,
+    },
   },
   { _id: false },
 );

@@ -18,6 +18,10 @@ export interface AddressForm {
   zipCode: string;
   country: string;
   landmark: string;
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
 }
 
 const PROVINCES = [
