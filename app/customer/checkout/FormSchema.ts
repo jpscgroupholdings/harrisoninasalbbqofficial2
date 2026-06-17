@@ -1,6 +1,10 @@
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
 import z from "zod";
+import {
+  isWithinMetroManilaDeliveryArea,
+  OUTSIDE_DELIVERY_AREA_MESSAGE,
+} from "@/lib/deliveryArea";
 
 export const CustomerSchema = z.object({
   firstName: z.string().min(1, "Firstname is required"),
@@ -30,6 +34,7 @@ export const ShippingSchema = z.object({
   zipCode: z.string().min(1, "Postal code is required"),
   country: z.literal("Philippines"),
   landmark: z.string().optional(),
+  placeName: z.string().optional(),
   coordinates: CoordinatesSchema.optional(),
 }).superRefine((value, ctx) => {
   if (!value.coordinates) {
@@ -37,6 +42,15 @@ export const ShippingSchema = z.object({
       code: "custom",
       path: ["coordinates"],
       message: "Pin your delivery location on the map",
+    });
+    return;
+  }
+
+  if (!isWithinMetroManilaDeliveryArea(value.coordinates)) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["coordinates"],
+      message: OUTSIDE_DELIVERY_AREA_MESSAGE,
     });
   }
 });
