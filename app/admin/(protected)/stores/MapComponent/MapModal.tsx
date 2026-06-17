@@ -9,9 +9,10 @@ import {
   MapMarker,
   type MapCoordinates,
 } from "@/components/leaflet";
-
-const METRO_MANILA_CENTER: [number, number] = [14.5995, 120.9842];
-const ALLOWED_RADIUS_METERS = 25_000;
+import {
+  METRO_MANILA_CENTER,
+  METRO_MANILA_DELIVERY_RADIUS_METERS,
+} from "@/lib/deliveryArea";
 
 type MapParentProps = {
   onSelectCoordinates: (latitude: number, longitude: number) => void;
@@ -46,7 +47,7 @@ const MapParent: React.FC<MapParentProps> = ({ onSelectCoordinates }) => {
         >
           <MapCircle
             center={{ lat: METRO_MANILA_CENTER[0], lng: METRO_MANILA_CENTER[1] }}
-            radius={ALLOWED_RADIUS_METERS}
+            radius={METRO_MANILA_DELIVERY_RADIUS_METERS}
             pathOptions={{
               color: "#2563eb",
               fillColor: "#3b82f6",
