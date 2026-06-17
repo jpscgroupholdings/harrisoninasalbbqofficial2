@@ -68,6 +68,7 @@ export const CheckoutProvider = ({ children }: { children: React.ReactNode }) =>
       zipCode: "",
       country: "Philippines",
       landmark: "",
+      placeName: "",
       coordinates: undefined,
     },
   });
@@ -121,6 +122,7 @@ export const CheckoutProvider = ({ children }: { children: React.ReactNode }) =>
         zipCode: shippingAddress?.zipCode || "",
         country: "Philippines",
         landmark: shippingAddress?.landmark || "",
+        placeName: "",
         coordinates: shippingAddress?.coordinates,
       },
     }));
