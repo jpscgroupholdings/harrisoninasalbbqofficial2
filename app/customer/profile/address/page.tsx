@@ -4,65 +4,65 @@
 
 import { InputField } from "@/components/ui/InputField";
 import { DynamicIcon } from "@/components/ui/DynamicIcon";
+import {
+  PsgcAddressFields,
+} from "@/components/customer/PsgcAddressFields";
+import type { ShippingAddressForm } from "@/types/address";
 import { SectionCard } from "../component/SectionCard";
 import { toast } from "sonner";
 import { useMyAddress, useUpdateAddress } from "../../hooks/useMyAddress";
 import { useEffect, useState } from "react";
-import LoadingPage from "@/components/ui/LoadingPage";
+import { NCR_REGION, type PsgcAddressSelection } from "@/lib/psgcAddress";
 
-export interface AddressForm {
-  line1: string;
-  line2: string;
-  city: string;
-  province: string;
-  zipCode: string;
-  country: string;
-  landmark: string;
-  coordinates?: {
-    lat: number;
-    lng: number;
-  };
-}
-
-const PROVINCES = [
-  "Metro Manila",
-  "Cebu",
-  "Davao del Sur",
-  "Rizal",
-  "Bulacan",
-  "Cavite",
-  "Laguna",
-  "Pampanga",
-  "Batangas",
-  "Iloilo",
-];
+const DEFAULT_ADDRESS_FORM: ShippingAddressForm = {
+  line1: "",
+  line2: "",
+  city: "",
+  cityCode: "",
+  province: NCR_REGION.displayName,
+  region: NCR_REGION.name,
+  regionCode: NCR_REGION.code,
+  barangayCode: "",
+  subMunicipality: "",
+  subMunicipalityCode: "",
+  zipCode: "",
+  country: "Philippines",
+  landmark: "",
+};
 
 const AddressTab = () => {
   const updateAddress = useUpdateAddress();
   const { data: myAddress, isPending } = useMyAddress();
 
-  const [form, setForm] = useState<AddressForm>({
-    line1: "",
-    line2: "",
-    city: "",
-    province: "",
-    zipCode: "",
-    country: "Philippines",
-    landmark: "",
-  });
+  const [form, setForm] = useState<ShippingAddressForm>(DEFAULT_ADDRESS_FORM);
   const [saving, setSaving] = useState(false);
 
   // Load existing address on mount
   useEffect(() => {
     if (myAddress?.shippingAddress) {
-      setForm(myAddress.shippingAddress);
+      setForm({
+        ...DEFAULT_ADDRESS_FORM,
+        ...myAddress.shippingAddress,
+        province:
+          myAddress.shippingAddress.province || NCR_REGION.displayName,
+        region: myAddress.shippingAddress.region || NCR_REGION.name,
+        regionCode: myAddress.shippingAddress.regionCode || NCR_REGION.code,
+        country: "Philippines",
+      });
     }
   }, [myAddress]);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleAddressFieldChange = (
+    field: keyof PsgcAddressSelection,
+    value: string,
+  ) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSave = async () => {
@@ -87,9 +87,10 @@ const AddressTab = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-pulse">
           {/* Line 1 */}
           <div className="sm:col-span-2 h-10 bg-gray-100 rounded-xl" />
-          {/* Line 2 */}
-          <div className="sm:col-span-2 h-10 bg-gray-100 rounded-xl" />
-          {/* City + Province */}
+          {/* Region + City */}
+          <div className="h-10 bg-gray-100 rounded-xl" />
+          <div className="h-10 bg-gray-100 rounded-xl" />
+          {/* Barangay + Province */}
           <div className="h-10 bg-gray-100 rounded-xl" />
           <div className="h-10 bg-gray-100 rounded-xl" />
           {/* ZIP + Country */}
@@ -125,43 +126,10 @@ const AddressTab = () => {
             required
           />
         </div>
-        <div className="sm:col-span-2">
-          <InputField
-            label="Address Line 2"
-            name="line2"
-            value={form.line2}
-            onChange={handleChange}
-            placeholder="Building, Floor, Suite (optional)"
-            leftIcon={<DynamicIcon name="Building" />}
-          />
-        </div>
-        <InputField
-          label="City / Municipality"
-          name="city"
-          value={form.city}
-          onChange={handleChange}
-          placeholder="Quezon City"
-          leftIcon={<DynamicIcon name="MapPin" />}
-          required
+        <PsgcAddressFields
+          value={form}
+          onFieldChange={handleAddressFieldChange}
         />
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-gray-700 flex items-center gap-1">
-            Province <span className="text-brand-color-500">*</span>
-          </label>
-          <select
-            name="province"
-            value={form.province}
-            onChange={handleChange}
-            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-color-400 focus:border-transparent transition-all"
-          >
-            <option value="">Select province</option>
-            {PROVINCES.map((p) => (
-              <option key={p} value={p}>
-                {p}
-              </option>
-            ))}
-          </select>
-        </div>
         <InputField
           label="ZIP Code"
           name="zipCode"
