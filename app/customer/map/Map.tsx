@@ -152,7 +152,7 @@ const BranchInfoCard = ({
         </p>
         {distanceKm !== undefined && (
           <p className="text-[11px] text-brand-color-400">
-            {distanceKm.toFixed(1)} km away
+            {distanceKm.toFixed(2)} km away
           </p>
         )}
 
@@ -523,7 +523,7 @@ const Map = () => {
                               {getDistance(
                                 toLatLng(branch.location.coordinates),
                                 userMarker,
-                              ).toFixed(1)}{" "}
+                              ).toFixed(2)}{" "}
                               km from your location
                             </p>
                           )}
