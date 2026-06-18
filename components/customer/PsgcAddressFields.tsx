@@ -33,10 +33,18 @@ const useSelectedCity = (
 ) =>
   useMemo(() => {
     if (!cities?.length) return undefined;
-    return (
-      cities.find((city) => city.code === value.cityCode) ??
-      findCityByName(cities, value.city)
-    );
+
+    const cityByCode = cities.find((city) => city.code === value.cityCode);
+    const cityByName = findCityByName(cities, value.city);
+
+    // A new map pin updates the city name first. If the old PSGC code points to
+    // a different city, trust the detected name and let the sync effect rewrite
+    // the code afterward.
+    if (cityByName && cityByCode?.code !== cityByName.code) {
+      return cityByName;
+    }
+
+    return cityByCode ?? cityByName;
   }, [cities, value.city, value.cityCode]);
 
 export function PsgcAddressFields({
@@ -131,6 +139,9 @@ export function PsgcAddressFields({
   useEffect(() => {
     if (!selectedCity) return;
 
+    const cityChangedFromDetectedLocation =
+      Boolean(value.cityCode) && value.cityCode !== selectedCity.code;
+
     // Once a saved or detected city matches PSGC, normalize both the display
     // name and code so future loads no longer depend on text matching.
     if (value.city !== selectedCity.name) {
@@ -141,6 +152,17 @@ export function PsgcAddressFields({
     }
     if (value.province !== NCR_REGION.displayName) {
       onFieldChange("province", NCR_REGION.displayName);
+    }
+
+    // When a map pin moves to another city, old child codes are no longer valid.
+    // Keep line2 text from the pin so barangay matching can still try to align.
+    if (cityChangedFromDetectedLocation) {
+      onFieldChange("subMunicipalityCode", "");
+      onFieldChange("barangayCode", "");
+
+      if (selectedCity.code !== MANILA_CITY_CODE) {
+        onFieldChange("subMunicipality", "");
+      }
     }
   }, [onFieldChange, selectedCity, value.city, value.cityCode, value.province]);
 
@@ -230,29 +252,38 @@ export function PsgcAddressFields({
         </p>
       </div>
 
-      <SelectField
-        label="City / Municipality"
-        value={selectedCity?.code ?? ""}
-        onChange={(event) => {
-          handleCityChange(event.target.value);
-          const city = cities.find(
-            (option) => option.code === event.target.value,
-          );
-          onFieldBlur?.("city", city?.name ?? "");
-        }}
-        options={[
-          { value: "", label: "Select City", disabled: true },
-          ...cities.map((city) => ({
-            value: city.code,
-            label: city.name,
-          })),
-        ]}
-        disabled={isLoadingCities}
-        leftIcon={<DynamicIcon name="Building2" size={15} />}
-        errors={errors?.city}
-        className="text-sm"
-        required
-      />
+      <div className="flex flex-col gap-2">
+        <SelectField
+          label="City / Municipality"
+          value={selectedCity?.code ?? ""}
+          onChange={(event) => {
+            handleCityChange(event.target.value);
+            const city = cities.find(
+              (option) => option.code === event.target.value,
+            );
+            onFieldBlur?.("city", city?.name ?? "");
+          }}
+          options={[
+            { value: "", label: "Select City", disabled: true },
+            ...cities.map((city) => ({
+              value: city.code,
+              label: city.name,
+            })),
+          ]}
+          disabled={isLoadingCities}
+          leftIcon={<DynamicIcon name="Building2" size={15} />}
+          errors={errors?.city}
+          className="text-sm"
+          required
+        />
+
+        {value.city !== selectedCity?.name && (
+          <p className="text-xs text-amber-600">
+            Detected "{value.city}". Choose the closest city if this is not
+            exact.
+          </p>
+        )}
+      </div>
 
       {isManila && (
         <SelectField
