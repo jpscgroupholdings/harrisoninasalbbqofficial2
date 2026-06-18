@@ -143,6 +143,14 @@ type CartListProps = {
   onNext: () => void;
 };
 
+type DeliveryFeeEstimateResponse = {
+  data: {
+    distanceKm: number;
+    billableKm: number;
+    deliveryFee: number;
+  };
+};
+
 type PaymentButtonProps = {
   id: "maya" | "cod";
   label: string;
@@ -275,6 +283,38 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
     landmark,
     coordinates,
   } = orderDetails?.shippingAddress;
+  const {
+    data: deliveryFeeEstimate,
+    isError: isDeliveryFeeError,
+    isLoading: isDeliveryFeeLoading,
+  } = useQuery({
+    queryKey: [
+      "customer",
+      "delivery-fee",
+      selectedBranch?._id,
+      coordinates?.lat,
+      coordinates?.lng,
+    ],
+    queryFn: () => {
+      if (!selectedBranch?._id || !coordinates) {
+        throw new Error("Branch and delivery pin are required.");
+      }
+
+      return apiClient.post<
+        DeliveryFeeEstimateResponse,
+        {
+          branchId: string;
+          coordinates: { lat: number; lng: number };
+        }
+      >("/customer/delivery-fee/estimate", {
+        branchId: selectedBranch._id,
+        coordinates,
+      });
+    },
+    enabled: Boolean(selectedBranch?._id && coordinates),
+    staleTime: 60_000,
+    retry: false,
+  });
 
   const {
     cartItems,
@@ -309,8 +349,12 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
     availableVoucherBalance,
     discountAdjustedTotal,
   );
+  const deliveryFeeAmount = deliveryFeeEstimate?.data.deliveryFee ?? 0;
   const displayTotalPrice = Number(
-    Math.max(discountAdjustedTotal - parsedVoucherAmount, 0).toFixed(2),
+    Math.max(
+      discountAdjustedTotal - parsedVoucherAmount + deliveryFeeAmount,
+      0,
+    ).toFixed(2),
   );
   const displayVatableSales = displayTotalPrice / 1.12;
   const displayVatAmount = displayTotalPrice - displayVatableSales;
@@ -344,7 +388,8 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
   const isNextDisabled =
     !selectedBranch ||
     (isDetails && isDetailsIncomplete) ||
-    (isShipping && isShippingIncomplete);
+    (isShipping &&
+      (isShippingIncomplete || isDeliveryFeeLoading || isDeliveryFeeError));
 
   const isActionPending = isPending || isCodPending;
 
@@ -591,6 +636,29 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
               <span>Voucher discount</span>
               <span>-₱{parsedVoucherAmount.toFixed(2)}</span>
             </div>
+          )}
+          {(deliveryFeeAmount > 0 || isDeliveryFeeLoading) && (
+            <div className="flex justify-between gap-3 text-sm text-slate-500">
+              <span>
+                Delivery fee
+                {deliveryFeeEstimate?.data.distanceKm != null && (
+                  <span className="ml-1 text-xs text-slate-400">
+                    ({deliveryFeeEstimate.data.distanceKm.toFixed(2)} km)
+                  </span>
+                )}
+              </span>
+              <span>
+                {isDeliveryFeeLoading
+                  ? "Calculating..."
+                  : `₱${deliveryFeeAmount.toFixed(2)}`}
+              </span>
+            </div>
+          )}
+          {isDeliveryFeeError && (
+            <p className="rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-medium text-red-500">
+              Delivery fee could not be calculated. Please adjust your pin or
+              try again.
+            </p>
           )}
           <div className="flex justify-between text-sm text-slate-500">
             <span>VATable Sales</span>
