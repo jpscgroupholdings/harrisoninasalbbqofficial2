@@ -18,7 +18,7 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
   ) => {
     return (
       <div className="w-full space-y-2">
-        <div>
+        <div className="m-0">
           {label && (
             <label
               htmlFor={props.id}
