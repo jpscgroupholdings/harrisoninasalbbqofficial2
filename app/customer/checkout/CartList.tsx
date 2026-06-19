@@ -28,6 +28,7 @@ import { CartItem } from "@/types/MenuTypes";
 import type { ActivePromotionsResponse } from "@/types/promotions.type";
 import { useQuery } from "@tanstack/react-query";
 import { PromotionDiscountDay } from "@/types/promotions/promotion-constant";
+import { OrderItemImage } from "../components/OrderItemImage";
 
 const createCodOrder = async (payload: CreateOrderPayload) => {
   const res = await fetch("/api/customer/cod-checkout", {
@@ -67,11 +68,9 @@ const CartRow = ({
 
   return (
     <div className="flex gap-3 py-3 first:pt-0">
-      <img
-        src={item.image}
-        alt={item.name || "Product"}
-        className="w-14 h-14 rounded-xl object-cover shrink-0"
-      />
+      <div className="w-14 h-14 rounded-xl object-cover shrink-0">
+        <OrderItemImage image={item.image} name={item.name} />
+      </div>
       <div className="flex-1 min-w-0">
         <div className="flex justify-between items-start gap-1">
           <div className="min-w-0">
@@ -186,11 +185,9 @@ const PaymentButton = ({
     >
       <div className="flex items-start justify-between w-full">
         <div className="w-20 h-20 rounded-xl bg-white flex items-center justify-center shrink-0">
-          <img
-            src={imageSrc}
-            alt={imageAlt}
-            className="w-full h-full object-contain"
-          />
+          <div className="w-full h-full object-contain">
+            <OrderItemImage image={imageSrc} name={imageAlt} />
+          </div>
         </div>
         <div
           className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors
@@ -492,7 +489,8 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
             "Payment link was not generated. Please try again or contact support.",
           );
         }
-
+        // clear cart and draft before redirecting to ensure a clean state when user returns from payment
+        window.sessionStorage.removeItem("checkout_order_draft");
         await clearCart();
         window.location.href = data.redirectUrl;
       }
