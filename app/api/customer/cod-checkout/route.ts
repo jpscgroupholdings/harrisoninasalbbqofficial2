@@ -14,6 +14,7 @@ import {
   persistOrder,
   reserveInventory,
   resolveCart,
+  resolveDeliveryFee,
   sendOrderConfirmationEmail,
 } from "../../paymaya/checkout/route";
 import { redeemCustomerVoucher } from "@/services/promoCardBenefits";
@@ -56,6 +57,12 @@ export async function POST(request: NextRequest) {
 
     // 4. Resolve branch
     const branch = await fetchBranch(body.branchId, session);
+
+    // 4.1 Resolve delivery fee
+    const deliveryFeeEstimate = resolveDeliveryFee(
+      branch,
+      body.shippingAddress,
+    );
 
     // 5. Resolve cart items + reserve inventory
     const { totalPrice, orderItems } = await resolveCart(
@@ -101,6 +108,9 @@ export async function POST(request: NextRequest) {
       promoCardDiscount?.discountCode,
       voucherDiscountAmount,
       orderDiscountPromotion,
+      deliveryFeeEstimate.deliveryFee,
+      deliveryFeeEstimate.distanceKm,
+      deliveryFeeEstimate.billableKm,
     );
 
     if (tax.totalAmount < MINIMUM_AMOUNT) {
