@@ -4,19 +4,6 @@ import { CreateOrderPayload } from "@/types/OrderTypes";
 import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
 import "@/lib/registerModels";
-import {
-  assertStoreIsOpen,
-  assertValidPayload,
-  assertCanUsePromoCardDiscount,
-  computeTax,
-  dispatchOrderCreatedEvent,
-  fetchBranch,
-  persistOrder,
-  reserveInventory,
-  resolveCart,
-  resolveDeliveryFee,
-  sendOrderConfirmationEmail,
-} from "../../paymaya/checkout/route";
 import { redeemCustomerVoucher } from "@/services/promoCardBenefits";
 import { calculatePromoCardTotal } from "@/lib/promoCard";
 import {
@@ -27,6 +14,25 @@ import {
   incrementProductDiscountRedemptions,
   resolveProductDiscountPromotions,
 } from "@/lib/product-promotions/product-promotion.application";
+import {
+  assertCanUsePromoCardDiscount,
+  assertStoreIsOpen,
+  assertValidPayload,
+} from "@/services/checkout/checkoutValidation.service";
+import {
+  computeTax,
+  fetchBranch,
+  resolveDeliveryFee,
+} from "@/services/checkout/checkoutPricing.service";
+import {
+  reserveInventory,
+  resolveCart,
+} from "@/services/checkout/checkoutInventory.service";
+import {
+  dispatchOrderCreatedEvent,
+  persistOrder,
+  sendOrderConfirmationEmail,
+} from "@/services/checkout/checkoutOrder.service";
 
 const MINIMUM_AMOUNT = 100;
 
@@ -165,7 +171,6 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     await session.abortTransaction();
-    session.endSession();
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : "Failed to checkout!",
