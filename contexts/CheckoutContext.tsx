@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import { useMyAddress } from "@/app/customer/hooks/useMyAddress";
 import { authClient } from "@/lib/auth-client";
@@ -19,22 +19,71 @@ type CheckoutContextType = {
   orderDetails: OrderFormState;
   customerErrors: ReturnType<typeof useFormErrors>["customerErrors"];
   shippingErrors: ReturnType<typeof useFormErrors>["shippingErrors"];
-  handleStateChange: (type: keyof OrderFormState, field: string, value: string) => void;
+  handleStateChange: (
+    type: keyof OrderFormState,
+    field: string,
+    value: string,
+  ) => void;
   handleShippingCoordinatesChange: (
     coordinates: OrderFormState["shippingAddress"]["coordinates"],
   ) => void;
   handleNext: () => void;
-  validateField: (step: "customer" | "shippingAddress", field: string, value: unknown) => void
+  validateField: (
+    step: "customer" | "shippingAddress",
+    field: string,
+    value: unknown,
+  ) => void;
 };
 
 export const CheckoutStep = {
-    DETAILS : "/checkout/details",
-    SHIPPING : "/checkout/shipping"
+  DETAILS: "/checkout/details",
+  SHIPPING: "/checkout/shipping",
 } as const;
 
+const CHECKOUT_DRAFT_KEY = "checkout_order_draft";
+
+const getDefaultOrderDetails = (): OrderFormState => ({
+  customer: {
+    firstName: "",
+    lastName: "",
+    customerEmail: "",
+    customerPhone: "",
+    notes: "",
+  },
+  shippingAddress: {
+    line1: "",
+    line2: "",
+    city: "",
+    cityCode: "",
+    province: NCR_REGION.displayName,
+    region: NCR_REGION.name,
+    regionCode: NCR_REGION.code,
+    barangayCode: "",
+    subMunicipality: "",
+    subMunicipalityCode: "",
+    zipCode: "",
+    country: "Philippines",
+    landmark: "",
+    placeName: "",
+    coordinates: undefined,
+  },
+});
+
+const readCheckoutDraft = (): OrderFormState | null => {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const raw = window.sessionStorage.getItem(CHECKOUT_DRAFT_KEY);
+    return raw ? (JSON.parse(raw) as OrderFormState) : null;
+  } catch {
+    return null;
+  }
+};
 
 // ---- Context ----
-const CheckoutContext = createContext<CheckoutContextType | undefined>(undefined);
+const CheckoutContext = createContext<CheckoutContextType | undefined>(
+  undefined,
+);
 
 // ---- Hook ----
 export const useCheckout = () => {
@@ -44,7 +93,11 @@ export const useCheckout = () => {
 };
 
 // ---- Provider ----
-export const CheckoutProvider = ({ children }: { children: React.ReactNode }) => {
+export const CheckoutProvider = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
   const { data: session, isPending } = authClient.useSession();
   const { data: myAddress } = useMyAddress();
   const { shippingAddress } = myAddress ?? {};
@@ -53,34 +106,12 @@ export const CheckoutProvider = ({ children }: { children: React.ReactNode }) =>
   const { selectedBranch } = useBranch();
   const { openModal } = useModalQuery();
 
-  const [orderDetails, setOrderDetails] = useState<OrderFormState>({
-    customer: {
-      firstName: "",
-      lastName: "",
-      customerEmail: "",
-      customerPhone: "",
-      notes: "",
-    },
-    shippingAddress: {
-      line1: "",
-      line2: "",
-      city: "",
-      cityCode: "",
-      province: NCR_REGION.displayName,
-      region: NCR_REGION.name,
-      regionCode: NCR_REGION.code,
-      barangayCode: "",
-      subMunicipality: "",
-      subMunicipalityCode: "",
-      zipCode: "",
-      country: "Philippines",
-      landmark: "",
-      placeName: "",
-      coordinates: undefined,
-    },
+  const [orderDetails, setOrderDetails] = useState<OrderFormState>(() => {
+    return readCheckoutDraft() ?? getDefaultOrderDetails();
   });
 
-  const { customerErrors, shippingErrors, validateField } = useFormErrors(orderDetails);
+  const { customerErrors, shippingErrors, validateField } =
+    useFormErrors(orderDetails);
 
   const handleStateChange = (
     type: keyof OrderFormState,
@@ -109,8 +140,17 @@ export const CheckoutProvider = ({ children }: { children: React.ReactNode }) =>
     router.push(CheckoutStep.SHIPPING);
   };
 
+  // Persist Changes
+  useEffect(() => {
+    window.sessionStorage.setItem(
+      CHECKOUT_DRAFT_KEY,
+      JSON.stringify(orderDetails),
+    );
+  }, [orderDetails]);
+
   useEffect(() => {
     if (!session?.user || !myAddress) return;
+    if (readCheckoutDraft()) return;
 
     setOrderDetails((prev) => ({
       ...prev,
@@ -139,7 +179,7 @@ export const CheckoutProvider = ({ children }: { children: React.ReactNode }) =>
         coordinates: shippingAddress?.coordinates,
       },
     }));
-  }, [session, myAddress]);
+  }, [session, myAddress, shippingAddress]);
 
   return (
     <CheckoutContext.Provider
@@ -154,7 +194,7 @@ export const CheckoutProvider = ({ children }: { children: React.ReactNode }) =>
         handleStateChange,
         handleShippingCoordinatesChange,
         handleNext,
-        validateField
+        validateField,
       }}
     >
       {children}
