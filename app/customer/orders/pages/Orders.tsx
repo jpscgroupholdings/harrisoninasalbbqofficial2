@@ -35,7 +35,11 @@ const TABS: Tab[] = [
     statuses: [ORDER_STATUSES.PENDING_PAYMENT, ORDER_STATUSES.PENDING],
   },
   { key: ORDER_STATUSES.PREPARING, label: "Preparing" },
-  { key: ORDER_STATUSES.DISPATCH, label: "To receive" },
+  {
+    key: ORDER_STATUSES.DISPATCH,
+    label: "To receive",
+    statuses: [ORDER_STATUSES.DISPATCH, ORDER_STATUSES.READY_FOR_PICKUP],
+  },
   { key: ORDER_STATUSES.COMPLETED, label: "Completed" },
   {
     key: ORDER_STATUSES.CANCELLED,
@@ -54,6 +58,7 @@ const STATUS_STYLES: Record<string, string> = {
   [ORDER_STATUSES.PENDING]: "bg-amber-50 text-amber-800",
   [ORDER_STATUSES.PREPARING]: "bg-blue-50 text-blue-800",
   [ORDER_STATUSES.DISPATCH]: "bg-purple-50 text-purple-800",
+  [ORDER_STATUSES.READY_FOR_PICKUP]: "bg-green-50 text-green-800",
   [ORDER_STATUSES.COMPLETED]: "bg-green-50 text-green-800",
   [ORDER_STATUSES.CANCELLED]: "bg-red-50 text-red-800",
   [ORDER_STATUSES.FAILED]: "bg-red-50 text-red-700",
@@ -65,6 +70,7 @@ const STATUS_LABELS: Record<string, string> = {
   [ORDER_STATUSES.PENDING]: "Pending",
   [ORDER_STATUSES.PREPARING]: "Preparing",
   [ORDER_STATUSES.DISPATCH]: "Dispatched / To Receive",
+  [ORDER_STATUSES.READY_FOR_PICKUP]: "Ready for Pickup",
   [ORDER_STATUSES.COMPLETED]: "Completed",
   [ORDER_STATUSES.CANCELLED]: "Cancelled",
   [ORDER_STATUSES.FAILED]: "Failed",
