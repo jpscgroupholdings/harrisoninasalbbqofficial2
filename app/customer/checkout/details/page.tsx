@@ -8,7 +8,7 @@ const page = () => {
   const {
     orderDetails,
     customerErrors,
-    canSyncProfileDetails,
+    shouldShowSyncProfileDetails,
     syncCheckoutDetailsFromProfile,
     handleStateChange,
     validateField,
@@ -18,7 +18,7 @@ const page = () => {
     <CustomerDetails
       customerData={orderDetails.customer}
       errors={customerErrors}
-      canSyncProfileDetails={canSyncProfileDetails}
+      shouldShowSyncProfileDetails={shouldShowSyncProfileDetails}
       onSyncProfileDetails={syncCheckoutDetailsFromProfile}
       onChange={handleStateChange}
       onBlur={(field, value) => validateField("customer", field, value)}

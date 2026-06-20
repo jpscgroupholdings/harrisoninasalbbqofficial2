@@ -9,7 +9,7 @@ import { OrderFormState } from "../FormSchema";
 type customerDataProps = {
   customerData: OrderFormState["customer"];
   errors: CustomerErrors;
-  canSyncProfileDetails: boolean;
+  shouldShowSyncProfileDetails: boolean;
   onSyncProfileDetails: () => void;
   onChange: (type: keyof OrderFormState, field: string, value: string) => void;
   onBlur: (field: keyof CustomerErrors, value: string) => void
@@ -18,24 +18,25 @@ type customerDataProps = {
 const CustomerDetails = ({
   customerData,
   errors,
-  canSyncProfileDetails,
+  shouldShowSyncProfileDetails,
   onSyncProfileDetails,
   onChange,
   onBlur
 }: customerDataProps) => {
   return (
     <div className="space-y-5 py-6">
-      <div className="flex justify-end">
-        <button
-          type="button"
-          disabled={!canSyncProfileDetails}
-          onClick={onSyncProfileDetails}
-          className="inline-flex items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
-        >
-          <DynamicIcon name="RefreshCw" size={15} />
-          Sync from profile
-        </button>
-      </div>
+      {shouldShowSyncProfileDetails && (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={onSyncProfileDetails}
+            className="inline-flex items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+          >
+            <DynamicIcon name="RefreshCw" size={15} />
+            Sync from profile
+          </button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <InputField

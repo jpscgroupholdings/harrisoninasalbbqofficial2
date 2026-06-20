@@ -8,7 +8,7 @@ const page = () => {
   const {
     orderDetails,
     shippingErrors,
-    canSyncProfileDetails,
+    shouldShowSyncProfileDetails,
     syncCheckoutDetailsFromProfile,
     openModal,
     handleStateChange,
@@ -31,7 +31,7 @@ const page = () => {
     <ShippingAddress
       shippingAddress={orderDetails.shippingAddress}
       errors={shippingErrors}
-      canSyncProfileDetails={canSyncProfileDetails}
+      shouldShowSyncProfileDetails={shouldShowSyncProfileDetails}
       onSyncProfileDetails={syncCheckoutDetailsFromProfile}
       openModal={openModal}
       onChange={handleStateChange}

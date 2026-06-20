@@ -8,6 +8,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -24,7 +25,7 @@ type CheckoutContextType = {
   selectedBranch: ReturnType<typeof useBranch>["selectedBranch"];
   openModal: ReturnType<typeof useModalQuery>["openModal"];
   orderDetails: OrderFormState;
-  canSyncProfileDetails: boolean; // true if logged in user
+  shouldShowSyncProfileDetails: boolean;
   customerErrors: ReturnType<typeof useFormErrors>["customerErrors"];
   shippingErrors: ReturnType<typeof useFormErrors>["shippingErrors"];
   syncCheckoutDetailsFromProfile: () => void;
@@ -88,6 +89,35 @@ const isUntouchedOrderDetails = (orderDetails: OrderFormState) => {
       JSON.stringify(defaultOrderDetails.customer) &&
     JSON.stringify(orderDetails.shippingAddress) ===
       JSON.stringify(defaultOrderDetails.shippingAddress)
+  );
+};
+
+// Profile sync owns customer identity and shipping data, but not checkout notes.
+const isSameProfileSyncedDetails = (
+  current: OrderFormState,
+  profileSynced: OrderFormState,
+) => {
+  const currentProfileFields = {
+    customer: {
+      firstName: current.customer.firstName,
+      lastName: current.customer.lastName,
+      customerEmail: current.customer.customerEmail,
+      customerPhone: current.customer.customerPhone,
+    },
+    shippingAddress: current.shippingAddress,
+  };
+  const syncedProfileFields = {
+    customer: {
+      firstName: profileSynced.customer.firstName,
+      lastName: profileSynced.customer.lastName,
+      customerEmail: profileSynced.customer.customerEmail,
+      customerPhone: profileSynced.customer.customerPhone,
+    },
+    shippingAddress: profileSynced.shippingAddress,
+  };
+
+  return (
+    JSON.stringify(currentProfileFields) === JSON.stringify(syncedProfileFields)
   );
 };
 
@@ -234,6 +264,21 @@ export const CheckoutProvider = ({
     setOrderDetails((prev) => applyProfileDetailsToDraft(prev, true));
   }, [applyProfileDetailsToDraft, session]);
 
+  const shouldShowSyncProfileDetails = useMemo(() => {
+    if (!session?.user || isPending || isAddressPending) return false;
+    if (!hasUserEditedDraft.current) return false;
+
+    const profileSyncedDraft = applyProfileDetailsToDraft(orderDetails, true);
+    // Show the sync button only when checkout data differs from profile data.
+    return !isSameProfileSyncedDetails(orderDetails, profileSyncedDraft);
+  }, [
+    applyProfileDetailsToDraft,
+    isPending,
+    isAddressPending,
+    orderDetails,
+    session,
+  ]);
+
   // Load storage after mount so SSR and the first client render both avoid sessionStorage.
   useEffect(() => {
     const draft = readCheckoutDraft();
@@ -286,7 +331,7 @@ export const CheckoutProvider = ({
         selectedBranch,
         openModal,
         orderDetails,
-        canSyncProfileDetails: Boolean(session?.user),
+        shouldShowSyncProfileDetails,
         customerErrors,
         shippingErrors,
         syncCheckoutDetailsFromProfile,
