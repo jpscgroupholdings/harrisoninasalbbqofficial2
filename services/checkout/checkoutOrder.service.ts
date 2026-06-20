@@ -1,12 +1,13 @@
 import { CreateOrderPayload } from "@/types/OrderTypes";
-import { fetchBranch, TaxBreakdown } from "./checkoutPricing.service";
+import { TaxBreakdown } from "./checkoutPricing.service";
 import { ResolvedCartItem } from "./checkoutInventory.service";
 import { ClientSession } from "mongoose";
 import { Order } from "@/models/Orders";
-import { ORDER_STATUSES } from "@/types/orderConstants";
+import { FULFILLMENT_TYPE, FulfillmentType, ORDER_STATUSES } from "@/types/orderConstants";
 import { inngest } from "@/inngest/client";
 import { EMAIL_FROM, resend } from "@/lib/resend";
 import OrderMessageEmail from "@/app/emails/OrderMessageEmail";
+import { fetchBranch } from "../branch/branch.service";
 
 export async function persistOrder(
   body: CreateOrderPayload,
@@ -17,6 +18,10 @@ export async function persistOrder(
   referenceNumber: string,
   customerId: string | null,
   session: ClientSession,
+  fulfillment?: {
+    fulfillmentType: FulfillmentType;
+    shippingAddress?: CreateOrderPayload["shippingAddress"];
+  },
 ) {
   const {
     branchId,
@@ -26,8 +31,9 @@ export async function persistOrder(
     customerPhone,
     paymentMethod,
     notes,
-    shippingAddress,
   } = body;
+  const fulfillmentType = fulfillment?.fulfillmentType ?? FULFILLMENT_TYPE.DELIVERY;
+  const shippingAddress = fulfillment?.shippingAddress ?? body.shippingAddress;
   const {
     vatableSales,
     vatAmount,
@@ -61,6 +67,7 @@ export async function persistOrder(
           paymentMethod === "maya"
             ? ORDER_STATUSES.PENDING_PAYMENT
             : ORDER_STATUSES.PENDING,
+        fulfillmentType,
         items: orderItems,
         paymentInfo: {
           checkoutId,
