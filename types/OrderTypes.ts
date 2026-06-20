@@ -1,5 +1,5 @@
 import { CartItem } from "./MenuTypes";
-import { OrderStatus } from "./orderConstants";
+import { FulfillmentType, OrderStatus } from "./orderConstants";
 
 /**
  * ORDER TYPES - TypeScript Interfaces
@@ -25,6 +25,7 @@ export interface OrderType {
   createdAt: string;
   updatedAt?: string;
   status: OrderStatus;
+  fulfillmentType: FulfillmentType;
 
   branchId?: string;
   customerId?: string;
@@ -58,7 +59,7 @@ export interface OrderType {
     customerEmail: string;
     customerPhone: string;
 
-    shippingAddress: {
+    shippingAddress?: {
       line1: string;
       line2?: string;
       city: string;
@@ -152,6 +153,7 @@ export interface OrdersApiResponse {
 
 export interface CreateOrderPayload {
   branchId: string;
+  fulfillmentType?: FulfillmentType;
   firstName: string;
   lastName: string;
   customerEmail: string;
@@ -166,7 +168,7 @@ export interface CreateOrderPayload {
   applyPromoCardDiscount?: boolean;
   voucherAmount?: number;
 
-  shippingAddress: {
+  shippingAddress?: {
     line1: string;
     line2?: string;
     city: string;
