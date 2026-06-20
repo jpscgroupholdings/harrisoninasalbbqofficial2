@@ -3,6 +3,8 @@
 import { useAdminUpdateOrder } from "@/hooks/api/admin/useAdminOrders";
 import {
   canTransitionTo,
+  FULFILLMENT_TYPE,
+  FulfillmentType,
   getActionConfig,
   ORDER_STATUSES,
   OrderStatus,
@@ -15,6 +17,7 @@ interface Props {
   status: OrderStatus;
   paymentMethod: "cod" | "maya";
   paymentStatus: PaymentStatus;
+  fulfillmentType?: FulfillmentType;
   role: "admin" | "customer";
 }
 
@@ -23,6 +26,7 @@ export function OrderActionButton({
   status,
   paymentMethod,
   paymentStatus,
+  fulfillmentType = FULFILLMENT_TYPE.DELIVERY,
   role,
 }: Props) {
   const nextStatuses = STATUS_TRANSITIONS[status];
@@ -34,9 +38,13 @@ export function OrderActionButton({
     mutate({ id: orderId, data: { status: nextStatus } });
   };
 
-  const allowedStatuses = nextStatuses.filter((nextStatus) =>
-    canTransitionTo(status, nextStatus, role),
-  );
+  const allowedStatuses = nextStatuses.filter((nextStatus) => {
+    if (!canTransitionTo(status, nextStatus, role)) return false;
+    if (fulfillmentType === FULFILLMENT_TYPE.PICKUP) {
+      return nextStatus !== ORDER_STATUSES.DISPATCH;
+    }
+    return nextStatus !== ORDER_STATUSES.READY_FOR_PICKUP;
+  });
 
   return (
     <div className="flex gap-2">
