@@ -5,7 +5,7 @@ import { OrderActions } from "@/app/customer/orders/components/OrderActions";
 import LoadingPage from "@/components/ui/LoadingPage";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { useOrderBase } from "@/hooks/api/shared/useOrdersBase";
-import { ORDER_STATUSES } from "@/types/orderConstants";
+import { FULFILLMENT_TYPE, ORDER_STATUSES } from "@/types/orderConstants";
 import { PAYMENT_STATUSES } from "@/types/paymentConstants";
 import { MailIcon, PhoneIcon, UserIcon } from "lucide-react";
 
@@ -30,6 +30,8 @@ const OrderDetailsModal = ({ orderId, role, variant }: OrderDetailsProps) => {
   const isMayaPaid =
     isMaya &&
     orderToView.paymentInfo?.paymentStatus === PAYMENT_STATUSES.PAYMENT_SUCCESS;
+  const fulfillmentLabel =
+    orderToView?.fulfillmentType === FULFILLMENT_TYPE.PICKUP ? "Pickup" : "Delivery";
 
   const content = (
     <>
@@ -102,6 +104,22 @@ const OrderDetailsModal = ({ orderId, role, variant }: OrderDetailsProps) => {
                     {orderToView.paymentInfo?.customerPhone ?? "—"}
                   </span>
                 </div>
+              </div>
+            </div>
+            <hr className="border-stone-100" />
+            {/* Fulfillment */}
+            <div>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
+                Fulfillment
+              </p>
+              <div className="rounded-lg bg-stone-50 px-3 py-2.5 text-sm text-gray-700">
+                {fulfillmentLabel}
+                {orderToView.fulfillmentType === FULFILLMENT_TYPE.PICKUP &&
+                  orderToView.branchSnapshot?.name && (
+                    <span className="block text-xs text-gray-400 mt-1">
+                      Pickup branch: {orderToView.branchSnapshot.name}
+                    </span>
+                  )}
               </div>
             </div>
             <hr className="border-stone-100" />
@@ -201,7 +219,9 @@ const OrderDetailsModal = ({ orderId, role, variant }: OrderDetailsProps) => {
                   >
                     {orderToView.paymentInfo?.paymentMethod === "maya"
                       ? "Maya"
-                      : "Cash on Delivery"}
+                      : orderToView.fulfillmentType === FULFILLMENT_TYPE.PICKUP
+                        ? "Cash on Pickup"
+                        : "Cash on Delivery"}
                   </span>
                 </div>
                 {orderToView.paymentInfo?.method && (
