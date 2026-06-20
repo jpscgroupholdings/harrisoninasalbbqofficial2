@@ -6,12 +6,20 @@ import { syne } from "@/app/font";
 import CartList from "./CartList";
 import BranchSelector from "./BranchSelector";
 import { CheckoutStep, useCheckout } from "@/contexts/CheckoutContext";
+import { FulfillmentSelector } from "./FulfillmentSelector";
 
 const CheckoutShell = ({ children }: { children: React.ReactNode }) => {
-  const { selectedBranch, openModal, orderDetails, handleNext } = useCheckout();
+  const {
+    selectedBranch,
+    openModal,
+    orderDetails,
+    handleFulfillmentTypeChange,
+    handleNext,
+  } = useCheckout();
 
   const pathname = usePathname();
   const details = pathname === CheckoutStep.DETAILS;
+  const isPickup = orderDetails.fulfillmentType === "pickup";
 
   return (
     <div className={`${syne.className} min-h-screen bg-slate-50`}>
@@ -23,18 +31,29 @@ const CheckoutShell = ({ children }: { children: React.ReactNode }) => {
             {/* Shared header */}
             <div className="pb-6">
               <h2 className="text-base font-semibold text-slate-900">
-                {details ? "Your details" : "Shipping address"}
+                {details
+                  ? "Your details"
+                  : isPickup
+                    ? "Pickup details"
+                    : "Shipping address"}
               </h2>
               <p className="text-xs text-slate-400 mt-0.5">
                 {details
                   ? "We'll use this to process and contact you about your order."
-                  : "Where should we deliver your order?"}
+                  : isPickup
+                    ? "Review where you will collect your order."
+                    : "Where should we deliver your order?"}
               </p>
             </div>
 
             <BranchSelector
               selectedBranch={selectedBranch}
               openModal={openModal}
+            />
+
+            <FulfillmentSelector
+              value={orderDetails.fulfillmentType}
+              onChange={handleFulfillmentTypeChange}
             />
 
             {children}
