@@ -2,8 +2,15 @@
 
 import { useMyAddress } from "@/app/customer/hooks/useMyAddress";
 import { authClient } from "@/lib/auth-client";
-import { useRouter } from "next/navigation"; // ✅ fix: next/navigation not next/router
-import { createContext, useContext, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useBranch } from "./BranchContext";
 import { useModalQuery } from "@/hooks/utils/useModalQuery";
 import { OrderFormState } from "@/app/customer/checkout/FormSchema";
@@ -17,8 +24,10 @@ type CheckoutContextType = {
   selectedBranch: ReturnType<typeof useBranch>["selectedBranch"];
   openModal: ReturnType<typeof useModalQuery>["openModal"];
   orderDetails: OrderFormState;
+  canSyncProfileDetails: boolean; // true if logged in user
   customerErrors: ReturnType<typeof useFormErrors>["customerErrors"];
   shippingErrors: ReturnType<typeof useFormErrors>["shippingErrors"];
+  syncCheckoutDetailsFromProfile: () => void;
   handleStateChange: (
     type: keyof OrderFormState,
     field: string,
@@ -42,6 +51,7 @@ export const CheckoutStep = {
 
 const CHECKOUT_DRAFT_KEY = "checkout_order_draft";
 
+// Single source for a blank checkout draft so comparisons and resets stay aligned.
 const getDefaultOrderDetails = (): OrderFormState => ({
   customer: {
     firstName: "",
@@ -69,12 +79,28 @@ const getDefaultOrderDetails = (): OrderFormState => ({
   },
 });
 
+// Treat the untouched default as "no draft" so it cannot block profile prefill.
+const isUntouchedOrderDetails = (orderDetails: OrderFormState) => {
+  const defaultOrderDetails = getDefaultOrderDetails();
+
+  return (
+    JSON.stringify(orderDetails.customer) ===
+      JSON.stringify(defaultOrderDetails.customer) &&
+    JSON.stringify(orderDetails.shippingAddress) ===
+      JSON.stringify(defaultOrderDetails.shippingAddress)
+  );
+};
+
+// Reads only on the browser; server render cannot access sessionStorage safely.
 const readCheckoutDraft = (): OrderFormState | null => {
   if (typeof window === "undefined") return null;
 
   try {
     const raw = window.sessionStorage.getItem(CHECKOUT_DRAFT_KEY);
-    return raw ? (JSON.parse(raw) as OrderFormState) : null;
+    if (!raw) return null;
+
+    const draft = JSON.parse(raw) as OrderFormState;
+    return isUntouchedOrderDetails(draft) ? null : draft;
   } catch {
     return null;
   }
@@ -99,14 +125,17 @@ export const CheckoutProvider = ({
   children: React.ReactNode;
 }) => {
   const { data: session, isPending } = authClient.useSession();
-  const { data: myAddress } = useMyAddress();
+  const { data: myAddress, isPending: isAddressPending } = useMyAddress();
   const { shippingAddress } = myAddress ?? {};
 
   const router = useRouter();
   const { selectedBranch } = useBranch();
   const { openModal } = useModalQuery();
 
-  const [orderDetails, setOrderDetails] = useState<OrderFormState>(getDefaultOrderDetails);
+  const [orderDetails, setOrderDetails] = useState<OrderFormState>(
+    getDefaultOrderDetails,
+  );
+  const hasUserEditedDraft = useRef(false);
 
   // prevent hydration issue
   const [hasLoadedDraft, setHasLoadedDraft] = useState(false);
@@ -114,20 +143,26 @@ export const CheckoutProvider = ({
   const { customerErrors, shippingErrors, validateField } =
     useFormErrors(orderDetails);
 
+  // Any direct input edit means the checkout draft should win over profile data.
   const handleStateChange = (
     type: keyof OrderFormState,
     field: string,
     value: string,
   ) => {
+    hasUserEditedDraft.current = true;
+
     setOrderDetails((prev) => ({
       ...prev,
       [type]: { ...prev[type], [field]: value },
     }));
   };
 
+  // Map pin changes are also user edits and should be persisted as draft data.
   const handleShippingCoordinatesChange = (
     coordinates: OrderFormState["shippingAddress"]["coordinates"],
   ) => {
+    hasUserEditedDraft.current = true;
+
     setOrderDetails((prev) => ({
       ...prev,
       shippingAddress: {
@@ -141,21 +176,83 @@ export const CheckoutProvider = ({
     router.push(CheckoutStep.SHIPPING);
   };
 
-  // Prevents hydration issue
+  // Shared profile mapper. Automatic prefill preserves typed customer fields;
+  // manual sync intentionally overwrites them from the latest profile data.
+  const applyProfileDetailsToDraft = useCallback(
+    (prev: OrderFormState, overwrite: boolean): OrderFormState => {
+      if (!session?.user) return prev;
+
+      return {
+        ...prev,
+        customer: {
+          ...prev.customer,
+          firstName:
+            overwrite || !prev.customer.firstName
+              ? session.user.firstName || ""
+              : prev.customer.firstName,
+          lastName:
+            overwrite || !prev.customer.lastName
+              ? session.user.lastName || ""
+              : prev.customer.lastName,
+          customerEmail:
+            overwrite || !prev.customer.customerEmail
+              ? session.user.email || ""
+              : prev.customer.customerEmail,
+          customerPhone:
+            overwrite || !prev.customer.customerPhone
+              ? session.user.phone || ""
+              : prev.customer.customerPhone,
+        },
+        shippingAddress: {
+          line1: shippingAddress?.line1 || "",
+          line2: shippingAddress?.line2 || "",
+          city: shippingAddress?.city || "",
+          cityCode: shippingAddress?.cityCode || "",
+          province: shippingAddress?.province || NCR_REGION.displayName,
+          region: shippingAddress?.region || NCR_REGION.name,
+          regionCode: shippingAddress?.regionCode || NCR_REGION.code,
+          barangayCode: shippingAddress?.barangayCode || "",
+          subMunicipality: shippingAddress?.subMunicipality || "",
+          subMunicipalityCode: shippingAddress?.subMunicipalityCode || "",
+          zipCode: shippingAddress?.zipCode || "",
+          country: "Philippines",
+          landmark: shippingAddress?.landmark || "",
+          placeName: "",
+          coordinates: shippingAddress?.coordinates,
+        },
+      };
+    },
+    [session, shippingAddress],
+  );
+
+  // Manual override for users who want to replace checkout fields with profile data.
+  const syncCheckoutDetailsFromProfile = useCallback(() => {
+    if (!session?.user) return;
+
+    hasUserEditedDraft.current = true;
+
+    setOrderDetails((prev) => applyProfileDetailsToDraft(prev, true));
+  }, [applyProfileDetailsToDraft, session]);
+
+  // Load storage after mount so SSR and the first client render both avoid sessionStorage.
   useEffect(() => {
     const draft = readCheckoutDraft();
 
-    if(draft){
-      setOrderDetails(draft)
+    if (draft) {
+      setOrderDetails(draft);
+      hasUserEditedDraft.current = true;
     }
 
     setHasLoadedDraft(true);
   }, []);
 
-  // Persist Changes
+  // Persist only after storage has loaded; never save the untouched default draft.
   useEffect(() => {
+    if (!hasLoadedDraft) return;
 
-    if(!hasLoadedDraft) return
+    if (!hasUserEditedDraft.current && isUntouchedOrderDetails(orderDetails)) {
+      return;
+    }
 
     window.sessionStorage.setItem(
       CHECKOUT_DRAFT_KEY,
@@ -163,38 +260,23 @@ export const CheckoutProvider = ({
     );
   }, [hasLoadedDraft, orderDetails]);
 
+  // First profile prefill: runs only while the customer has not edited the draft.
   useEffect(() => {
-    if (!session?.user || !myAddress) return;
-    if (readCheckoutDraft()) return;
+    if (!hasLoadedDraft || isPending || isAddressPending) return;
+    if (!session?.user || hasUserEditedDraft.current) return;
 
-    setOrderDetails((prev) => ({
-      ...prev,
-      customer: {
-        ...prev.customer,
-        firstName: prev.customer.firstName || session.user.firstName || "",
-        lastName: prev.customer.lastName || session.user.lastName || "",
-        customerEmail: prev.customer.customerEmail || session.user.email || "",
-        customerPhone: prev.customer.customerPhone || session.user.phone || "",
-      },
-      shippingAddress: {
-        line1: shippingAddress?.line1 || "",
-        line2: shippingAddress?.line2 || "",
-        city: shippingAddress?.city || "",
-        cityCode: shippingAddress?.cityCode || "",
-        province: shippingAddress?.province || NCR_REGION.displayName,
-        region: shippingAddress?.region || NCR_REGION.name,
-        regionCode: shippingAddress?.regionCode || NCR_REGION.code,
-        barangayCode: shippingAddress?.barangayCode || "",
-        subMunicipality: shippingAddress?.subMunicipality || "",
-        subMunicipalityCode: shippingAddress?.subMunicipalityCode || "",
-        zipCode: shippingAddress?.zipCode || "",
-        country: "Philippines",
-        landmark: shippingAddress?.landmark || "",
-        placeName: "",
-        coordinates: shippingAddress?.coordinates,
-      },
-    }));
-  }, [session, myAddress, shippingAddress]);
+    setOrderDetails((prev) => applyProfileDetailsToDraft(prev, false));
+  }, [
+    applyProfileDetailsToDraft,
+    hasLoadedDraft,
+    isPending,
+    isAddressPending,
+    session,
+  ]);
+
+  if (!hasLoadedDraft) {
+    return null;
+  }
 
   return (
     <CheckoutContext.Provider
@@ -204,8 +286,10 @@ export const CheckoutProvider = ({
         selectedBranch,
         openModal,
         orderDetails,
+        canSyncProfileDetails: Boolean(session?.user),
         customerErrors,
         shippingErrors,
+        syncCheckoutDetailsFromProfile,
         handleStateChange,
         handleShippingCoordinatesChange,
         handleNext,
@@ -216,3 +300,5 @@ export const CheckoutProvider = ({
     </CheckoutContext.Provider>
   );
 };
+
+export const useCheckoutContext = useCheckout;
