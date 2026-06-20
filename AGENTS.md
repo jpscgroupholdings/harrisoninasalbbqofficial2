@@ -20,6 +20,7 @@ The project uses:
 
 ## General Rules
 
+* Add proper comments what the function does or why
 * Do not rewrite large files unless necessary.
 * Prefer small, safe, incremental changes.
 * Preserve the existing project structure.
@@ -32,7 +33,7 @@ The project uses:
 * Prefer environment variables for config.
 * Keep code readable and maintainable.
 * Check some components if there is needed to be used
-* Add proper comments if important, 
+
 
 ## Development Priorities
 
