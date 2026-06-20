@@ -6,6 +6,12 @@
  * across the entire application.
  */
 
+export const FULFILLMENT_TYPE = {
+  DELIVERY: "delivery",
+  PICKUP: "pickup"
+} as const;
+
+export type FulfillmentType = (typeof FULFILLMENT_TYPE)[keyof typeof FULFILLMENT_TYPE];
 // ============================================
 // ORDER STATUSES
 // ============================================
