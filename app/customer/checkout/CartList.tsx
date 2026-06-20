@@ -29,6 +29,7 @@ import type { ActivePromotionsResponse } from "@/types/promotions.type";
 import { useQuery } from "@tanstack/react-query";
 import { PromotionDiscountDay } from "@/types/promotions/promotion-constant";
 import { OrderItemImage } from "../components/OrderItemImage";
+import { FULFILLMENT_TYPE } from "@/types/orderConstants";
 
 const createCodOrder = async (payload: CreateOrderPayload) => {
   const res = await fetch("/api/customer/cod-checkout", {
@@ -219,6 +220,7 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
   const pathname = usePathname();
   const isDetails = pathname === CheckoutStep.DETAILS;
   const isShipping = pathname === CheckoutStep.SHIPPING;
+  const isDelivery = orderDetails.fulfillmentType === FULFILLMENT_TYPE.DELIVERY;
 
   const { data: session } = authClient.useSession();
   const { data: promoCardStatus } = useQuery({
@@ -309,7 +311,7 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
         coordinates,
       });
     },
-    enabled: Boolean(selectedBranch?._id && coordinates),
+    enabled: Boolean(isDelivery && selectedBranch?._id && coordinates),
     staleTime: 60_000,
     retry: false,
   });
@@ -347,7 +349,9 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
     availableVoucherBalance,
     discountAdjustedTotal,
   );
-  const deliveryFeeAmount = deliveryFeeEstimate?.data.deliveryFee ?? 0;
+  const deliveryFeeAmount = isDelivery
+    ? (deliveryFeeEstimate?.data.deliveryFee ?? 0)
+    : 0;
   const displayTotalPrice = Number(
     Math.max(
       discountAdjustedTotal - parsedVoucherAmount + deliveryFeeAmount,
@@ -379,15 +383,16 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
   // check if current step has any errors or empty required fields
   const isDetailsIncomplete = !CustomerSchema.safeParse(orderDetails.customer)
     .success;
-  const isShippingIncomplete = !ShippingSchema.safeParse(
-    orderDetails.shippingAddress,
-  ).success;
+  const isShippingIncomplete =
+    isDelivery &&
+    !ShippingSchema.safeParse(orderDetails.shippingAddress).success;
 
   const isNextDisabled =
     !selectedBranch ||
     (isDetails && isDetailsIncomplete) ||
     (isShipping &&
-      (isShippingIncomplete || isDeliveryFeeLoading || isDeliveryFeeError));
+      (isShippingIncomplete ||
+        (isDelivery && (isDeliveryFeeLoading || isDeliveryFeeError))));
 
   const isActionPending = isPending || isCodPending;
 
@@ -437,8 +442,9 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
       return;
     }
 
-    const orderPayload = {
+    const orderPayload: CreateOrderPayload = {
       branchId: selectedBranch!._id,
+      fulfillmentType: orderDetails.fulfillmentType,
       firstName,
       lastName,
       customerEmail,
@@ -450,17 +456,19 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
       items: cartItems
         .filter((item) => item.quantity > 0)
         .map((item) => ({ _id: item._id, quantity: item.quantity })),
-      shippingAddress: {
-        line1,
-        line2,
-        city,
-        zipCode,
-        province,
-        country,
-        landmark,
-        coordinates,
-        placeName,
-      },
+      ...(isDelivery && {
+        shippingAddress: {
+          line1,
+          line2,
+          city,
+          zipCode,
+          province,
+          country,
+          landmark,
+          coordinates,
+          placeName,
+        },
+      }),
     };
 
     try {
@@ -637,7 +645,7 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
               <span>-₱{parsedVoucherAmount.toFixed(2)}</span>
             </div>
           )}
-          {(deliveryFeeAmount > 0 || isDeliveryFeeLoading) && (
+          {isDelivery && (deliveryFeeAmount > 0 || isDeliveryFeeLoading) && (
             <div className="flex justify-between gap-3 text-sm text-slate-500">
               <span>
                 Delivery fee
@@ -654,7 +662,7 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
               </span>
             </div>
           )}
-          {isDeliveryFeeError && (
+          {isDelivery && isDeliveryFeeError && (
             <p className="rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-medium text-red-500">
               Delivery fee could not be calculated. Please adjust your pin or
               try again.
@@ -710,7 +718,7 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
             </span>
           ) : (
             <span className="flex items-center gap-2 justify-center">
-              Next — Shipping details
+              Next — {isDelivery ? "Shipping details" : "Pickup details"}
               <DynamicIcon name="ArrowRight" size={14} />
             </span>
           )}
@@ -757,11 +765,11 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
               />
               <PaymentButton
                 id="cod"
-                label="Cash on Delivery"
+                label={isDelivery ? "Cash on Delivery" : "Cash on Pickup"}
                 description="Pay when your order arrives"
                 badge="No fee"
                 imageSrc="/images/cod-icon.png"
-                imageAlt="Cash on Delivery"
+                imageAlt={isDelivery ? "Cash on Delivery" : "Cash on Pickup"}
                 selectedPayment={selectedPayment}
                 setSelectedPayment={setSelectedPayment}
               />
