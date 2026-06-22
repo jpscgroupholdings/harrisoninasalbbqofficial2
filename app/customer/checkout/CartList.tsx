@@ -30,6 +30,7 @@ import { useQuery } from "@tanstack/react-query";
 import { PromotionDiscountDay } from "@/types/promotions/promotion-constant";
 import { OrderItemImage } from "../components/OrderItemImage";
 import { FULFILLMENT_TYPE } from "@/types/orderConstants";
+import { getCheckoutActionMode } from "./checkoutAction";
 
 const createCodOrder = async (payload: CreateOrderPayload) => {
   const res = await fetch("/api/customer/cod-checkout", {
@@ -221,6 +222,10 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
   const isDetails = pathname === CheckoutStep.DETAILS;
   const isShipping = pathname === CheckoutStep.SHIPPING;
   const isDelivery = orderDetails.fulfillmentType === FULFILLMENT_TYPE.DELIVERY;
+  const checkoutActionMode = getCheckoutActionMode({
+    pathname,
+    fulfillmentType: orderDetails.fulfillmentType,
+  });
 
   const { data: session } = authClient.useSession();
   const { data: promoCardStatus } = useQuery({
@@ -513,7 +518,7 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
     }
   };
 
-  const isSubmitStep = isShipping;
+  const isSubmitStep = checkoutActionMode === "submit";
 
   if (cartItems.length === 0) {
     return (
@@ -711,6 +716,11 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
               Placing order…
               <DynamicIcon name="Loader" size={14} className="animate-spin" />
             </span>
+          ) : isSubmitStep && !isDelivery ? (
+            <span className="flex items-center gap-2 justify-center">
+              Place Pickup Order
+              <DynamicIcon name="ShoppingBag" size={14} />
+            </span>
           ) : isSubmitStep ? (
             <span className="flex items-center gap-2 justify-center">
               Place Order
@@ -744,6 +754,19 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
       >
         Need to add more items?
       </Link>
+
+      <p className="mt-1 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs leading-5 text-slate-500">
+        By placing an order, you agree to our{" "}
+        <span className="font-semibold text-slate-600">Terms of Service</span>,{" "}
+        <Link
+          href="/privacy-policy"
+          className="font-semibold text-brand-color-600 hover:underline"
+        >
+          Privacy Policy
+        </Link>
+        , and delivery service guidelines, including use of your provided
+        contact details and delivery location to process the order.
+      </p>
 
       {showPaymentOptions && (
         <Modal
