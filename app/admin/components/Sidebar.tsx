@@ -144,7 +144,7 @@ const navSections: NavSection[] = [
         name: "Activity Logs",
         path: "/activity-logs",
         icon: "ScrollText",
-        permission: "orders.read",
+        permission: "activity-logs.read",
       },
       {
         name: "Store Management",
