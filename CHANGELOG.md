@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.3.0 - Activity Logs 2026-06-23
+
+* Added Activity Logs for tracking customer, staff, system, and webhook actions.
+* Added branch-aware filtering across inventory, activity logs, and operational data.
+* Improved multi-branch support for Super Admin, Admin, and Cashier roles.
+* Automatically creates default inventory records when adding new products.
+* Enhanced order details with better shipping address and payment information display.
+* Added payment confirmation validation to prevent processing unpaid orders.
+* Improved checkout experience with clearer customer guidance and validation messages.
+* Updated inventory and stock visibility for branch management.
+* Added AI configuration support for future intelligent features.
+
+
 ## 1.2.0 - Fulfillment Checkout 2026-06-22
 
 **Release Focus:** Introduces fulfillment-based ordering with support for both Delivery and Pickup workflows. This release adds fulfillment-aware checkout validation, order processing, status management, and customer order tracking.
