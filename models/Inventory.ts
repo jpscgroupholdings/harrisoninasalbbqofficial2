@@ -33,7 +33,7 @@ const InventorySchema = new Schema(
       type: Number,
       required: true,
       min: 0,
-      default: 0,
+      default: 20,
     },
 
     reservations: {
