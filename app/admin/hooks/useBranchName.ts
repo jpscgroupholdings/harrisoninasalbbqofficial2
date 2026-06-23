@@ -5,7 +5,7 @@ import { STAFF_ROLES } from "@/types/staff";
 export const useBranchName = () => {
   const { selectedBranch, isLoadingBranches } = useAdminBranchContext();
   const staffData = useStaffContext();
-  const isSuperAdmin = staffData?.role === STAFF_ROLES.SUPERADMIN;
+  const isSuperAdmin = staffData?.role !== STAFF_ROLES.ADMIN ;
 
   const branchName = isLoadingBranches
     ? "Loading..."
