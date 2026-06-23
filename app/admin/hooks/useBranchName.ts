@@ -7,11 +7,11 @@ export const useBranchName = () => {
   const staffData = useStaffContext();
   const isSuperAdmin = staffData?.role === STAFF_ROLES.SUPERADMIN;
 
-  const dashboardBranchName = isLoadingBranches
+  const branchName = isLoadingBranches
     ? "Loading..."
     : isSuperAdmin
       ? (selectedBranch?.name ?? "All Branches")
       : (staffData?.branch?.name ?? "Assigned Branch");
 
-  return { dashboardBranchName };
+  return { branchName };
 };

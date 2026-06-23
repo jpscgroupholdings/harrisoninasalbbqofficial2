@@ -19,7 +19,7 @@ const OrdersPage = () => {
   const [limit, setLimit] = useState(10);
 
   const { selectedBranchId } = useAdminBranchContext();
-  const { dashboardBranchName } = useBranchName();
+  const { branchName } = useBranchName();
 
   // ✅ pass all filters to the server
   const { data, isPending } = useAdminOrders({
@@ -54,7 +54,7 @@ const OrdersPage = () => {
       <div>
         <h1 className="text-3xl font-bold text-gray-800 mb-2">
           Orders Management -{" "}
-          <span className="text-brand-color-500">{dashboardBranchName}</span>
+          <span className="text-brand-color-500">{branchName}</span>
         </h1>
         <p className="text-gray-500">View and manage all customers order</p>
       </div>

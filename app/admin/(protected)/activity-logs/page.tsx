@@ -30,7 +30,7 @@ const ActivityLogsPage = () => {
   const [actorFilter, setActorFilter] = useState<string>("all");
 
   const { selectedBranchId } = useAdminBranchContext();
-  const { dashboardBranchName } = useBranchName();
+  const { branchName } = useBranchName();
 
   const params: ActivityLogParams = {
     page: currentPage,
@@ -54,7 +54,7 @@ const ActivityLogsPage = () => {
       <div>
         <h1 className="text-3xl font-bold text-gray-800 mb-2">
           Activity Logs -{" "}
-          <span className="text-brand-color-500">{dashboardBranchName}</span>
+          <span className="text-brand-color-500">{branchName}</span>
         </h1>
         <p className="text-gray-500">
           Track all actions performed by staff, customers, and system events
