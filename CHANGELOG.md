@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.1 - Map Polygon - 2026-06-23
+
+**Release Focus:** Introduces the polygon area where declared coordinates of nearby places from makati - now the customer's marker will check if inside of polygon instead of the whole radius of metro manila. Also, decreased the radius to ensure the area is within the nearby area.
+
 ## 1.3.0 - Activity Logs 2026-06-23
 
 * Added Activity Logs for tracking customer, staff, system, and webhook actions.
