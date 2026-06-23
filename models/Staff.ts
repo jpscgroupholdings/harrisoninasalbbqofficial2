@@ -1,3 +1,4 @@
+import { STAFF_ROLES } from "@/types/staff";
 import mongoose from "mongoose";
 
 export type StaffRole = "superadmin" | "admin" | "cashier";
@@ -10,7 +11,7 @@ export interface IStaff {
   password: string;
   phone?: string;
   role: StaffRole;
-  branch: mongoose.Schema.Types.ObjectId;
+  branch?: mongoose.Schema.Types.ObjectId | null;
   isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -58,7 +59,10 @@ const staffSchema = new mongoose.Schema<IStaff>(
     branch: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Branch",
-      required: [true, "Branch assignment is required"],
+      // Superadmin and cashier are cross-branch roles; only admin requires a branch
+      required: function (this: { role: StaffRole }) {
+        return this.role === STAFF_ROLES.ADMIN;
+      },
     },
     isActive: {
       type: Boolean,
