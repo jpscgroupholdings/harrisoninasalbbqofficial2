@@ -34,7 +34,7 @@ import { SelectField } from "@/components/ui/SelectField";
 const ROLES: { value: StaffRole; label: string }[] = [
   { value: STAFF_ROLES.SUPERADMIN, label: "Super Admin" },
   { value: STAFF_ROLES.ADMIN, label: "Admin" },
-  { value: STAFF_ROLES.CASHIER, label: "Cashier" },
+  { value: STAFF_ROLES.CASHIER, label: "Cashier/CSR" },
 ];
 
 const emptyForm: StaffFormData = {
@@ -46,6 +46,9 @@ const emptyForm: StaffFormData = {
   role: "",
   branch: "",
 };
+
+// Superadmin and cashier are cross-branch roles — no branch assignment needed
+const roleRequiresBranch = (role: StaffRole | "") => role === STAFF_ROLES.ADMIN;
 
 export default function StaffManagement() {
   const [showModal, setShowModal] = useState(false);
@@ -91,7 +94,9 @@ export default function StaffManagement() {
       e.password = "Password must be at least 8 characters.";
 
     if (!form.role) e.role = "Role is required.";
-    if (!form.branch) e.branch = "Branch is required.";
+    // Branch is only required for admin role — superadmin/cashier are cross-branch
+    if (roleRequiresBranch(form.role) && !form.branch)
+      e.branch = "Branch is required.";
     return e;
   };
 
@@ -137,7 +142,14 @@ export default function StaffManagement() {
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    setForm((prev) => {
+      const updated = { ...prev, [name]: value };
+      // Clear branch when role changes to a cross-branch role
+      if (name === "role" && !roleRequiresBranch(value as StaffRole)) {
+        updated.branch = "";
+      }
+      return updated;
+    });
     setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
@@ -289,17 +301,23 @@ export default function StaffManagement() {
 
                   {/* Branch */}
                   <TableCell>
-                    <div className="flex items-center gap-1.5">
-                      <span
-                        style={{ fontFamily: "'DM Mono', monospace" }}
-                        className="text-xs bg-gray-500 py-0.5 px-2 rounded-md text-white"
-                      >
-                        {staff.branch?.code}
+                    {staff.branch ? (
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          style={{ fontFamily: "'DM Mono', monospace" }}
+                          className="text-xs bg-gray-500 py-0.5 px-2 rounded-md text-white"
+                        >
+                          {staff.branch.code}
+                        </span>
+                        <span className="text-sm text-gray-600">
+                          {staff.branch.name}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-gray-400 italic">
+                        All branches ({ROLE_LABELS[staff.role]})
                       </span>
-                      <span className="text-sm text-gray-600">
-                        {staff.branch?.name}
-                      </span>
-                    </div>
+                    )}
                   </TableCell>
 
                   {/* Status */}
@@ -426,7 +444,6 @@ export default function StaffManagement() {
             </p>
             <div className="grid grid-cols-2 gap-3 mb-6">
               {/* Role dropdown */}
-
               <SelectField
                 label="Role"
                 name="role"
@@ -436,16 +453,22 @@ export default function StaffManagement() {
                   { value: "", label: "Select Role", disabled: true },
                   ...ROLES.map((r) => ({ value: r.value, label: r.label })),
                 ]}
-                 errors={errors.role}
+                errors={errors.role}
                 required
               />
-
-              {/* Branch dropdown */}
+              {/* Branch dropdown — only for admin role; superadmin/cashier are cross-branch */}
               <SelectField
                 label="Branch"
                 name="branch"
+                disabled={!roleRequiresBranch(form.role)}
                 options={[
-                  { value: "", label: "Select a branch", disabled: true },
+                  {
+                    value: "",
+                    label: form.role
+                      ? `All Branches`
+                      : "Select a role first",
+                    disabled: roleRequiresBranch(form.role),
+                  },
                   ...branches
                     .filter((b) => b.isActive)
                     .map((b) => ({
@@ -458,6 +481,7 @@ export default function StaffManagement() {
                 errors={errors.branch}
                 required
               />
+              
             </div>
 
             {/* Actions */}
