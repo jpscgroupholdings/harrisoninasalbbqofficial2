@@ -11,7 +11,6 @@ import { FulfillmentSelector } from "./FulfillmentSelector";
 const CheckoutShell = ({ children }: { children: React.ReactNode }) => {
   const {
     selectedBranch,
-    openModal,
     orderDetails,
     handleFulfillmentTypeChange,
     handleNext,
@@ -48,7 +47,6 @@ const CheckoutShell = ({ children }: { children: React.ReactNode }) => {
 
             <BranchSelector
               selectedBranch={selectedBranch}
-              openModal={openModal}
             />
 
             <FulfillmentSelector

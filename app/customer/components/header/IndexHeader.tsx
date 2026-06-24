@@ -3,11 +3,10 @@
 import { useState, useEffect } from "react";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
-import { MODAL_TYPES, useModalQuery } from "@/hooks/utils/useModalQuery";
+import { useModalQuery } from "@/hooks/utils/useModalQuery";
 import { DynamicIcon } from "@/components/ui/DynamicIcon";
 
 import BrandLogo from "@/components/BrandLogo";
-import { HeaderBranchButton } from "./HeaderBranchButton";
 import { HeaderNavLinks } from "./HeaderNavLinks";
 import { HeaderCartActions } from "./HeaderCartActions";
 import { HeaderAuthDesktop } from "./HeaderAuthDesktop";
@@ -15,10 +14,14 @@ import { HeaderMobileMenu } from "./HeaderAuthMobile";
 import { HeaderModals } from "./HeaderModal";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
+import { useBranch } from "@/contexts/BranchContext";
+import BranchSelector from "../../checkout/BranchSelector";
 
 const Header = () => {
   const { data: session, isPending: sessionPending } = authClient.useSession();
   const router = useRouter();
+
+  const { selectedBranch } = useBranch();
 
   const { modal: modalType, openModal, closeModal } = useModalQuery();
 
@@ -63,9 +66,11 @@ const Header = () => {
     >
       <div className="max-w-400 mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between lg:justify-around h-18 lg:h-20">
-          <BrandLogo subdomain="food"/>
+          <BrandLogo subdomain="food" />
 
-          <HeaderBranchButton mounted={mounted} onOpen={openModal} />
+          <div className="max-w-60">
+            <BranchSelector selectedBranch={selectedBranch} />
+          </div>
 
           <HeaderNavLinks />
 
