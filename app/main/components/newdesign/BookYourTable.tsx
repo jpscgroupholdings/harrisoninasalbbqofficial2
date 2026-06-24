@@ -48,7 +48,7 @@ const BookYourTable = () => {
                 <span className="font-bold text-brand-color-500">Viber</span>{" "}
                 and we'll get your table sorted in no time. We're open everyday
               </p>
-              {!isLoading && days.length > 0 && (
+              {!isLoading && days.length > 0 && days && (
                 <>
                   <p className="font-bold text-brand-color-500">
                     <span className="font-semibold">{formatDays(days)}</span>
