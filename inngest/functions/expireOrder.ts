@@ -11,10 +11,8 @@ export const expireOrder = inngest.createFunction(
   { id: "expire-pending-order", triggers: { event: "order/created" } },
   async ({ event, step }) => {
     const sleepDuration = event.data.paymentMethod === "maya" ? "30m" : "4h";
-
     // Wait 30 minutes before doing anything
     await step.sleep("wait-for-payment-window", sleepDuration);
-
     // After the payment/order window, check and expire if still awaiting action.
     await step.run("check-and-expire-order", async () => {
       await connectDB();
@@ -25,25 +23,33 @@ export const expireOrder = inngest.createFunction(
         return { skipped: true, reason: "Order not found" };
       }
 
-      const expirableStatus =
-        order.paymentInfo?.paymentMethod === "maya"
-          ? ORDER_STATUSES.PENDING_PAYMENT
-          : ORDER_STATUSES.PENDING;
+      const expirableStatuses = [
+        ORDER_STATUSES.PENDING_PAYMENT,
+        ORDER_STATUSES.PENDING,
+      ];
 
-      // Only expire if still waiting (not paid, cancelled, etc.)
-      if (order.status !== expirableStatus) {
-        return { skipped: true, reason: `Order is already ${order.status}` };
-      }
-
-      if (
-        order.paymentInfo?.paymentMethod === "maya" &&
-        order.paymentInfo?.paymentStatus === PAYMENT_STATUSES.PAYMENT_SUCCESS
-      ) {
+      if (!expirableStatuses.includes(order.status)) {
         return {
           skipped: true,
-          reason: "Payment method is maya and already paid.",
+          reason: `Order is in status "${order.status}" — already progressed beyond expirable states`,
         };
       }
+
+      // Check if Maya payment is genuinely confirmed
+      const isPaymentConfirmed =
+        order.paymentInfo?.paymentMethod === "maya" &&
+        order.paymentInfo?.paymentStatus === PAYMENT_STATUSES.PAYMENT_SUCCESS &&
+        !!order.paymentInfo?.paymentId;
+
+      if (isPaymentConfirmed) {
+        return {
+          skipped: true,
+          reason: `Maya payment is confirmed (paymentId: ${order.paymentInfo?.paymentId}, status: ${order.paymentInfo?.paymentStatus}) — order is legitimately paid`,
+        };
+      }
+
+      // Determine expiration reason for logging before we mutate anything
+      const expirationReason = resolveExpirationReason(order);
 
       // Release reserved inventory for each item
       await Inventory.updateMany(
@@ -55,7 +61,6 @@ export const expireOrder = inngest.createFunction(
         order.customerId,
         order.total?.voucherDiscountAmount ?? 0,
       );
-
       // Mark order as expired
       await Order.findByIdAndUpdate(order._id, {
         status: ORDER_STATUSES.EXPIRED,
@@ -73,14 +78,57 @@ export const expireOrder = inngest.createFunction(
         },
         category: "order",
         action: "order.expired",
-        summary: `Order ${event.data.referenceNumber} expired automatically`,
+        summary: `Order ${event.data.referenceNumber} expired automatically — ${expirationReason}`,
         metadata: {
-          paymentMethod: event.data.paymentMethod,
-          previousStatus: expirableStatus,
+          paymentMethod:
+            order.paymentInfo?.paymentMethod ?? event.data.paymentMethod,
+          previousStatus: order.status,
+          expirationReason,
         },
       });
 
-      return { expired: true, orderId: order._id };
+      return { expired: true, orderId: order._id, reason: expirationReason };
     });
   },
 );
+
+function resolveExpirationReason(order: {
+  status: string;
+  paymentInfo?: {
+    paymentMethod?: string;
+    paymentStatus?: string;
+    paymentId?: string;
+  };
+}): string {
+  if (order.status === ORDER_STATUSES.PENDING_PAYMENT) {
+    return "Payment window elapsed — Maya payment was never completed";
+  }
+
+  if (order.status === ORDER_STATUSES.PENDING) {
+    const method = order.paymentInfo?.paymentMethod;
+
+    if (method === "maya") {
+      const hasId = !!order.paymentInfo?.paymentId;
+      const hasSuccess =
+        order.paymentInfo?.paymentStatus === PAYMENT_STATUSES.PAYMENT_SUCCESS;
+
+      if (!hasId && !hasSuccess) {
+        return "Order reached pending status without a confirmed Maya payment — possible bypass attempt";
+      }
+      if (!hasId) {
+        return "Payment status shows success but no paymentId recorded — treating as unconfirmed";
+      }
+      if (!hasSuccess) {
+        return "PaymentId exists but status is not success — payment likely failed or is still processing";
+      }
+    }
+
+    if (method === "cod") {
+      return "COD order exceeded the confirmation window without being accepted by staff";
+    }
+
+    return `Order in pending status exceeded expiration window (method: ${method ?? "unknown"})`;
+  }
+
+  return `Order in status "${order.status}" exceeded expiration window`;
+}
