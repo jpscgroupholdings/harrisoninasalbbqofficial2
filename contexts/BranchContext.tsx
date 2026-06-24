@@ -1,6 +1,13 @@
 "use client";
 
-import { createContext, ReactNode, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { Branch } from "@/types/branch";
 import { useBranches } from "@/hooks/api/useBranch";
 import { useModalQuery } from "@/hooks/utils/useModalQuery";
@@ -11,6 +18,9 @@ type BranchContextType = {
 
   userLocation: [number, number] | null;
   setUserLocation: (location: [number, number] | null) => void;
+
+  openBranchSelector: () => void;
+  registerBranchSelectorOpener: (fn: () => void) => void;
 };
 
 const BranchContext = createContext<BranchContextType | null>(null);
@@ -40,10 +50,22 @@ const saveLocation = (location: [number, number] | null) => {
 };
 
 export const BranchProvider = ({ children }: { children: ReactNode }) => {
-  const {closeModal} = useModalQuery();
+  const { closeModal } = useModalQuery();
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [userLocation, setUserLocationState] = useState<[number, number] | null>(loadLocation);
+  const [userLocation, setUserLocationState] = useState<
+    [number, number] | null
+  >(loadLocation);
   const { data: branches = [] } = useBranches();
+
+  const openerRef = useRef<(() => void) | null>(null);
+
+  const registerBranchSelectorOpener = (fn: () => void) => {
+    openerRef.current = fn;
+  };
+
+  const openBranchSelector = () => {
+    openerRef.current?.();
+  };
 
   // Load selected branch ID from sessionStorage on mount
   useEffect(() => {
@@ -67,7 +89,7 @@ export const BranchProvider = ({ children }: { children: ReactNode }) => {
       sessionStorage.removeItem(SELECTED_BRANCH_KEY);
     }
 
-    closeModal()
+    closeModal();
   };
 
   const setUserLocation = (location: [number, number] | null) => {
@@ -76,7 +98,17 @@ export const BranchProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <BranchContext value={{ selectedBranch, setSelectedBranch, userLocation, setUserLocation }}>
+    <BranchContext
+      value={{
+        selectedBranch,
+        setSelectedBranch,
+        userLocation,
+        setUserLocation,
+
+        openBranchSelector,
+        registerBranchSelectorOpener
+      }}
+    >
       {children}
     </BranchContext>
   );
