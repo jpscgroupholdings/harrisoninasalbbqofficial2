@@ -5,7 +5,7 @@ import { BranchProduct } from "@/hooks/api/useBranchProductInfinite";
 import { STOCK_STATUSES } from "@/types/inventory_types";
 import { ShoppingBag } from "lucide-react";
 import ProductDetailModal from "./ProductDetailsModal";
-import { MODAL_TYPES, useModalQuery } from "@/hooks/utils/useModalQuery";
+import { toast } from "sonner";
 import { ITEM_TYPES } from "@/types/products";
 import { getStoreStatus } from "@/lib/storeStatus";
 import { useSettings } from "@/hooks/api/useSettings";
@@ -83,7 +83,6 @@ const ProductCard: React.FC<ProductCardProps> = ({
   hasBranch,
   selectedBranch,
 }) => {
-  const { openModal } = useModalQuery();
   const { data: operatingSched } = useSettings();
   const [showDetail, setShowDetail] = useState(false);
 
@@ -223,7 +222,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
               type="button"
               onClick={() => {
                 !selectedBranch
-                  ? openModal(MODAL_TYPES.MAP)
+                  ? toast.warning("Please select a branch first")
                   : setShowDetail(true);
               }}
               disabled={isOutOfStock || !storeStatus?.isOpen}

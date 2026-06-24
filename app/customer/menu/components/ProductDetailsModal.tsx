@@ -8,7 +8,6 @@ import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
 import Modal from "@/components/ui/Modal";
 import { syne } from "@/app/font";
-import { MODAL_TYPES, useModalQuery } from "@/hooks/utils/useModalQuery";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -94,7 +93,6 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   onClose,
 }) => {
   const { addToCart } = useCart();
-  const { openModal: handleOpenModal } = useModalQuery();
 
   const [activeTab, setActiveTab] = useState<"info" | "desc">("info");
   const [mainQty, setMainQty] = useState(1);
@@ -272,7 +270,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               <button
                 onClick={() =>
                   !selectedBranch
-                    ? handleOpenModal(MODAL_TYPES.MAP)
+                    ? toast.warning("Please select a branch first")
                     : handleAddToCart()
                 }
                 disabled={isAdded}
