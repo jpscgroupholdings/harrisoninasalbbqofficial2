@@ -1,4 +1,16 @@
 # Changelog
+## [1.3.3] - 2026-06-24
+### Changed
+- **Branch Selector** — Replaced map modal with a lightweight dropdown listing
+  all available branches. Customers can now select a branch directly without
+  triggering a map interaction.
+
+## [1.3.2] - 2026-06-24
+### Fixed
+- **Order Expiration (Maya)** — Inngest background job now correctly expires
+  pending orders for Maya payments where the customer did not complete payment.
+  Previously, orders could remain in a `pending` state indefinitely if no
+  `paymentId` was recorded or the payment status never reached `success`.
 
 ## 1.3.1 - Map Polygon - 2026-06-23
 
