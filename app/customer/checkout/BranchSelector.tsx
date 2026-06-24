@@ -33,26 +33,25 @@ const BranchSelector = ({ selectedBranch }: BranchSelectorProps) => {
         onChange={() => {}}
         options={[{ value: "", label: "Select Branch", disabled: true }]}
         className="border-none text-brand-color-500"
+        required
       />
     );
   }
 
-  function truncate(str: string, max = 40) {
-    return str.length > max ? str.slice(0, max) + "…" : str;
-  }
-
   return (
     <SelectField
+      label={selectedBranch ? "Selected branch" : ""}
       value={selectedBranch ? selectedBranch._id : ""}
       onChange={handleChange}
       options={[
         { value: "", label: "Select Branch", disabled: true },
         ...branches.map((branch) => ({
           value: branch._id,
-          label: truncate(`${branch.name} - ${branch.address}`),
+          label: `${branch.name} - ${branch.address}`,
         })),
       ]}
       className="border-none text-brand-color-500 whitespace-nowrap overflow-hidden text-ellipsis wrap-break-word"
+      required
     />
   );
 };

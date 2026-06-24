@@ -14,14 +14,11 @@ import { HeaderMobileMenu } from "./HeaderAuthMobile";
 import { HeaderModals } from "./HeaderModal";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { useBranch } from "@/contexts/BranchContext";
-import BranchSelector from "../../checkout/BranchSelector";
+import HeaderBranchSelector from "./HeaderBranchSelector";
 
 const Header = () => {
   const { data: session, isPending: sessionPending } = authClient.useSession();
   const router = useRouter();
-
-  const { selectedBranch } = useBranch();
 
   const { modal: modalType, openModal, closeModal } = useModalQuery();
 
@@ -67,10 +64,7 @@ const Header = () => {
       <div className="max-w-400 mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between lg:justify-around h-18 lg:h-20">
           <BrandLogo subdomain="food" />
-
-          <div className="max-w-60">
-            <BranchSelector selectedBranch={selectedBranch} />
-          </div>
+          <HeaderBranchSelector />
 
           <HeaderNavLinks />
 
