@@ -135,6 +135,37 @@ const BranchModal = ({
       </div>
 
 
+      {/* Opening Soon Toggle */}
+      <div className="flex items-center gap-3 mb-4">
+        <button
+          type="button"
+          role="switch"
+          aria-checked={form.openingSoon}
+          onClick={() =>
+            setForm((prev) => ({ ...prev, openingSoon: !prev.openingSoon }))
+          }
+          className={[
+            "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out",
+            "focus-visible:ring-2 focus-visible:ring-brand-color-400 focus-visible:ring-offset-2 outline-none",
+            form.openingSoon ? "bg-brand-color-500" : "bg-gray-200",
+          ].join(" ")}
+        >
+          <span
+            aria-hidden="true"
+            className={[
+              "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+              form.openingSoon ? "translate-x-5" : "translate-x-0",
+            ].join(" ")}
+          />
+        </button>
+        <label className="text-sm font-medium text-slate-700 select-none">
+          Opening Soon
+        </label>
+        <span className="text-xs text-slate-400">
+          Mark this branch as not yet ready for orders
+        </span>
+      </div>
+
       {/* Coordinates Section */}
       <div className="mb-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
         <div className="flex items-center gap-2 mb-4">
