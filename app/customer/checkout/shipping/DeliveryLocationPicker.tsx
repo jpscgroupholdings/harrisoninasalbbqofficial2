@@ -18,8 +18,12 @@ import {
   METRO_MANILA_CENTER,
   DELIVERY_AREA_POLYGON,
   OUTSIDE_DELIVERY_AREA_MESSAGE,
+  CITY_RESTRICTION_MESSAGE,
+  isCityAllowedForDelivery,
+  ALLOWED_DELIVERY_CITIES,
 } from "@/lib/deliveryArea";
 import { InputField } from "@/components/ui/InputField";
+import { toast } from "sonner";
 
 type DeliveryCoordinates = MapCoordinates;
 
@@ -138,6 +142,7 @@ const DeliveryLocationPicker = ({
     setQuery(addressQuery);
   }, [addressQuery]);
 
+  // reverseGeocode - coordinates will turn into actual name
   const resolveAddressFromCoordinates = useCallback(
     async (coordinates: DeliveryCoordinates) => {
       const requestId = ++resolveRequestIdRef.current;
@@ -160,6 +165,14 @@ const DeliveryLocationPicker = ({
 
         const address = data.address;
         if (!address) return;
+
+        // Temporary city-level restriction: if the resolved address does not
+        // belong to an allowed city, reject the selection and show a message.
+        if (!isCityAllowedForDelivery(address)) {
+          setLocationError(CITY_RESTRICTION_MESSAGE);
+          toast.info(CITY_RESTRICTION_MESSAGE);
+          return;
+        }
 
         const subMunicipality =
           address.city_district ?? address.quarter ?? address.suburb;
@@ -194,8 +207,12 @@ const DeliveryLocationPicker = ({
 
         if (requestId !== resolveRequestIdRef.current) return;
 
+        // City check passed — commit the selection to the parent.
+        setLocationError(null);
+        onChange(coordinates);
         setResolvedAddress(resolved);
         onAddressResolved?.(resolved);
+        setTimeout(() => markerRef.current?.openPopup(), 300);
       } catch {
         // Reverse geocoding is a convenience; the pinned coordinates remain authoritative.
       } finally {
@@ -205,7 +222,7 @@ const DeliveryLocationPicker = ({
         }
       }
     },
-    [onAddressResolved],
+    [onChange, onAddressResolved, onResolvingAddressChange],
   );
 
   const selectCoordinates = useCallback(
@@ -220,12 +237,11 @@ const DeliveryLocationPicker = ({
         return;
       }
 
-      setLocationError(null);
-      onChange(nextCoordinates);
+      // Polygon check passed — resolve the address (which also runs the
+      // city-level restriction and calls onChange only when both checks pass).
       resolveAddressFromCoordinates(nextCoordinates);
-      setTimeout(() => markerRef.current?.openPopup(), 300);
     },
-    [onChange, resolveAddressFromCoordinates],
+    [resolveAddressFromCoordinates],
   );
 
   const searchAddress = useCallback(async (searchText: string) => {
@@ -252,10 +268,27 @@ const DeliveryLocationPicker = ({
       }
 
       const data = (await response.json()) as SearchResult[];
-      setResults(data);
 
-      if (data.length === 0) {
-        setLocationError("No matching address found. Try a nearby landmark.");
+      // Temporary city restriction: pre-filter search results whose
+      // display_name does not mention any allowed city. When
+      // ALLOWED_DELIVERY_CITIES is empty, no filtering is applied.
+      const filtered =
+        ALLOWED_DELIVERY_CITIES.length === 0
+          ? data
+          : data.filter((result) =>
+              ALLOWED_DELIVERY_CITIES.some((city) =>
+                result.display_name.toLowerCase().includes(city),
+              ),
+            );
+
+      setResults(filtered);
+
+      if (filtered.length === 0) {
+        setLocationError(
+          data.length === 0
+            ? "No matching address found. Try a nearby landmark."
+            : CITY_RESTRICTION_MESSAGE,
+        );
       }
     } catch (searchError) {
       setResults([]);
@@ -450,10 +483,9 @@ const DeliveryLocationPicker = ({
       <div className="flex items-start gap-2 text-xs text-slate-500">
         <DynamicIcon name="MapPinned" size={15} className="mt-0.5 shrink-0" />
         <p>
-          Click inside the highlighted service area to place your delivery pin
-          (Makati, Taguig/BGC, Pasay, Mandaluyong, Pasig, Parañaque). Drag the
-          pin to fine-tune it, or allow location access to start from your
-          current position.
+          {ALLOWED_DELIVERY_CITIES.length > 0
+            ? "Delivery is currently limited to Mandaluyong, Pasay, and Makati only. Search, click, or drag within these areas to set your pin."
+            : "Click inside the highlighted service area to place your delivery pin (Makati, Taguig/BGC, Pasay, Mandaluyong, Pasig, Parañaque). Drag the pin to fine-tune it, or allow location access to start from your current position."}
         </p>
       </div>
     </div>
