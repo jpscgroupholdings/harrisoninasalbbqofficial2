@@ -16,6 +16,7 @@ import { DynamicIcon } from "@/components/ui/DynamicIcon";
 import { Product } from "@/types/products";
 import { useProductsInfinite } from "@/hooks/api/useInfiniteProducts";
 import { useDiscountedProducts } from "@/hooks/api/useDiscountedProducts";
+import { FetchError } from "@/components/ui/FetchError";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -100,6 +101,7 @@ const MenuSection = () => {
     isLoading: isAllLoading,
     isError: isAllError,
     refetch: refetchAll,
+    error: allError,
   } = useProductsInfinite({
     limit: 20,
     categoryName: activeCategory !== "All" ? activeCategory : undefined,
@@ -118,6 +120,7 @@ const MenuSection = () => {
     isLoading: isBranchLoading,
     isError: isBranchError,
     refetch: refetchBranch,
+    error: branchError,
   } = useBranchProductInfinite(branchId ?? "", {
     limit: 20,
     categoryName: activeCategory !== "All" ? activeCategory : undefined,
@@ -144,6 +147,7 @@ const MenuSection = () => {
   const isLoading = branchId ? isBranchLoading : isAllLoading;
   const isError = branchId ? isBranchError : isAllError;
   const refetch = branchId ? refetchBranch : refetchAll;
+  const error = branchId ? branchError : allError;
 
   useScrollToSection();
 
@@ -307,7 +311,6 @@ const MenuSection = () => {
     <>
       {groupedItems.length > 0 || discountedProducts.length > 0 ? (
         <div className="space-y-12">
-          
           {activeCategory === "All" && <DiscountedProductsShelf />}
 
           {groupedItems.map(({ categoryName, subcategoryGroups }) => (
@@ -367,23 +370,12 @@ const MenuSection = () => {
           </h3>
         </div>
       ) : isError ? (
-        <div className="text-center py-20">
-          <DynamicIcon
-            name="Search"
-            size={32}
-            className="mx-auto text-red-200 mb-4"
-          />
-          <h3 className="text-base font-semibold text-gray-500 mb-1">
-            Failed to load products
-          </h3>
-          <p className="text-sm text-gray-400 mb-4">Something went wrong</p>
-          <button
-            onClick={() => refetch()}
-            className="underline text-sm text-brand-color-500 hover:text-brand-color-600 cursor-pointer"
-          >
-            Try again
-          </button>
-        </div>
+        <FetchError
+          onRetry={refetch}
+          error={error}
+          title="Failed to load products"
+          description="Our menu couldn't be fetched right now. Please try again."
+        />
       ) : (
         <div className="text-center py-20">
           <DynamicIcon
