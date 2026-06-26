@@ -156,6 +156,9 @@ type DeliveryFeeEstimateResponse = {
     distanceKm: number;
     billableKm: number;
     deliveryFee: number;
+    freeDeliveryEligible: boolean;
+    effectiveDeliveryFee: number;
+    freeDeliveryReason?: string;
   };
 };
 
@@ -296,39 +299,6 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
     placeName,
   } = orderDetails?.shippingAddress;
   const {
-    data: deliveryFeeEstimate,
-    isError: isDeliveryFeeError,
-    isLoading: isDeliveryFeeLoading,
-  } = useQuery({
-    queryKey: [
-      "customer",
-      "delivery-fee",
-      selectedBranch?._id,
-      coordinates?.lat,
-      coordinates?.lng,
-    ],
-    queryFn: () => {
-      if (!selectedBranch?._id || !coordinates) {
-        throw new Error("Branch and delivery pin are required.");
-      }
-
-      return apiClient.post<
-        DeliveryFeeEstimateResponse,
-        {
-          branchId: string;
-          coordinates: { lat: number; lng: number };
-        }
-      >("/customer/delivery-fee/estimate", {
-        branchId: selectedBranch._id,
-        coordinates,
-      });
-    },
-    enabled: Boolean(isDelivery && selectedBranch?._id && coordinates),
-    staleTime: 60_000,
-    retry: false,
-  });
-
-  const {
     cartItems,
     removeFromCart,
     updateQuantity,
@@ -342,6 +312,41 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
     setPromoCardDiscountRate,
     clearCart,
   } = useCart();
+  const {
+    data: deliveryFeeEstimate,
+    isError: isDeliveryFeeError,
+    isLoading: isDeliveryFeeLoading,
+  } = useQuery({
+    queryKey: [
+      "customer",
+      "delivery-fee",
+      selectedBranch?._id,
+      coordinates?.lat,
+      coordinates?.lng,
+      productDiscountedSubtotal,
+    ],
+    queryFn: () => {
+      if (!selectedBranch?._id || !coordinates) {
+        throw new Error("Branch and delivery pin are required.");
+      }
+
+      return apiClient.post<
+        DeliveryFeeEstimateResponse,
+        {
+          branchId: string;
+          coordinates: { lat: number; lng: number };
+          itemSubtotalAmount: number;
+        }
+      >("/customer/delivery-fee/estimate", {
+        branchId: selectedBranch._id,
+        coordinates,
+        itemSubtotalAmount: productDiscountedSubtotal,
+      });
+    },
+    enabled: Boolean(isDelivery && selectedBranch?._id && coordinates),
+    staleTime: 60_000,
+    retry: false,
+  });
   const orderDiscountPromotion = getBestOrderDiscountEstimate(
     activePromotions?.data,
     productDiscountedSubtotal,
@@ -359,11 +364,18 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
     availableVoucherBalance,
     discountAdjustedTotal,
   );
+  const freeDeliveryEligible = isDelivery
+    ? (deliveryFeeEstimate?.data.freeDeliveryEligible ?? false)
+    : false;
+  const freeDeliveryReason = isDelivery
+    ? (deliveryFeeEstimate?.data.freeDeliveryReason ?? undefined)
+    : undefined;
   const deliveryFeeAmount = isDelivery
     ? (deliveryFeeEstimate?.data.deliveryFee ?? 0)
     : 0;
+  const effectiveDeliveryFee = freeDeliveryEligible ? 0 : deliveryFeeAmount;
   const displayTotalPrice = clampMoneyMin(
-    addMoney(subtractMoney(discountAdjustedTotal, parsedVoucherAmount), deliveryFeeAmount),
+    addMoney(subtractMoney(discountAdjustedTotal, parsedVoucherAmount), effectiveDeliveryFee),
   );
   const displayVatableSales = multiplyMoney(displayTotalPrice, 1 / 1.12);
   const displayVatAmount = subtractMoney(displayTotalPrice, displayVatableSales);
@@ -653,8 +665,8 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
             </div>
           )}
           {isDelivery && (deliveryFeeAmount > 0 || isDeliveryFeeLoading) && (
-            <div className="flex justify-between gap-3 text-sm text-slate-500">
-              <span className="text-green-500">
+            <div className="flex justify-between gap-3 text-sm">
+              <span className={freeDeliveryEligible ? "text-green-600 font-semibold" : "text-green-500"}>
                 Delivery fee
                 {deliveryFeeEstimate?.data.distanceKm != null && (
                   <span className="ml-1 text-xs">
@@ -662,12 +674,24 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
                   </span>
                 )}
               </span>
-              <span>
-                {isDeliveryFeeLoading
-                  ? "Calculating..."
-                  : `₱${deliveryFeeAmount.toFixed(2)}`}
-              </span>
+              {freeDeliveryEligible ? (
+                <span className="flex items-center gap-1.5">
+                  <span className="line-through text-slate-400">₱{deliveryFeeAmount.toFixed(2)}</span>
+                  <span className="text-green-600 font-bold">FREE</span>
+                </span>
+              ) : (
+                <span className="text-slate-500">
+                  {isDeliveryFeeLoading
+                    ? "Calculating..."
+                    : `₱${deliveryFeeAmount.toFixed(2)}`}
+                </span>
+              )}
             </div>
+          )}
+          {isDelivery && !freeDeliveryEligible && freeDeliveryReason && !isDeliveryFeeLoading && (
+            <p className="text-xs font-medium text-green-600">
+              {freeDeliveryReason}
+            </p>
           )}
           {isDelivery && isDeliveryFeeError && (
             <p className="rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-medium text-red-500">
