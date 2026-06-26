@@ -120,6 +120,24 @@ export const resolveEffectiveDeliveryFee = (
 const isDeliveryFeeScenario = (distanceKm: number, itemSubtotalAmount: number) =>
   distanceKm > 0 && itemSubtotalAmount > 0;
 
+// Checks whether free delivery applies for a delivery order given the item
+// subtotal and distance. Used by checkout routes after cart resolution,
+// where the subtotal is known but wasn't available at fulfillment resolution.
+export function isFreeDeliveryEligible(
+  fulfillmentType: string,
+  distanceKm: number,
+  itemSubtotalAmount: number,
+): boolean {
+  if (!FREE_DELIVERY_ENABLED) return false;
+  if (fulfillmentType !== FULFILLMENT_TYPE.DELIVERY) return false;
+  if (distanceKm > FREE_DELIVERY_MAX_DISTANCE_KM) return false;
+  if (itemSubtotalAmount < FREE_DELIVERY_MINIMUM_PURCHASE) return false;
+  return true;
+}
+
+// FULFILLMENT_TYPE imported here for isFreeDeliveryEligible comparison.
+import { FULFILLMENT_TYPE } from "@/types/orderConstants";
+
 // Convenience function to calculate delivery fee estimate directly from branch and delivery coordinates.
 export const calculateDeliveryFeeFromCoordinates = (
   branchCoordinates: BranchGeoJsonCoordinates,
