@@ -23,6 +23,7 @@ import {
   computeTax,
 } from "@/services/checkout/checkoutPricing.service";
 import { resolveCheckoutFulfillment } from "@/services/checkout/checkoutFulfillment.service";
+import { isFreeDeliveryEligible } from "@/lib/deliveryFee";
 import {
   reserveInventory,
   resolveCart,
@@ -120,6 +121,14 @@ export async function POST(request: NextRequest) {
       ),
       session,
     );
+
+    // 6.1 Free delivery: check eligibility after subtotal is known (cart was resolved in step 5).
+    const freeDeliveryApplied = isFreeDeliveryEligible(
+      fulfillment.fulfillmentType,
+      fulfillment.distanceKm,
+      productDiscountedTotal,
+    );
+
     const tax = computeTax(
       totalPrice,
       productDiscountResolution,
@@ -131,6 +140,7 @@ export async function POST(request: NextRequest) {
       fulfillment.deliveryFee,
       fulfillment.distanceKm,
       fulfillment.billableKm,
+      freeDeliveryApplied,
     );
 
     if (tax.totalAmount < MINIMUM_AMOUNT)
