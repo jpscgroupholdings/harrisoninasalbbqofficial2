@@ -1,5 +1,5 @@
 "use client";
-import { InputField } from "@/components/ui/InputField";
+import { InputField } from "@/components/ui/FormComponents/InputField";
 import Modal from "@/components/ui/Modal";
 import {
   Table,
@@ -29,7 +29,7 @@ import {
 import { Ban, Loader2, Search } from "lucide-react";
 import { ChangeEvent, useState } from "react";
 import SectionHeader from "../../components/SectionHeader";
-import { SelectField } from "@/components/ui/SelectField";
+import { SelectField } from "@/components/ui/FormComponents/SelectField";
 
 const ROLES: { value: StaffRole; label: string }[] = [
   { value: STAFF_ROLES.SUPERADMIN, label: "Super Admin" },

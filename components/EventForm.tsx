@@ -1,6 +1,6 @@
 "use client";
 
-import { InputField } from "@/components/ui/InputField";
+import { InputField } from "@/components/ui/FormComponents/InputField";
 import { useState } from "react";
 
 const textareaBaseClass =

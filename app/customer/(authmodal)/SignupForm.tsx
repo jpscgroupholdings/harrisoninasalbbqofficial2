@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Eye, EyeOff, Lock, Mail, User } from "lucide-react";
-import { InputField } from "../../../components/ui/InputField";
+import { InputField } from "../../../components/ui/FormComponents/InputField";
 import type { SignupFormValues } from "./types";
 
 type SignupFormProps = {

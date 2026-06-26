@@ -1,5 +1,5 @@
 import { Search } from "lucide-react";
-import { InputField } from "./InputField";
+import { InputField } from "./FormComponents/InputField";
 
 interface SearchBarProps {
   value: string;

@@ -2,7 +2,7 @@
 
 import { DynamicIcon } from "@/components/ui/DynamicIcon";
 import { SectionCard } from "../component/SectionCard";
-import { InputField } from "@/components/ui/InputField";
+import { InputField } from "@/components/ui/FormComponents/InputField";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";

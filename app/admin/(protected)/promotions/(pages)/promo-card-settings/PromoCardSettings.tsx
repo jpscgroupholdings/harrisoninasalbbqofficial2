@@ -1,8 +1,8 @@
 import React, { FormEvent } from "react";
 import { usePromoCardSettings } from "../../hooks/usePromoCardSettings";
 import { usePromoCards } from "../../hooks/usePromoCards";
-import { InputField } from "@/components/ui/InputField";
-import { SelectField } from "@/components/ui/SelectField";
+import { InputField } from "@/components/ui/FormComponents/InputField";
+import { SelectField } from "@/components/ui/FormComponents/SelectField";
 import { PROMO_CARD_DAYS, PromoCardValidityUnit } from "@/lib/promoCard";
 import {
   VOUCHER_VALIDITY_UNITS,

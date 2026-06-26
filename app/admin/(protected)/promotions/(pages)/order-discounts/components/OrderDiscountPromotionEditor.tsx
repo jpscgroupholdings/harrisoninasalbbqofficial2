@@ -1,7 +1,7 @@
 "use client";
 
-import { InputField } from "@/components/ui/InputField";
-import { SelectField } from "@/components/ui/SelectField";
+import { InputField } from "@/components/ui/FormComponents/InputField";
+import { SelectField } from "@/components/ui/FormComponents/SelectField";
 import {
   DEFAULT_ORDER_DISCOUNT_PROMOTION,
   type OrderDiscountPromotionConfig,

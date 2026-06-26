@@ -1,6 +1,6 @@
 "use client";
 
-import { InputField } from "@/components/ui/InputField";
+import { InputField } from "@/components/ui/FormComponents/InputField";
 import LoadingPage from "@/components/ui/LoadingPage";
 import Modal from "@/components/ui/Modal";
 import {

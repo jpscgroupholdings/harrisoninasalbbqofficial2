@@ -1,7 +1,7 @@
 "use client";
 
-import { InputField } from "@/components/ui/InputField";
-import { TextareaField } from "@/components/ui/TextAreaField";
+import { InputField } from "@/components/ui/FormComponents/InputField";
+import { TextareaField } from "@/components/ui/FormComponents/TextAreaField";
 import { DynamicIcon } from "@/components/ui/DynamicIcon";
 import { CustomerErrors } from "../useFormErrors";
 import { OrderFormState } from "../FormSchema";

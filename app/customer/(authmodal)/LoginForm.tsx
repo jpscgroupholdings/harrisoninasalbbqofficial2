@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import ForgotPasswordButton from "@/components/ui/ForgotPasswordButton";
-import { InputField } from "../../../components/ui/InputField";
+import { InputField } from "../../../components/ui/FormComponents/InputField";
 import type { LoginFormValues } from "./types";
 
 type LoginFormProps = {

@@ -6,7 +6,7 @@ import { DynamicIcon } from "@/components/ui/DynamicIcon";
 import { syne } from "@/app/font";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/apiClient";
-import { InputField } from "@/components/ui/InputField";
+import { InputField } from "@/components/ui/FormComponents/InputField";
 
 export default function VerifiedPage() {
   const searchParams = useSearchParams();

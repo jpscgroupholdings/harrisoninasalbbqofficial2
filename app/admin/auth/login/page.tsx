@@ -1,7 +1,7 @@
 "use client";
 
 import BrandLogo from "@/components/BrandLogo";
-import { InputField } from "@/components/ui/InputField";
+import { InputField } from "@/components/ui/FormComponents/InputField";
 import { apiClient } from "@/lib/apiClient";
 import { STAFF_ROLES } from "@/types/staff";
 import { Loader2, Lock, Mail } from "lucide-react";

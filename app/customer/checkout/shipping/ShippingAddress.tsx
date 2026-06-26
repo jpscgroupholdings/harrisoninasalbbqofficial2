@@ -1,6 +1,6 @@
 "use client";
 
-import { InputField } from "@/components/ui/InputField";
+import { InputField } from "@/components/ui/FormComponents/InputField";
 import { PsgcAddressFields } from "@/components/customer/PsgcAddressFields";
 import type { PsgcAddressSelection } from "@/lib/psgcAddress";
 import { ModalType, useModalQuery } from "@/hooks/utils/useModalQuery";

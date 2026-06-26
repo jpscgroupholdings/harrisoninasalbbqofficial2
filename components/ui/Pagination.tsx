@@ -2,7 +2,7 @@
 "use client";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { InputField } from "./InputField";
+import { InputField } from "./FormComponents/InputField";
 import { useState } from "react";
 
 interface PaginationProps {

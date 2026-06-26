@@ -15,8 +15,8 @@ import {
   type PsgcAddressSelection,
   type PsgcOption,
 } from "@/lib/psgcAddress";
-import { SelectField } from "../ui/SelectField";
-import { InputField } from "../ui/InputField";
+import { SelectField } from "../ui/FormComponents/SelectField";
+import { InputField } from "../ui/FormComponents/InputField";
 
 type PsgcAddressFieldsProps = {
   value: PsgcAddressSelection;

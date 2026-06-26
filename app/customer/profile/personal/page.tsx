@@ -4,7 +4,7 @@ import React, { useRef, useState } from "react";
 import { toast } from "sonner";
 import { SectionCard } from "../component/SectionCard";
 import { DynamicIcon } from "@/components/ui/DynamicIcon";
-import { InputField } from "@/components/ui/InputField";
+import { InputField } from "@/components/ui/FormComponents/InputField";
 import { authClient } from "@/lib/auth-client";
 import { apiClient } from "@/lib/apiClient";
 import { fileToBase64 } from "@/utils/fileUtils";

@@ -1,6 +1,6 @@
 "use client";
 
-import { InputField } from "@/components/ui/InputField";
+import { InputField } from "@/components/ui/FormComponents/InputField";
 import React, { useEffect, useReducer } from "react";
 import SectionHeader from "../../components/SectionHeader";
 import {
@@ -10,7 +10,7 @@ import {
   type SettingsType,
 } from "@/hooks/api/useSettings";
 import LoadingPage from "@/components/ui/LoadingPage";
-import { TextareaField } from "@/components/ui/TextAreaField";
+import { TextareaField } from "@/components/ui/FormComponents/TextAreaField";
 import { formatTime } from "@/helper/formatTime";
 import { formatDays } from "@/helper/formatDays";
 

@@ -1,7 +1,7 @@
 import React from "react";
-import { InputField } from "@/components/ui/InputField";
-import { SelectField } from "@/components/ui/SelectField";
-import { TextareaField } from "@/components/ui/TextAreaField";
+import { InputField } from "@/components/ui/FormComponents/InputField";
+import { SelectField } from "@/components/ui/FormComponents/SelectField";
+import { TextareaField } from "@/components/ui/FormComponents/TextAreaField";
 
 const ContactUs = () => {
   const subjectOptions = [

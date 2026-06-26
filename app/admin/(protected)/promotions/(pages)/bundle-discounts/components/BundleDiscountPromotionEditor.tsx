@@ -1,7 +1,7 @@
 "use client";
 
-import { InputField } from "@/components/ui/InputField";
-import { SelectField } from "@/components/ui/SelectField";
+import { InputField } from "@/components/ui/FormComponents/InputField";
+import { SelectField } from "@/components/ui/FormComponents/SelectField";
 import { formatCurrency } from "@/helper/formatCurrency";
 import {
   BUNDLE_TYPE,

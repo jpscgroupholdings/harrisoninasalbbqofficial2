@@ -2,12 +2,13 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Package, Star } from "lucide-react";
 import { toast } from "sonner";
-import { FormTextarea } from "@/components/ui/FormTextArea";
 import { useCustomerOrder } from "@/hooks/api/customers/useCustomerOrders";
 import { useSubmitReview } from "@/hooks/api/customers/useSubmitReview";
 import { ItemReviewInput } from "@/types/ReviewTypes";
+import { TextareaField } from "@/components/ui/FormComponents";
+import { OrderItemImage } from "@/app/customer/components/OrderItemImage";
+import { DynamicIcon } from "@/components/ui/DynamicIcon";
 
 // ─── Star Row ─────────────────────────────────────────────────────────────────
 
@@ -22,7 +23,8 @@ const StarRow = ({
 }) => {
   const [hovered, setHovered] = useState(0);
   const display = hovered || value;
-  const dim = size === "lg" ? "w-12 h-12" : size === "sm" ? "w-7 h-7" : "w-9 h-9";
+  const dim =
+    size === "lg" ? "w-12 h-12" : size === "sm" ? "w-7 h-7" : "w-9 h-9";
 
   return (
     <div className="flex items-center gap-1 group">
@@ -37,7 +39,7 @@ const StarRow = ({
             star <= display ? "group-hover:scale-110" : ""
           }`}
         >
-          <Star
+          <DynamicIcon name="Star"
             className={`${dim} transition-all duration-150`}
             fill={star <= display ? "#ef4501" : "#e5e7eb"}
             stroke={star <= display ? "#c13500" : "#d1d5db"}
@@ -51,7 +53,14 @@ const StarRow = ({
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-const LABELS = ["No rating", "Poor 😓", "Fair 😐", "Good 🙂", "Very Good 😋", "Excellent 😍"];
+const LABELS = [
+  "No rating",
+  "Poor 😓",
+  "Fair 😐",
+  "Good 🙂",
+  "Very Good 😋",
+  "Excellent 😍",
+];
 const ITEMS_TO_SHOW = 3;
 
 const ReviewPage = () => {
@@ -60,7 +69,8 @@ const ReviewPage = () => {
   const orderId = String(params.id ?? "");
 
   const { data: order, isPending: isLoading } = useCustomerOrder(orderId);
-  const { mutateAsync: submitReview, isPending: isSubmitting } = useSubmitReview(orderId);
+  const { mutateAsync: submitReview, isPending: isSubmitting } =
+    useSubmitReview(orderId);
 
   // ── Order-level state ──────────────────────────────────────────────────────
   const [rating, setRating] = useState(0);
@@ -90,7 +100,8 @@ const ReviewPage = () => {
     }
 
     // Pre-populate item map so we always have an entry per item
-    const initial: Record<string, { rating: number | null; comment: string }> = {};
+    const initial: Record<string, { rating: number | null; comment: string }> =
+      {};
     order.items.forEach((item) => {
       initial[item.productId] = { rating: null, comment: "" };
     });
@@ -136,11 +147,16 @@ const ReviewPage = () => {
       .filter((ir) => ir.rating !== null || ir.comment);
 
     try {
-      await submitReview({ rating, comment: comment.trim() || undefined, itemReviews });
+      await submitReview({
+        rating,
+        comment: comment.trim() || undefined,
+        itemReviews,
+      });
       toast.success("Thank you for your review!");
       router.push("/orders");
     } catch (error: any) {
-      const msg = error?.message ?? "Failed to submit review. Please try again.";
+      const msg =
+        error?.message ?? "Failed to submit review. Please try again.";
       toast.error(msg);
     }
   };
@@ -163,13 +179,14 @@ const ReviewPage = () => {
     );
   }
 
-  const displayedItems = showAllItems ? order.items : order.items.slice(0, ITEMS_TO_SHOW);
+  const displayedItems = showAllItems
+    ? order.items
+    : order.items.slice(0, ITEMS_TO_SHOW);
 
   return (
     <div className="bg-gray-50 py-8 px-4">
       <div className="max-w-2xl mx-auto">
         <div className="bg-white rounded-lg shadow-md p-6 md:p-8">
-
           {/* ── Header ── */}
           <div className="mb-8">
             <h1 className="text-brand-color-500 text-2xl md:text-3xl font-bold mb-2">
@@ -184,7 +201,6 @@ const ReviewPage = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-8">
-
             {/* ── Overall Rating ── */}
             <div className="space-y-4">
               <label className="font-[550] text-gray-700">
@@ -198,7 +214,7 @@ const ReviewPage = () => {
                   </p>
                 )}
               </div>
-              <FormTextarea
+              <TextareaField
                 label="Overall Comment (Optional)"
                 name="comment"
                 value={comment}
@@ -213,7 +229,9 @@ const ReviewPage = () => {
               <div className="flex items-center justify-between">
                 <h3 className="font-[550] text-gray-700">
                   Rate Individual Items{" "}
-                  <span className="text-gray-400 font-normal text-sm">(Optional)</span>
+                  <span className="text-gray-400 font-normal text-sm">
+                    (Optional)
+                  </span>
                 </h3>
               </div>
 
@@ -227,20 +245,25 @@ const ReviewPage = () => {
                     <div className="flex gap-3 items-center">
                       <div className="w-14 h-14 shrink-0 bg-gray-100 rounded-lg overflow-hidden">
                         {item.image ? (
-                          <img
-                            src={item.image}
-                            alt={item.name}
-                            className="w-full h-full object-cover"
-                          />
+                          <div className="w-full h-full object-cover">
+                            <OrderItemImage
+                              image={item.image}
+                              name={item.name}
+                            />
+                          </div>
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
-                            <Package size={20} className="text-gray-400" />
+                            <DynamicIcon name="Package" size={20} className="text-gray-400" />
                           </div>
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-gray-900 truncate">{item.name}</p>
-                        <p className="text-xs text-gray-500">qty: {item.quantity}</p>
+                        <p className="font-semibold text-gray-900 truncate">
+                          {item.name}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          qty: {item.quantity}
+                        </p>
                       </div>
                       <div className="shrink-0">
                         <StarRow
@@ -255,7 +278,9 @@ const ReviewPage = () => {
                     {(itemRatings[item.productId]?.rating ?? 0) > 0 && (
                       <textarea
                         value={itemRatings[item.productId]?.comment ?? ""}
-                        onChange={(e) => setItemComment(item.productId, e.target.value)}
+                        onChange={(e) =>
+                          setItemComment(item.productId, e.target.value)
+                        }
                         placeholder={`Anything about ${item.name}? (optional)`}
                         rows={2}
                         className="w-full text-sm px-3 py-2 border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-brand-color-500/30 focus:border-brand-color-500 transition"

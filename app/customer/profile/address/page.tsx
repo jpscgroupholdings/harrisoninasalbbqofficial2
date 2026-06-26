@@ -2,7 +2,7 @@
 
 // ─── Tab: Address ─────────────────────────────────────────────────────────────
 
-import { InputField } from "@/components/ui/InputField";
+import { InputField } from "@/components/ui/FormComponents/InputField";
 import { DynamicIcon } from "@/components/ui/DynamicIcon";
 import { PsgcAddressFields } from "@/components/customer/PsgcAddressFields";
 import type { ShippingAddressForm } from "@/types/address";

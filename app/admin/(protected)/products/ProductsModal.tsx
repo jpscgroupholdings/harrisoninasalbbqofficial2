@@ -1,9 +1,9 @@
 import React, { ChangeEvent, FormEvent, useEffect, useState } from "react";
-import { InputField } from "@/components/ui/InputField";
+import { InputField } from "@/components/ui/FormComponents/InputField";
 import Modal from "@/components/ui/Modal";
 import { useCreateProduct, useUpdateProduct } from "@/hooks/api/useProducts";
 import { toast } from "sonner";
-import { TextareaField } from "@/components/ui/TextAreaField";
+import { TextareaField } from "@/components/ui/FormComponents/TextAreaField";
 import { Category } from "@/types/category";
 import { IncludedItemUI, ITEM_TYPES, ProductType, Product } from "@/types/products";
 import { DynamicIcon } from "@/components/ui/DynamicIcon";

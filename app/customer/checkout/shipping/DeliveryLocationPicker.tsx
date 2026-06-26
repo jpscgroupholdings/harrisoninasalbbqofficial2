@@ -22,7 +22,7 @@ import {
   isCityAllowedForDelivery,
   ALLOWED_DELIVERY_CITIES,
 } from "@/lib/deliveryArea";
-import { InputField } from "@/components/ui/InputField";
+import { InputField } from "@/components/ui/FormComponents/InputField";
 import { toast } from "sonner";
 
 type DeliveryCoordinates = MapCoordinates;

@@ -1,5 +1,5 @@
 import BrandLogo from "@/components/BrandLogo";
-import { InputField } from "@/components/ui/InputField";
+import { InputField } from "@/components/ui/FormComponents/InputField";
 import React from "react";
 
 const Subscribe = () => {
