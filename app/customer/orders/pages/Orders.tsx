@@ -200,6 +200,12 @@ function OrderCard({
                 <DynamicIcon name="Clock" size={13} />
                 {formatDate(order.createdAt)}
               </span>
+              {order.branchSnapshot?.name && (
+                <span className="flex items-center gap-1 text-[12px] text-gray-400">
+                  <DynamicIcon name="Store" size={13} />
+                  {order.branchSnapshot.name}
+                </span>
+              )}
             </div>
           </div>
 
