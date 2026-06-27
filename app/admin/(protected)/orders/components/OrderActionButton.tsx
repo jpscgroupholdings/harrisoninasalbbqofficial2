@@ -76,7 +76,7 @@ export function OrderActionButton({
             key={nextStatus}
             onClick={() => handleClick(nextStatus)}
             disabled={isPending}
-            className={`text-xs rounded-full font-bold text-white py-2 px-4 cursor-pointer text-nowrap disabled:opacity-60 disabled:cursor-not-allowed ${actionConfig.variant}`}
+            className={`text-xs rounded-full font-bold py-2 px-4 cursor-pointer text-nowrap disabled:opacity-60 disabled:cursor-not-allowed ${actionConfig.variant}`}
           >
             {isPending ? "Updating..." : actionConfig.label}
           </button>
