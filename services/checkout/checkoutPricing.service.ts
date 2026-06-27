@@ -35,7 +35,10 @@ export interface TaxBreakdown {
   voucherDiscountAmount: number;
   discountCode?: string;
 
+  /** Effective delivery fee (0 when free delivery is applied, otherwise the full fee). */
   deliveryFeeAmount: number;
+  /** Raw/original delivery fee before free delivery discount — only present when free delivery was applied. */
+  rawDeliveryFee?: number;
   deliveryDistanceKm?: number;
   deliveryBillableKm?: number;
   freeDeliveryApplied?: boolean;
@@ -124,6 +127,7 @@ export function computeTax(
     voucherDiscountAmount,
     ...(promoCardDiscountAmount > 0 && { discountCode }),
     deliveryFeeAmount: effectiveDeliveryFee,
+    ...(freeDeliveryApplied && { rawDeliveryFee: deliveryFeeAmount }),
     deliveryDistanceKm,
     deliveryBillableKm,
     ...(freeDeliveryApplied && { freeDeliveryApplied }),

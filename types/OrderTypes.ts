@@ -99,6 +99,7 @@ export interface OrderType {
     orderDiscountPromotionName?: string;
     voucherDiscountAmount?: number;
     deliveryFeeAmount?: number;
+    rawDeliveryFee?: number;
     deliveryDistanceKm?: number;
     deliveryBillableKm?: number;
     freeDeliveryApplied?: boolean;

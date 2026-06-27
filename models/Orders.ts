@@ -214,6 +214,7 @@ const OrderSchema = new Schema(
       orderDiscountPromotionName: { type: String },
       voucherDiscountAmount: { type: Number, default: 0 },
       deliveryFeeAmount: { type: Number, default: 0 },
+      rawDeliveryFee: { type: Number },
       deliveryDistanceKm: { type: Number, default: 0 },
       deliveryBillableKm: { type: Number, default: 0 },
       freeDeliveryApplied: { type: Boolean, default: false },
