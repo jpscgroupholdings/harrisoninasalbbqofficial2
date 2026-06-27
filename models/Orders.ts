@@ -130,6 +130,10 @@ const OrderSchema = new Schema(
       code: String, // e.g. OR-001
       address: String,
       contactNumber: String,
+      location: {
+        type: { type: String, enum: ["Point"], default: "Point" },
+        coordinates: { type: [Number] }, // [longitude, latitude] — GeoJSON order
+      },
     },
     status: {
       type: String,

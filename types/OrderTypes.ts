@@ -35,6 +35,10 @@ export interface OrderType {
     code: string;
     address: string;
     contactNumber: string;
+    location?: {
+      type: "Point";
+      coordinates: [number, number]; // [longitude, latitude] — GeoJSON order
+    };
   };
 
   items: OrderItem[];
