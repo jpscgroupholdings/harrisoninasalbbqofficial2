@@ -4,14 +4,8 @@ import { useState, useRef } from "react";
 import { LINKS } from "@/constant/links";
 import { DynamicIcon } from "@/components/ui/DynamicIcon";
 import { useBranches } from "@/hooks/api/useBranch";
+import { buildEmbedUrl, buildMapLink } from "@/lib/google-maps";
 
-function buildMapLink(lat: number, lng: number) {
-  return `https://www.google.com/maps?q=${lat},${lng}`;
-}
-
-function buildEmbedUrl(lat: number, lng: number) {
-  return `https://maps.google.com/maps?q=${lat},${lng}&output=embed`;
-}
 
 const LocationsSection = () => {
   const [current, setCurrent] = useState(0);
