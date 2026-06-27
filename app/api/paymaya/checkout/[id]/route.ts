@@ -81,7 +81,7 @@ export async function POST(
     const deliveryItems = order.total.freeDeliveryApplied && order.total.rawDeliveryFee
       ? [
           {
-            name: `Delivery Fee (${order.total.rawDeliveryFee} waived)`,
+            name: `Delivery Fee (FREE)`,
             quantity: 1,
             code: "DELIVERY_FEE_FREE",
             description: `Free delivery — originally ₱${order.total.rawDeliveryFee}`,
@@ -113,10 +113,15 @@ export async function POST(
         value: order.total.totalAmount,
         currency: "PHP",
         details: {
-          discount: addMoney(
-            order.total.discountAmount ?? 0,
-            order.total.voucherDiscountAmount ?? 0,
-          ),
+          discount: order.total.freeDeliveryApplied && order.total.rawDeliveryFee
+            ? addMoney(
+                addMoney(order.total.discountAmount ?? 0, order.total.voucherDiscountAmount ?? 0),
+                order.total.rawDeliveryFee,
+              )
+            : addMoney(
+                order.total.discountAmount ?? 0,
+                order.total.voucherDiscountAmount ?? 0,
+              ),
           vatAmount: order.total.vatAmount,
           subTotal: order.total.vatableSales,
         },
