@@ -63,7 +63,7 @@ const CustomersPage = () => {
     queryKey: ["customers"],
     queryFn: () =>
       apiClient.get<{ data: CustomerResponse[]; pagination: any }>(
-        "/accounts/customers",
+        "/admin/customers",
       ),
   });
 
