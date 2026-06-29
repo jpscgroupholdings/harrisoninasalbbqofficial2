@@ -1,5 +1,30 @@
 # Changelog
 
+## [1.6.0] - 2026-06-29
+
+### Added
+- Centavo-based arithmetic for currency calculations to prevent floating-point rounding errors
+- Free delivery eligibility logic based on minimum purchase amount, max distance, and free delivery toggle
+- `freeDeliveryApplied` and `freeDelivery` attributes tracked on orders
+- Raw delivery fee tracked on orders for receipt accuracy when free delivery is applied
+- Branch location coordinates stored on order branch snapshot for customer tracking
+- Google Maps URL builder helpers for branch and shipping address links
+- Fulfillment type visible on orders table so customers can see order type without opening details
+- Branch name rendered on orders table
+- Cart list renders free delivery with strikethrough on original fee when eligible
+- Order details modal renders delivery fee as free when eligible
+
+### Changed
+- Delivery info section showing the free delivery amount (₱0) when `freeDeliveryApplied`
+- Moved input field rendering to the shared `FormField` component
+- Delivery fee calculation now resolves the effective fee based on minimum purchase, max distance, and free delivery enabled flag
+- Delivery fee estimate computes subtotal to pass into `resolveEffectiveFeeFromCoordinates` for free delivery eligibility
+- All computed amounts now use centavo arithmetic for consistency
+- Free delivery UI hints guarded — only shown when free delivery is actually enabled to avoid customer confusion
+- Order details modal now shows role-accessed information: shipping address, branch location, payment, and order ID, with iframe maps for branch and shipping address
+- Increased delivery rate per distance
+
+
 ## [1.5.0] - 2026-06-25
 
 ### Added
