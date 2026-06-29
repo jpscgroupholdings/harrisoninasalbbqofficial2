@@ -2,7 +2,8 @@ import {
   getSalesData,
   getTopProducts,
   resolveDashboardFilters,
-  type DashboardRange,
+  parseDashboardPeriod,
+  type DashboardPeriod,
 } from "@/services/admin/dashboard.service";
 import { requireAdmin } from "@/lib/getAuth";
 import { NextRequest, NextResponse } from "next/server";
@@ -15,14 +16,14 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const range = (req.nextUrl.searchParams.get("range") ??
-      "week") as DashboardRange;
     const requestedBranchId = req.nextUrl.searchParams.get("branchId");
     const filters = resolveDashboardFilters(admin, requestedBranchId);
 
+    const period = parseDashboardPeriod(req.nextUrl.searchParams);
+
     const [salesData, topProducts] = await Promise.all([
-      getSalesData(range, filters),
-      getTopProducts(range, filters),
+      getSalesData(period, filters),
+      getTopProducts(period, filters),
     ]);
 
     return NextResponse.json({ salesData, topProducts });
@@ -34,7 +35,9 @@ export async function GET(req: NextRequest) {
         ? 401
         : message === "No branch assigned"
           ? 403
-          : message === "Invalid branch id"
+          : message === "Invalid branch id" ||
+            message.startsWith("Invalid range") ||
+            message.includes("are required when range=")
             ? 400
             : 500;
 
