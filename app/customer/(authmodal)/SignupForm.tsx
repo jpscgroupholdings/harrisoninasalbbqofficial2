@@ -1,7 +1,12 @@
 import { useState } from "react";
 import { Eye, EyeOff, Lock, Mail, User } from "lucide-react";
 import { InputField } from "../../../components/ui/FormComponents/InputField";
+import {
+  PasswordRequirementHint,
+  isPasswordSecure,
+} from "../../../components/ui/PasswordRequirementHint";
 import type { SignupFormValues } from "./types";
+import { GMAIL_DOMAIN, isGmail } from "@/lib/isGmail";
 
 type SignupFormProps = {
   isLoading: boolean;
@@ -29,6 +34,10 @@ export function SignupForm({
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Track whether password meets the full policy — controls button state
+  const passwordMeetsPolicy = isPasswordSecure(formData.password);
+  const passwordsMatch = formData.password === formData.confirmPassword;
+
   const validateForm = () => {
     const nextErrors: Record<string, string> = {};
 
@@ -44,15 +53,19 @@ export function SignupForm({
       nextErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       nextErrors.email = "Please enter a valid email";
+    } else if (!isGmail(formData.email)) {
+      nextErrors.email = `Only @${GMAIL_DOMAIN} email addresses are accepted`;
     }
 
     if (!formData.password) {
       nextErrors.password = "Password is required";
-    } else if (formData.password.length < 8) {
-      nextErrors.password = "Password must be at least 8 characters";
+    } else if (!isPasswordSecure(formData.password)) {
+      nextErrors.password = "Password does not meet the requirements";
     }
 
-    if (formData.password !== formData.confirmPassword) {
+    if (!formData.confirmPassword) {
+      nextErrors.confirmPassword = "Please confirm your password";
+    } else if (formData.password !== formData.confirmPassword) {
       nextErrors.confirmPassword = "Passwords do not match";
     }
 
@@ -71,6 +84,10 @@ export function SignupForm({
     if (!validateForm()) return;
     onSubmit(formData);
   };
+
+  // Button is disabled when loading, social loading, or password policy isn't met
+  const isSubmitDisabled =
+    isLoading || isDisabled || !passwordMeetsPolicy || !passwordsMatch;
 
   return (
     <div className="space-y-4">
@@ -99,6 +116,7 @@ export function SignupForm({
         <InputField
           label="Email Address"
           placeholder="example@gmail.com"
+          subLabel="Only Gmail addresses are accepted"
           leftIcon={<Mail size={18} />}
           type="email"
           name="email"
@@ -107,30 +125,37 @@ export function SignupForm({
           error={errors.email}
         />
 
-        <InputField
-          label="Password"
-          placeholder="Enter your password"
-          name="password"
-          type={showPassword.password ? "text" : "password"}
-          value={formData.password}
-          onChange={handleInputChange}
-          error={errors.password}
-          leftIcon={<Lock size={18} />}
-          rightElement={
-            <button
-              type="button"
-              onClick={() =>
-                setShowPassword((prev) => ({
-                  ...prev,
-                  password: !prev.password,
-                }))
-              }
-              className="text-gray-400"
-            >
-              {showPassword.password ? <Eye size={18} /> : <EyeOff size={18} />}
-            </button>
-          }
-        />
+        <div>
+          <InputField
+            label="Password"
+            placeholder="Enter your password"
+            name="password"
+            type={showPassword.password ? "text" : "password"}
+            value={formData.password}
+            onChange={handleInputChange}
+            error={errors.password}
+            leftIcon={<Lock size={18} />}
+            rightElement={
+              <button
+                type="button"
+                onClick={() =>
+                  setShowPassword((prev) => ({
+                    ...prev,
+                    password: !prev.password,
+                  }))
+                }
+                className="text-gray-400"
+              >
+                {showPassword.password ? (
+                  <Eye size={18} />
+                ) : (
+                  <EyeOff size={18} />
+                )}
+              </button>
+            }
+          />
+          <PasswordRequirementHint password={formData.password} />
+        </div>
 
         <InputField
           id="confirm_password"
@@ -164,8 +189,12 @@ export function SignupForm({
 
         <button
           type="submit"
-          disabled={isLoading || isDisabled}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-color-500 py-3 font-semibold text-white transition-colors hover:bg-[#c13500] disabled:bg-gray-400"
+          disabled={isSubmitDisabled}
+          className={`flex w-full items-center justify-center gap-2 rounded-xl py-3 font-semibold text-white transition-colors ${
+            isSubmitDisabled
+              ? "bg-gray-400"
+              : "bg-brand-color-500 hover:bg-[#c13500]"
+          }`}
         >
           {isLoading ? (
             <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />

@@ -3,6 +3,7 @@ import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import ForgotPasswordButton from "@/components/ui/ForgotPasswordButton";
 import { InputField } from "../../../components/ui/FormComponents/InputField";
 import type { LoginFormValues } from "./types";
+import { GMAIL_DOMAIN, isGmail } from "@/lib/isGmail";
 
 type LoginFormProps = {
   isLoading: boolean;
@@ -33,6 +34,8 @@ export function LoginForm({
       nextErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       nextErrors.email = "Please enter a valid email";
+    } else if (!isGmail(formData.email)) {
+      nextErrors.email = `Only @${GMAIL_DOMAIN} email addresses are accepted`;
     }
 
     if (!formData.password) {
@@ -149,7 +152,7 @@ export function LoginForm({
 
       <div className="pt-2 text-center">
         <p className="text-sm text-gray-500">
-          Don't have an account?{" "}
+          Don&apos;t have an account?{" "}
           <button
             type="button"
             onClick={onSwitchToSignup}
