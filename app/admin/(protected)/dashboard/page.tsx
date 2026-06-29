@@ -1,11 +1,14 @@
 "use client";
 
-import DashboardCards from "@/app/admin/components/DashboardCard";
-import SalesChart from "@/app/admin/components/SalesChart";
 import { useBranchName } from "../../hooks/useBranchName";
+import type { DashboardPeriod } from "@/services/admin/dashboard.service";
+import { useState } from "react";
+import { DashboardCards, DashboardFilter, SalesChartClient } from "./components";
 
 export default function DashboardPage() {
   const { branchName } = useBranchName();
+
+  const [period, setPeriod] = useState<DashboardPeriod>({ range: "week" });
 
   return (
     <div className="space-y-8">
@@ -21,10 +24,13 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      <DashboardCards />
+      {/* Global Time Period Filter */}
+      <DashboardFilter value={period} onChange={setPeriod} />
+
+      <DashboardCards period={period} />
 
       {/* Charts */}
-      <SalesChart />
+      <SalesChartClient period={period} />
     </div>
   );
 }
