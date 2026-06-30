@@ -22,7 +22,7 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
           {label && (
             <label
               htmlFor={props.id}
-              className="block text-sm font-semibold text-gray-700"
+              className="block text-sm font-semibold text-gray-700 mb-1"
             >
               {label}
               {props.required && <span className="text-red-500 ml-1">*</span>}

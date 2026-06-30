@@ -50,20 +50,20 @@ export function PasswordChangePromptModal({
 
   return (
     <Modal title="Secure Your Account" onClose={onSkip}>
-      <div className="space-x-4">
+      <div className="space-y-6">
         {/** Info banner */}
-        <div className="flex items-start gap-3 bg-brand-color-50 border border-brand-color-200 rounded-xl p-4">
+        <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl p-4">
           <DynamicIcon
             name="ShieldAlert"
             size={20}
-            className="text-brand-color-500 mt-0.5 shrink-0"
+            className="text-red-500 mt-0.5 shrink-0"
           />
           <div>
-            <p className="text-sm font-medium text-brand-color-800">
+            <p className="text-sm font-medium text-red-800">
               We&apos;ve strengthened our password requirements
             </p>
-            <p className="text-xs text-brand-color-600 mt-1">
-              Your current password may not meet our new security standards. We
+            <p className="text-xs text-red-600 mt-1">
+              Your current password may not meet our new security standards. <br/>We
               recommend updating it to keep your account safe.
             </p>
           </div>
