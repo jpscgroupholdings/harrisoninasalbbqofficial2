@@ -3,10 +3,10 @@ import { Eye, EyeOff, Lock, Mail, User } from "lucide-react";
 import { InputField } from "../../../components/ui/FormComponents/InputField";
 import {
   PasswordRequirementHint,
-  isPasswordSecure,
 } from "../../../components/ui/PasswordRequirementHint";
 import type { SignupFormValues } from "./types";
-import { GMAIL_DOMAIN, isGmail } from "@/lib/isGmail";
+import { GMAIL_DOMAIN, isGmail } from "@/lib/isAllowedEmails";
+import { isPasswordSecure } from "@/lib/validations";
 
 type SignupFormProps = {
   isLoading: boolean;
