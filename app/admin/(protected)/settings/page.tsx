@@ -21,6 +21,7 @@ type Action =
   | { type: "TOGGLE_DAY"; day: Days }
   | { type: "SET_HOURS_FIELD"; field: "openTime" | "closeTime"; value: string }
   | { type: "SET_IS_CLOSED"; value: boolean }
+  | { type: "SET_GLOBAL_MAX_ACTIVE_ORDERS"; value: number | null }
   | { type: "LOAD_SETTINGS"; payload: SettingsType }
   | { type: "RESET" };
 
@@ -34,6 +35,7 @@ const DEFAULT_STATE: SettingsType = {
     closeTime: "",
     isClosed: false,
   },
+  globalMaxActiveOrders: null,
 };
 
 function settingsReducer(state: SettingsType, action: Action): SettingsType {
@@ -80,6 +82,9 @@ function settingsReducer(state: SettingsType, action: Action): SettingsType {
           isClosed: action.value,
         },
       };
+
+    case "SET_GLOBAL_MAX_ACTIVE_ORDERS":
+      return { ...state, globalMaxActiveOrders: action.value };
 
     case "LOAD_SETTINGS":
       return action.payload;
@@ -350,6 +355,34 @@ const SettingsPage = () => {
               </p>
             )}
           </div>
+        </div>
+
+        <h2 className="text-xl font-bold text-stone-800">Order Capacity</h2>
+
+        <div className="p-6 border border-gray-200 rounded-xl shadow space-y-4">
+          <p className="text-sm text-stone-600">
+            Set the global default for how many active orders a branch can handle simultaneously.
+            Branches can override this with their own limit.
+          </p>
+          <InputField
+            label="Global Max Active Orders"
+            id="global-max-active-orders"
+            type="number"
+            value={settings.globalMaxActiveOrders === null ? "" : String(settings.globalMaxActiveOrders)}
+            onChange={(e) => {
+              const val = e.target.value;
+              dispatch({
+                type: "SET_GLOBAL_MAX_ACTIVE_ORDERS",
+                value: val === "" ? null : Math.max(1, parseInt(val) || 1),
+              });
+            }}
+            placeholder="Leave empty for no limit"
+            className={fieldClassName}
+          />
+          <p className="text-xs text-stone-400">
+            Active orders include: pending, preparing, dispatched, and ready for pickup.
+            When a branch reaches this limit, new orders are blocked until an active order completes.
+          </p>
         </div>
 
         <div className="flex gap-4">
