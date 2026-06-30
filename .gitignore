@@ -44,3 +44,4 @@ next-env.d.ts
 
 # Qwen Code personal settings
 .qwen/settings.json
+.qwen
