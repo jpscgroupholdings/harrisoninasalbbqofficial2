@@ -1,25 +1,9 @@
 import { connectDB } from "@/lib/mongodb";
+import { changePasswordSchema } from "@/lib/validations";
 import Staff from "@/models/Staff";
 import bcrypt from "bcryptjs";
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/getAuth";
-import { z } from "zod";
-
-/** Schema for admin self-password-change (no current password needed since session is valid). */
-const changePasswordSchema = z.object({
-  newPassword: z
-    .string()
-    .min(8, "Password must be at least 8 characters")
-    .refine((val) => /[A-Z]/.test(val), {
-      message: "Password must contain at least one uppercase letter",
-    })
-    .refine((val) => /[0-9]/.test(val), {
-      message: "Password must contain at least one number",
-    })
-    .refine((val) => /[^A-Za-z0-9]/.test(val), {
-      message: "Password must contain at least one symbol",
-    }),
-});
 
 /**
  * POST /api/auth/admin/change-password

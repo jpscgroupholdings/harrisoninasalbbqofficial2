@@ -1,24 +1,9 @@
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
+import { changePasswordSchema } from "@/lib/validations";
 import bcrypt from "bcryptjs";
 import { APIError } from "better-auth";
 import { NextRequest, NextResponse } from "next/server";
-import z from "zod";
-
-const changePasswordSchema = z.object({
-  newPassword: z
-    .string()
-    .min(8, "Password must be at least 8 characters")
-    .refine((val) => /[A-Z]/.test(val), {
-      message: "Password must contain at least one uppercase letter",
-    })
-    .refine((val) => /[0-9]/.test(val), {
-      message: "Password must contain at least one number",
-    })
-    .refine((val) => /[^A-Za-z0-9]/.test(val), {
-      message: "Password must contain at least one symbol",
-    }),
-});
 
 /**
  * POSTS /api/auth/customer/change-password

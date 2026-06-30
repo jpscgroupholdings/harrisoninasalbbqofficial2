@@ -1,47 +1,31 @@
 import { requireAdmin, requireSuperAdmin } from "@/lib/getAuth";
 import { connectDB } from "@/lib/mongodb";
+import { createStaffSchema } from "@/lib/validations";
 import Staff from "@/models/Staff";
 import { STAFF_ROLES } from "@/types/staff";
 import bcrypt from "bcryptjs";
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-
-export const createStaffSchema = z.object({
-  firstName: z.string().min(1),
-  lastName: z.string().min(1),
-  email: z
-    .string()
-    .email()
-    .transform((val) => val.toLowerCase().trim()),
-  password: z.string().min(8),
-  phone: z.string().optional().refine((val) => !val || /^(\+63|0)[0-9]{10}$/.test(val.trim()), {message: "Invalid phone number."}),
-  role: z.enum(["superadmin", "admin", "cashier"]),
-  branch: z.string().min(1).optional(),
-}).superRefine((data, ctx) => {
-  // Admin role must have a branch; superadmin and cashier are cross-branch
-  if (data.role === STAFF_ROLES.ADMIN && !data.branch) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ["branch"],
-      message: "Branch is required for admin role.",
-    });
-  }
-});
 
 export async function GET(req: NextRequest) {
   try {
     await connectDB();
 
-    const staff = await requireAdmin(req)
+    const staff = await requireAdmin(req);
 
-    const filter = staff.role === STAFF_ROLES.SUPERADMIN ? {} : {_id: staff._id}
+    const filter =
+      staff.role === STAFF_ROLES.SUPERADMIN ? {} : { _id: staff._id };
 
-    const data = await Staff.find(filter).populate("branch", "name code").lean();
+    const data = await Staff.find(filter)
+      .populate("branch", "name code")
+      .lean();
 
     return NextResponse.json(data, { status: 200 });
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to fetch staffs" },
+      {
+        error:
+          error instanceof Error ? error.message : "Failed to fetch staffs",
+      },
       { status: 500 },
     );
   }
@@ -51,7 +35,7 @@ export async function POST(request: NextRequest) {
   try {
     await connectDB();
     await requireSuperAdmin(request);
-    
+
     const body = await request.json();
     const parsed = createStaffSchema.safeParse(body);
 
@@ -60,11 +44,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: firstError }, { status: 400 });
     }
 
-    const { firstName, lastName, email, password, phone, role, branch } = parsed.data;
+    const { firstName, lastName, email, password, phone, role, branch } =
+      parsed.data;
 
     const existing = await Staff.findOne({ email });
     if (existing) {
-      return NextResponse.json({ error: "Email already exists." }, { status: 409 });
+      return NextResponse.json(
+        { error: "Email already exists." },
+        { status: 409 },
+      );
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -83,7 +71,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(staff, { status: 201 });
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to create staff account." },
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to create staff account.",
+      },
       { status: 500 },
     );
   }
