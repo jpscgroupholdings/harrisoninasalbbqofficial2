@@ -3,7 +3,7 @@ import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import ForgotPasswordButton from "@/components/ui/ForgotPasswordButton";
 import { InputField } from "../../../components/ui/FormComponents/InputField";
 import type { LoginFormValues } from "./types";
-import { GMAIL_DOMAIN, isGmail } from "@/lib/isGmail";
+import { GMAIL_DOMAIN, isGmail } from "@/lib/isAllowedEmails";
 
 type LoginFormProps = {
   isLoading: boolean;
