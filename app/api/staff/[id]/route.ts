@@ -1,5 +1,6 @@
 import { requireSuperAdmin } from "@/lib/getAuth";
 import { connectDB } from "@/lib/mongodb";
+import { updateStaffSchema } from "@/lib/validations";
 import Staff from "@/models/Staff";
 import bcrypt from "bcryptjs";
 import { NextRequest, NextResponse } from "next/server";
@@ -59,7 +60,14 @@ export async function PUT(
       );
     }
 
-    const { firstName, lastName, email, password, phone, role, branch } = body;
+    const parsed = updateStaffSchema.safeParse(body);
+    if (!parsed.success) {
+      const firstError = parsed.error.issues[0]?.message ?? "Invalid input.";
+      return NextResponse.json({ error: firstError }, { status: 400 });
+    }
+
+    const { firstName, lastName, email, password, phone, role, branch } =
+      parsed.data;
 
     const existing = await Staff.findById(id);
     if (!existing) {
@@ -77,30 +85,36 @@ export async function PUT(
       }
     }
 
-    // only hash if new password provided
+    // Build update payload — Zod already converted empty branch → null and empty password → undefined
     const updatedFields: Record<string, any> = {
-        firstName,
-        lastName,
-        email,
-        phone,
-        role,
-        branch
+      firstName,
+      lastName,
+      email,
+      phone,
+      role,
+      branch,
+    };
+
+    // Only hash if a new password was provided
+    if (password) {
+      updatedFields.password = await bcrypt.hash(password, 12);
     }
 
-    if(password && password.trim().length > 0){
-        updatedFields.password = await bcrypt.hash(password, 12)
-    }
+    const updated = await Staff.findByIdAndUpdate(id, updatedFields, {
+      new: true,
+      runValidators: true,
+    })
+      .populate("branch", "name code")
+      .lean();
 
-    const updated = await Staff.findByIdAndUpdate(id, updatedFields, {new: true, runValidators: true}).populate("branch", "name code").lean();
-
-      // strip password from response
+    // Strip password from response
     const { password: _, ...staff } = updated as any;
 
-     return NextResponse.json(staff, { status: 200 });
+    return NextResponse.json(staff, { status: 200 });
 
   } catch (error) {
     return NextResponse.json(
-      { error: "Failed to update staff's details" },
+      { error: error instanceof Error ? error.message : "Failed to update staff's details" },
       { status: 500 },
     );
   }
