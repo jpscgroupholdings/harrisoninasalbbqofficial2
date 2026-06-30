@@ -1,4 +1,4 @@
-import { apiClient } from "@/lib/apiClient";
+import { apiClient, ApiError } from "@/lib/apiClient";
 import { Staff, StaffFormData } from "@/types/staff";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -13,14 +13,14 @@ export const useStaff = () =>
 // create staff
 export const useCreateStaff = () => {
   const queryClient = useQueryClient();
-  return useMutation<Staff, { error: string }, StaffFormData>({
+  return useMutation<Staff, ApiError, StaffFormData>({
     mutationFn: (staffData) => apiClient.post("/staff", staffData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["staff"] });
       toast.success("Staff created successfully!");
     },
     onError: (error) => {
-      toast.error(error?.error ?? "Something went wrong.");
+      toast.error(error?.message ?? "Something went wrong.");
     },
   });
 };
@@ -30,7 +30,7 @@ export const useUpdateStaff = () => {
   const queryClient = useQueryClient();
   return useMutation<
     Staff,
-    { error: string },
+    ApiError,
     { id: string; staffData: Partial<StaffFormData> }
   >({
     mutationFn: ({ id, staffData }) => apiClient.put(`/staff/${id}`, staffData),
@@ -39,7 +39,7 @@ export const useUpdateStaff = () => {
       toast.success("Staff updated successfully!");
     },
     onError: (error) => {
-      toast.error(error?.error ?? "Something went wrong.");
+      toast.error(error?.message ?? "Something went wrong.");
     },
   });
 };
@@ -47,13 +47,13 @@ export const useUpdateStaff = () => {
 // toggle staff status
 export const useToggleStaffStatus = () => {
   const queryClient = useQueryClient();
-  return useMutation<Staff, Error, string>({
+  return useMutation<Staff, ApiError, string>({
     mutationFn: (id) => apiClient.patch(`/staff/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["staff"] });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to update status.");
+      toast.error(error?.message ?? "Failed to update status.");
     },
   });
 };
