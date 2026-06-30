@@ -1,5 +1,50 @@
 # Changelog
 
+## [1.7.1] - 2026-06-30
+
+### Added
+- Automatic password upgrade prompt for admins using legacy passwords after login
+- Password update modal with validation and password strength guidance
+- API endpoint for updating admin passwords with the new password policy
+- Allowed email validation for customer and admin accounts
+- Exact validation error messages for account creation and password updates
+- Shared API error type for consistent error handling
+
+### Changed
+- Enforced stricter account validation:
+  - Customers using password authentication must register with a Gmail address
+  - Passwords must contain at least 8 characters, one uppercase letter, one number, and one special character
+- Account creation now uses centralized validation schemas and shared constants
+- Admin password prompt is shown only for non-OAuth accounts whose existing password no longer meets the new security requirements
+- Password validation utilities are now shared across the application
+
+### Fixed
+- Fixed account creation validation for roles with access to all branches
+- Fixed password prompt visibility to correctly detect insecure legacy passwords
+
+### Refactored
+- Centralized account validation using shared Zod schemas
+- Consolidated password validation utilities into the validation library
+- Standardized allowed email validation across customer and admin authentication flows
+- Updated validation imports and project structure for improved maintainability
+
+## [1.7.0] - 2026-06-30
+
+### Added
+- Dashboard filter controls supporting week, month, year, custom month, and custom year selection
+- Dashboard search parameter builder for period and branch filtering
+- Shared dashboard period parsing helper
+- Static months data for dashboard filtering
+- Free delivery hint label on dashboard metrics
+
+### Changed
+- Dashboard filtering now happens at the parent level and is shared across all dashboard charts
+- Dashboard charts now update dynamically based on the selected period and branch filters
+- Dashboard labels now adapt dynamically based on the selected reporting period
+- Expanded dashboard filtering logic to support date ranges, specific months, and specific years across all dashboard analytics
+- Customer orders now display both order status and payment status
+- Customer-facing payment status is now derived from the internal payment status for clearer order tracking
+
 ## [1.6.0] - 2026-06-29
 
 ### Added
