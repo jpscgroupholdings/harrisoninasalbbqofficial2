@@ -1,6 +1,6 @@
 const BASE_URL = "/api";
 
-type ApiError = {
+export type ApiError = {
   message: string;
   details?: any;
 };
