@@ -10,6 +10,7 @@ import "@/models/Orders"
 import "@/models/Product"
 import "@/models/PromoCardConfig";
 import "@/models/PromoCardPurchase";
+import "@/models/Policy";
 import "@/models/Staff"
 import "@/models/SubCategory"
 import "@/models/Setting";

@@ -1,10 +1,5 @@
-import RefundPolicy from '@/app/policies/refund-policy/RefundPolicy'
-import React from 'react'
+import PolicyPage from "@/app/policies/components/PolicyPage";
 
-const page = () => {
-  return (
-    <RefundPolicy />
-  )
-}
+const Page = () => <PolicyPage slug="refund-policy" />;
 
-export default page
+export default Page;

@@ -14,18 +14,14 @@ const POLICY_NAV_ITEMS = [
   { name: "Delivery Policy", href: `${PARENT_PAGE}/delivery-policy` },
 ];
 
-const PolicyPageLayout = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => {
+const PolicyPageLayout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
 
   return (
     <>
       <NewHeader />
       <main className="min-h-screen bg-white">
-        <nav className="sticky top-0 z-10 border-b border-gray-200 bg-gray-50">
+        <nav className="sticky top-18 md:top-20 z-10 border-b border-gray-200 bg-gray-50">
           <div className="mx-auto flex max-w-4xl gap-1 overflow-x-auto px-4 sm:px-6">
             {POLICY_NAV_ITEMS.map((item) => (
               <a
