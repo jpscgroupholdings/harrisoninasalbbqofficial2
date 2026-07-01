@@ -1,10 +1,5 @@
-import PrivacyPolicy from '@/app/policies/privacy-policy/PrivacyPolicy'
-import React from 'react'
+import PolicyPage from "@/app/policies/components/PolicyPage";
 
-const page = () => {
-  return (
-    <PrivacyPolicy />
-  )
-}
+const Page = () => <PolicyPage slug="privacy-policy" />;
 
-export default page
+export default Page;

@@ -1,10 +1,5 @@
-import DeliveryPolicy from '@/app/policies/delivery-policy/DeliveryPolicy'
-import React from 'react'
+import PolicyPage from "@/app/policies/components/PolicyPage";
 
-const page = () => {
-  return (
-    <DeliveryPolicy />
-  )
-}
+const Page = () => <PolicyPage slug="delivery-policy" />;
 
-export default page
+export default Page;

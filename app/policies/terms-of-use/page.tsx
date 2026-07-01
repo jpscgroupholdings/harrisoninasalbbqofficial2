@@ -1,10 +1,5 @@
-import TermsOfUse from '@/app/policies/terms-of-use/TermsOfUse'
-import React from 'react'
+import PolicyPage from "@/app/policies/components/PolicyPage";
 
-const page = () => {
-  return (
-    <TermsOfUse />
-  )
-}
+const Page = () => <PolicyPage slug="terms-of-use" />;
 
-export default page
+export default Page;
