@@ -51,7 +51,7 @@ export const metadata: Metadata = {
   },
 
   icons: {
-    icon: "images/harrison_logo.png",
+    icon: "/images/harrison_logo.png",
   },
 };
 
