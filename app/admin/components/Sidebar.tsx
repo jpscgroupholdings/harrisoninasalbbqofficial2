@@ -159,6 +159,12 @@ const navSections: NavSection[] = [
         permission: "staff.read",
       },
       {
+        name: "Legal Policies",
+        path: "/legal",
+        icon: "Scale",
+        permission: "legal.read",
+      },
+      {
         name: "Settings",
         path: "/settings",
         icon: "Settings",
