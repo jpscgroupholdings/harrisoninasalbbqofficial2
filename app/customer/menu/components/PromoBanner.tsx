@@ -98,6 +98,8 @@ const PromoBanner = ({
                     image={card.image}
                     name={`Promo Banner ${card.id}`}
                   />
+
+                  <div className="absolute bg-linear-to-t from-black/30 to-transparent inset-0"/>
                 </div>
               </div>
             </div>
