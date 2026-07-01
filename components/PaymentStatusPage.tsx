@@ -1,14 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { CircleCheck, CircleOff, CircleX } from "lucide-react";
+import { trackPurchase } from "@/lib/metaPixel";
 
 export type PaymentStatusType = "success" | "failed" | "cancel";
 
 type PaymentStatusPageProps = {
   type: PaymentStatusType;
+  /** Order total amount (from server) — used for Purchase pixel event */
+  orderValue?: number;
+  /** Order reference number — used for Purchase pixel event */
+  orderId?: string;
 };
 
 type StatusConfig = {
@@ -72,11 +77,24 @@ const statusConfig: Record<PaymentStatusType, StatusConfig> = {
   },
 };
 
-export default function PaymentStatusPage({ type }: PaymentStatusPageProps) {
+export default function PaymentStatusPage({ type, orderValue, orderId }: PaymentStatusPageProps) {
   const searchParams = useSearchParams();
   const [visible, setVisible] = useState(false);
+  const hasTrackedPurchase = useRef(false);
 
-  const referenceNumber = searchParams.get("referenceNumber");
+  const referenceNumber = searchParams.get("referenceNumber") ?? orderId ?? "";
+
+  // Fire Purchase pixel event once on successful payment confirmation
+  useEffect(() => {
+    if (type === "success" && !hasTrackedPurchase.current && orderValue != null) {
+      hasTrackedPurchase.current = true;
+      trackPurchase({
+        currency: "PHP",
+        value: orderValue,
+        order_id: referenceNumber,
+      });
+    }
+  }, [type, orderValue, referenceNumber]);
 
   const config = statusConfig[type];
 

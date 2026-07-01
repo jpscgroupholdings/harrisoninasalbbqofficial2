@@ -1,10 +1,12 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import CustomerDetails from "./CustomerDetails";
 import { useCheckoutContext } from "@/contexts/CheckoutContext";
+import { useCart } from "@/contexts/CartContext";
 import { FULFILLMENT_TYPE } from "@/types/orderConstants";
 import { DetailsFormSkeleton } from "../CheckoutFormSkeleton";
+import { trackInitiateCheckout } from "@/lib/metaPixel";
 
 const page = () => {
   const {
@@ -17,6 +19,22 @@ const page = () => {
     validateField,
     isReady,
   } = useCheckoutContext();
+
+  const { totalItems, totalPrice } = useCart();
+  const hasTrackedRef = useRef(false);
+
+  // Fire InitiateCheckout once when the checkout details page mounts
+  useEffect(() => {
+    if (isReady && !hasTrackedRef.current) {
+      hasTrackedRef.current = true;
+      trackInitiateCheckout({
+        content_category: orderDetails.fulfillmentType === FULFILLMENT_TYPE.DELIVERY ? "Delivery" : "Pickup",
+        currency: "PHP",
+        num_items: totalItems,
+        value: totalPrice,
+      });
+    }
+  }, [isReady, orderDetails.fulfillmentType, totalItems, totalPrice]);
 
   if (!isReady) {
     return <DetailsFormSkeleton />;

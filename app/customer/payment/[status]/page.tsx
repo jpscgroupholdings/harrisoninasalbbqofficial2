@@ -27,7 +27,17 @@ const PaymentStatus = async ({ params, searchParams }: Props) => {
 
   if (status !== "cancel" && !order) notFound();
 
-  return <PaymentStatusPage type={status} />;
+  // Pass order total and reference number for Meta Pixel Purchase tracking
+  const orderValue = order?.total?.totalAmount ?? 0;
+  const orderId = referenceNumber ?? order?._id?.toString() ?? "";
+
+  return (
+    <PaymentStatusPage
+      type={status}
+      orderValue={orderValue}
+      orderId={orderId}
+    />
+  );
 };
 
 export default PaymentStatus;
