@@ -22,6 +22,7 @@ export interface SettingsType {
     isClosed: boolean; // override: mark entire store as temporarily closed
   };
   globalMaxActiveOrders: number | null;
+  isGlobalCapacityShared: boolean;
 }
 
 interface SettingsResponse {

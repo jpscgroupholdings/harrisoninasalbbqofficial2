@@ -52,6 +52,14 @@ const SettingsSchema = new Schema(
       default: null,
       min: 1,
     },
+    // When true, all branches share one global capacity pool.
+    // Active orders across every branch are counted together
+    // against globalMaxActiveOrders, so if one branch is full,
+    // all branches show "high demand".
+    isGlobalCapacityShared: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

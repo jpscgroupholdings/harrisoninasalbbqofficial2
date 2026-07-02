@@ -22,6 +22,7 @@ type Action =
   | { type: "SET_HOURS_FIELD"; field: "openTime" | "closeTime"; value: string }
   | { type: "SET_IS_CLOSED"; value: boolean }
   | { type: "SET_GLOBAL_MAX_ACTIVE_ORDERS"; value: number | null }
+  | { type: "SET_IS_GLOBAL_CAPACITY_SHARED"; value: boolean }
   | { type: "LOAD_SETTINGS"; payload: SettingsType }
   | { type: "RESET" };
 
@@ -36,6 +37,7 @@ const DEFAULT_STATE: SettingsType = {
     isClosed: false,
   },
   globalMaxActiveOrders: null,
+  isGlobalCapacityShared: false,
 };
 
 function settingsReducer(state: SettingsType, action: Action): SettingsType {
@@ -85,6 +87,9 @@ function settingsReducer(state: SettingsType, action: Action): SettingsType {
 
     case "SET_GLOBAL_MAX_ACTIVE_ORDERS":
       return { ...state, globalMaxActiveOrders: action.value };
+
+    case "SET_IS_GLOBAL_CAPACITY_SHARED":
+      return { ...state, isGlobalCapacityShared: action.value };
 
     case "LOAD_SETTINGS":
       return action.payload;
@@ -379,6 +384,31 @@ const SettingsPage = () => {
             placeholder="Leave empty for no limit"
             className={fieldClassName}
           />
+
+          <label className="flex items-start gap-3 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={settings.isGlobalCapacityShared}
+              onChange={(e) =>
+                dispatch({
+                  type: "SET_IS_GLOBAL_CAPACITY_SHARED",
+                  value: e.target.checked,
+                })
+              }
+              className="mt-1 w-4 h-4 accent-brand-color-500"
+            />
+            <div>
+              <span className="text-sm font-semibold text-stone-700">
+                Shared capacity across all branches
+              </span>
+              <p className="text-xs text-stone-400 mt-0.5">
+                When enabled, all branches share one global pool — active orders across
+                every branch are counted together against the global limit. If one branch
+                is at capacity, all branches show "high demand" to customers.
+              </p>
+            </div>
+          </label>
+
           <p className="text-xs text-stone-400">
             Active orders include: pending, preparing, dispatched, and ready for pickup.
             When a branch reaches this limit, new orders are blocked until an active order completes.
