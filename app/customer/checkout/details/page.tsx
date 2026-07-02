@@ -20,7 +20,7 @@ const page = () => {
     isReady,
   } = useCheckoutContext();
 
-  const { totalItems, totalPrice } = useCart();
+  const { cartItems, totalItems, totalPrice } = useCart();
   const hasTrackedRef = useRef(false);
 
   // Fire InitiateCheckout once when the checkout details page mounts
@@ -28,6 +28,8 @@ const page = () => {
     if (isReady && !hasTrackedRef.current) {
       hasTrackedRef.current = true;
       trackInitiateCheckout({
+        content_ids: cartItems.map((item) => item._id),
+        content_type: "product",
         content_category: orderDetails.fulfillmentType === FULFILLMENT_TYPE.DELIVERY ? "Delivery" : "Pickup",
         currency: "PHP",
         num_items: totalItems,

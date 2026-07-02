@@ -14,6 +14,8 @@ type PaymentStatusPageProps = {
   orderValue?: number;
   /** Order reference number — used for Purchase pixel event */
   orderId?: string;
+  /** Product IDs from the order — used for Purchase pixel content_ids */
+  contentIds?: string[];
 };
 
 type StatusConfig = {
@@ -77,7 +79,7 @@ const statusConfig: Record<PaymentStatusType, StatusConfig> = {
   },
 };
 
-export default function PaymentStatusPage({ type, orderValue, orderId }: PaymentStatusPageProps) {
+export default function PaymentStatusPage({ type, orderValue, orderId, contentIds }: PaymentStatusPageProps) {
   const searchParams = useSearchParams();
   const [visible, setVisible] = useState(false);
   const hasTrackedPurchase = useRef(false);
@@ -89,6 +91,8 @@ export default function PaymentStatusPage({ type, orderValue, orderId }: Payment
     if (type === "success" && !hasTrackedPurchase.current && orderValue != null) {
       hasTrackedPurchase.current = true;
       trackPurchase({
+        content_ids: contentIds ?? [],
+        content_type: "product",
         currency: "PHP",
         value: orderValue,
         order_id: referenceNumber,

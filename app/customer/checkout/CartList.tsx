@@ -14,6 +14,7 @@ import Modal from "@/components/ui/Modal";
 import { CreateOrderPayload } from "@/types/OrderTypes";
 import { authClient } from "@/lib/auth-client";
 import { apiClient } from "@/lib/apiClient";
+import { trackAddPaymentInfo } from "@/lib/metaPixel";
 import {
   getPromoCardDay,
   getPromoCardDiscountRateForDay,
@@ -857,6 +858,11 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
             <button
               disabled={!selectedPayment}
               onClick={() => {
+                trackAddPaymentInfo({
+                  content_category: selectedPayment === "maya" ? "Maya" : "Cash on Delivery",
+                  currency: "PHP",
+                  value: totalPrice,
+                });
                 handlePlaceOrder();
                 setShowPaymentOptions(false);
               }}

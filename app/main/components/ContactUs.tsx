@@ -2,6 +2,7 @@ import React from "react";
 import { InputField } from "@/components/ui/FormComponents/InputField";
 import { SelectField } from "@/components/ui/FormComponents/SelectField";
 import { TextareaField } from "@/components/ui/FormComponents/TextAreaField";
+import { trackContact } from "@/lib/metaPixel";
 
 const ContactUs = () => {
   const subjectOptions = [
@@ -25,7 +26,13 @@ const ContactUs = () => {
           </p>
         </div>
 
-        <form className="space-y-6">
+        <form
+          className="space-y-6"
+          onSubmit={(e) => {
+            e.preventDefault();
+            trackContact();
+          }}
+        >
           <InputField
             label="Name"
             required

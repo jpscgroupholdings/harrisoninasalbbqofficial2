@@ -30,12 +30,14 @@ const PaymentStatus = async ({ params, searchParams }: Props) => {
   // Pass order total and reference number for Meta Pixel Purchase tracking
   const orderValue = order?.total?.totalAmount ?? 0;
   const orderId = referenceNumber ?? order?._id?.toString() ?? "";
+  const contentIds = order?.items?.map((item: any) => item.productId?.toString()) ?? [];
 
   return (
     <PaymentStatusPage
       type={status}
       orderValue={orderValue}
       orderId={orderId}
+      contentIds={contentIds}
     />
   );
 };

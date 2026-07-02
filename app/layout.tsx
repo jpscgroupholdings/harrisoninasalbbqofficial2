@@ -87,7 +87,7 @@ export default function RootLayout({
     (window, document, 'script',
     'https://connect.facebook.net/en_US/fbevents.js');
 
-    fbq('init', '2998314207040726');
+    fbq('init', '1584332956581235');
     fbq('track', 'PageView');
   `}
         </Script>
@@ -101,7 +101,7 @@ export default function RootLayout({
             height="1"
             width="1"
             style={{ display: "none" }}
-            src="https://www.facebook.com/tr?id=2998314207040726&ev=PageView&noscript=1"
+            src="https://www.facebook.com/tr?id=1584332956581235&ev=PageView&noscript=1"
             alt=""
           />
         </noscript>

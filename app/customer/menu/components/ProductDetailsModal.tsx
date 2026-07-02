@@ -101,6 +101,8 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   // Fire ViewContent when the product detail modal opens
   React.useEffect(() => {
     trackViewContent({
+      content_ids: [item._id],
+      content_type: "product",
       content_name: item.name,
       content_category: item.category?.name ?? "Menu Item",
       currency: "PHP",
@@ -153,6 +155,8 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 
     // Track AddToCart pixel event with the effective unit price
     trackAddToCart({
+      content_ids: [item._id],
+      content_type: "product",
       content_name: item.name,
       content_category: item.category?.name ?? "Menu Item",
       currency: "PHP",
