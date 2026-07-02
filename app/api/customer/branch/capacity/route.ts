@@ -2,7 +2,7 @@ import { connectDB } from "@/lib/mongodb";
 import { Order } from "@/models/Orders";
 import { Branch } from "@/models/Branch";
 import { Settings } from "@/models/Setting";
-import { ORDER_STATUSES } from "@/types/orderConstants";
+import { FULFILLMENT_TYPE, ORDER_STATUSES } from "@/types/orderConstants";
 import { NextRequest, NextResponse } from "next/server";
 import "@/lib/registerModels";
 
@@ -14,11 +14,12 @@ const ACTIVE_STATUSES = [
 ];
 
 /**
- * GET /api/customer/branch/capacity?branchId=...
+ * GET /api/customer/branch/capacity?branchId=...&fulfillmentType=...
  *
  * Returns whether a branch can currently accept new orders.
- * Used by the frontend to show "high demand" overlay and disable checkout.
- * Never exposes rider count or internal staffing details.
+ * Pickup orders are only blocked by the manual isBusy override —
+ * no capacity counting since pickup doesn't share riders.
+ * Delivery orders are subject to full capacity counting.
  */
 export async function GET(request: NextRequest) {
   try {
@@ -26,6 +27,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const branchId = searchParams.get("branchId");
+    const fulfillmentType = searchParams.get("fulfillmentType");
 
     if (!branchId) {
       return NextResponse.json(
@@ -36,20 +38,25 @@ export async function GET(request: NextRequest) {
 
     const branch = await Branch.findById(branchId);
     if (!branch) {
-      return NextResponse.json(
-        { error: "Branch not found" },
-        { status: 404 },
-      );
+      return NextResponse.json({ error: "Branch not found" }, { status: 404 });
     }
 
-    // Admin manual override — hard block
+    // Admin manual override — hard block regardless of fulfillment type
     if (branch.isBusy) {
       return NextResponse.json({
         canAcceptOrders: false,
         reason: "high_demand",
-        message: "We're currently experiencing high demand. Please try again shortly.",
+        message:
+          "We're currently experiencing high demand. Please try again shortly.",
       });
     }
+
+    // Pickup: only isBusy matters — no rider-based capacity counting
+    if (fulfillmentType === FULFILLMENT_TYPE.PICKUP) {
+      return NextResponse.json({ canAcceptOrders: true });
+    }
+
+    // Delivery (or unspecified): full capacity check
 
     // Resolve the effective limit: branch-specific > global fallback > no limit
     const settings = await Settings.findOne();
@@ -81,13 +88,18 @@ export async function GET(request: NextRequest) {
         : {
             reason: "high_demand",
             message:
-              "We're currently experiencing high demand. Please try again shortly.",
+              "We're currently experiencing high demand. Please try again shortly. You may try pickup instead.",
           }),
     });
   } catch (error) {
     console.error("GET /api/customer/branch/capacity error:", error);
     return NextResponse.json(
-      { error: "Failed to check branch capacity" },
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to check branch capacity",
+      },
       { status: 500 },
     );
   }
