@@ -55,14 +55,18 @@ export async function GET(request: NextRequest) {
     const settings = await Settings.findOne();
     const maxActiveOrders =
       branch.maxActiveOrders ?? settings?.globalMaxActiveOrders ?? null;
+    const isSharedCapacity = settings?.isGlobalCapacityShared === true;
 
     // No limit configured — always allow
     if (maxActiveOrders === null) {
       return NextResponse.json({ canAcceptOrders: true });
     }
 
+    // When shared capacity is enabled, count active orders across ALL branches
+    // so branches that share riders/resources are affected by each other's load.
+    // Otherwise, count only this branch's orders independently.
     const activeOrderCount = await Order.countDocuments({
-      branchId,
+      ...(isSharedCapacity ? {} : { branchId }),
       status: { $in: ACTIVE_STATUSES },
     });
 
@@ -70,14 +74,14 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       canAcceptOrders: canAccept,
+      maxActiveOrders,
+      activeOrderCount,
       ...(canAccept
         ? {}
         : {
             reason: "high_demand",
             message:
               "We're currently experiencing high demand. Please try again shortly.",
-            activeOrderCount,
-            maxActiveOrders,
           }),
     });
   } catch (error) {

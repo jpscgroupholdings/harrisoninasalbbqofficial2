@@ -41,6 +41,7 @@ export async function assertBranchCanAcceptOrders(
   const settings = await Settings.findOne().session(session);
   const maxActiveOrders =
     branch.maxActiveOrders ?? settings?.globalMaxActiveOrders ?? null;
+  const isSharedCapacity = settings?.isGlobalCapacityShared === true;
 
   // No limit configured — allow all orders
   if (maxActiveOrders === null) return;
@@ -52,8 +53,11 @@ export async function assertBranchCanAcceptOrders(
     ORDER_STATUSES.DISPATCH,
   ];
 
+  // When shared capacity is enabled, count active orders across ALL branches
+  // so branches that share riders/resources are affected by each other's load.
+  // Otherwise, count only this branch's orders independently.
   const activeOrderCount = await Order.countDocuments({
-    branchId,
+    ...(isSharedCapacity ? {} : { branchId }),
     status: { $in: activeStatuses },
   }).session(session);
 
