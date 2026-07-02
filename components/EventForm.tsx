@@ -2,6 +2,7 @@
 
 import { InputField } from "@/components/ui/FormComponents/InputField";
 import { useState } from "react";
+import { trackLead } from "@/lib/metaPixel";
 
 const textareaBaseClass =
   "w-full py-3 pl-4 pr-4 border border-gray-300 rounded-lg outline-none transition focus:ring-1 focus:ring-red-500 focus:border-red-500/80 resize-none text-gray-900 placeholder:text-gray-400";
@@ -29,6 +30,12 @@ export default function EventForm() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log(form);
+    trackLead({
+      content_name: form.eventType || "Catering Inquiry",
+      content_category: "Catering",
+      currency: "PHP",
+      value: 0,
+    });
     setSubmitted(true);
   };
 

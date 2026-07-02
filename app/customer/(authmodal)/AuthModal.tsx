@@ -8,6 +8,7 @@ import Modal from "@/components/ui/Modal";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 import { maskEmail } from "@/helper/maskEmail";
+import { trackCompleteRegistration } from "@/lib/metaPixel";
 import { mergeGuestCartOnLogin } from "@/contexts/CartContext";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { LoginForm } from "./LoginForm";
@@ -126,6 +127,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
       },
       {
         onSuccess: () => {
+          trackCompleteRegistration({ status: "completed" });
           setVerificationEmailHint(maskEmail(normalizedEmail));
           setVerificationSent(true);
           persistSignupVerificationState(normalizedEmail);

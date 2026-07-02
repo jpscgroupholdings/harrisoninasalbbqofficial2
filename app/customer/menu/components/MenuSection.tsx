@@ -17,6 +17,7 @@ import { Product } from "@/types/products";
 import { useProductsInfinite } from "@/hooks/api/useInfiniteProducts";
 import { useDiscountedProducts } from "@/hooks/api/useDiscountedProducts";
 import { FetchError } from "@/components/ui/FetchError";
+import { trackSearch } from "@/lib/metaPixel";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -221,6 +222,7 @@ const MenuSection = () => {
     setActiveCategory(categoryName);
     setActiveSubcategory(null);
     scrollToContent();
+    trackSearch({ search_string: categoryName });
 
     if (categoryName === "All") {
       setExpandedCategories(new Set());
@@ -236,6 +238,9 @@ const MenuSection = () => {
   const handleSelectSubcategory = (subcategoryName: string | null) => {
     setActiveSubcategory(subcategoryName);
     scrollToContent();
+    if (subcategoryName) {
+      trackSearch({ search_string: `${activeCategory} - ${subcategoryName}` });
+    }
   };
 
   const getSubcategoriesForCategory = (categoryName: string): string[] => {
