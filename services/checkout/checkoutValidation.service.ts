@@ -66,7 +66,7 @@ export async function assertBranchCanAcceptOrders(
 
   if (activeOrderCount >= maxActiveOrders) {
     throw new Error(
-      "We're currently experiencing high demand. Please try again shortly.",
+      "We're currently experiencing high demand. Please try again shortly. You may try pickup instead.",
     );
   }
 }
