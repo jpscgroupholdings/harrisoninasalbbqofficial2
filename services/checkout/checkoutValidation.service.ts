@@ -2,7 +2,7 @@ import { getPromoCardConfig } from "@/lib/promoCardConfig";
 import { getStoreStatus } from "@/lib/storeStatus";
 import { Settings } from "@/models/Setting";
 import { Order } from "@/models/Orders";
-import { ORDER_STATUSES } from "@/types/orderConstants";
+import { FULFILLMENT_TYPE, ORDER_STATUSES } from "@/types/orderConstants";
 import { CreateOrderPayload } from "@/types/OrderTypes";
 import { ClientSession } from "mongoose";
 import { getPaidPromoCardBenefit } from "../promoCardBenefits";
@@ -19,23 +19,26 @@ export async function assertStoreIsOpen(session: ClientSession): Promise<void> {
 
 /**
  * Guard: check that a branch can accept new orders based on capacity.
- * Counts confirmed active orders (pending, preparing, dispatch, ready_for_pickup)
- * against the branch's maxActiveOrders limit (or the global fallback).
- * Also rejects if the branch is flagged as isBusy (admin manual override).
+ * Pickup orders only check the manual isBusy override — no rider-based counting.
+ * Delivery orders are subject to full capacity counting.
  */
 export async function assertBranchCanAcceptOrders(
   branchId: string,
+  fulfillmentType: string | undefined,
   session: ClientSession,
 ): Promise<void> {
   const branch = await Branch.findById(branchId).session(session);
   if (!branch) throw new Error("Branch not found.");
 
-  // Admin manual override — hard block regardless of order count
+  // Admin manual override — hard block regardless of fulfillment type
   if (branch.isBusy) {
     throw new Error(
       "We're currently experiencing high demand. Please try again shortly.",
     );
   }
+
+  // Pickup: only isBusy matters — no rider-based capacity counting
+  if (fulfillmentType === FULFILLMENT_TYPE.PICKUP) return;
 
   // Determine the effective limit: branch-specific > global fallback > no limit
   const settings = await Settings.findOne().session(session);
