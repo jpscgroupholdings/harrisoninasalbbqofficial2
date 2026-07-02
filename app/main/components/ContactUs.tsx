@@ -1,3 +1,5 @@
+'use client'
+
 import React from "react";
 import { InputField } from "@/components/ui/FormComponents/InputField";
 import { SelectField } from "@/components/ui/FormComponents/SelectField";
