@@ -332,7 +332,7 @@ const Sidebar = ({ isMobileOpen, onClose }: SidebarProps) => {
                           )}
                           {/** Pending order indicator */}
                           {item.path === "/orders" && pendingCount > 0 && (
-                            <div className="absolute -top-1 right-0 flex items-center justify-center w-5 h-5 text-xs bg-red-600 text-white rounded-full">
+                            <div className="absolute -top-2 -right-2 flex items-center justify-center w-6 h-6 text-sm bg-red-600 border text-white rounded-full">
                               {pendingCount}
                             </div>
                           )}
