@@ -26,6 +26,9 @@ const ShippingAddressSchema = new Schema(
 
 const UserSchema = new Schema(
   {
+    // ISO timestamp of when the user accepted Terms of Use & Privacy Policy
+    termsAcceptedAt: { type: String, required: false, default: null },
+
     // Default shipping address saved on profile
     shippingAddress: {
       type: ShippingAddressSchema,
