@@ -110,25 +110,6 @@ export function LoginForm({
         </button>
       </form>
 
-      <p className="text-center text-xs text-gray-400">
-        By signing in, you agree to our{" "}
-        <Link
-          href="/policies/terms-of-use"
-          target="_blank"
-          className="font-semibold text-gray-500 hover:underline"
-        >
-          Terms of Use
-        </Link>
-        {" "}and{" "}
-        <Link
-          href="/policies/privacy-policy"
-          target="_blank"
-          className="font-semibold text-gray-500 hover:underline"
-        >
-          Privacy Policy
-        </Link>
-      </p>
-
       <div className="relative flex items-center py-2">
         <div className="grow border-t border-gray-200" />
         <span className="mx-4 shrink text-xs uppercase tracking-wider text-gray-400">
@@ -169,6 +150,25 @@ export function LoginForm({
           </>
         )}
       </button>
+
+      <p className="text-center text-sm text-gray-600">
+        By continuing, you agree to our{" "}
+        <Link
+          href="/policies/terms-of-use"
+          target="_blank"
+          className="text-brand-color-500 hover:underline"
+        >
+          Terms of Use
+        </Link>{" "}
+        and{" "}
+        <Link
+          href="/policies/privacy-policy"
+          target="_blank"
+          className="text-brand-color-500 hover:underline"
+        >
+          Privacy Policy
+        </Link>
+      </p>
 
       <div className="pt-2 text-center">
         <p className="text-sm text-gray-500">
