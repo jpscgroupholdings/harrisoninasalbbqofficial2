@@ -14,6 +14,7 @@ import { toast } from "sonner";
 interface ProductResponse {
   data: OrderType[];
   pagination: PaginationMeta;
+  tabCounts?: Record<string, number>;
 }
 
 const ORDER_ENDPOINTS = {
@@ -28,6 +29,7 @@ export type OrderParams = {
   sort?: string;
   search?: string;
   status?: OrderStatus | OrderStatus[];
+  paymentFilter?: "confirmed" | "unpaid";
   branchId?: "all" | string;
   productType?: string;
 };
