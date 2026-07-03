@@ -31,11 +31,16 @@ export async function GET(request: NextRequest) {
     const { page, limit, skip, sort, match } = parseRequestQuery(request, {
       exactFields: ["status"],
       searchFields: [
-        "paymentInfo.customerName",
+        "paymentInfo.firstName",
+        "paymentInfo.lastName",
         "paymentInfo.customerEmail",
         "paymentInfo.customerPhone",
         "status",
         "paymentInfo.referenceNumber",
+        "items.name",
+        "paymentInfo.shippingAddress.city",
+        "branchSnapshot.name",
+        "fulfillmentType"
       ],
       defaultLimit: 20,
       maxLimit: 50,
@@ -43,7 +48,18 @@ export async function GET(request: NextRequest) {
     });
 
     const paymentFilter = request.nextUrl.searchParams.get("paymentFilter");
-    const filter: Record<string, any> = { ...match };
+
+    // Separate search $or from other match fields to prevent $or collision.
+    // MongoDB cannot have two top-level $or keys — the second silently overwrites the first,
+    // which was breaking search on tabs that also need a payment-confirmation $or.
+    const searchOr = match.$or as Record<string, any>[] | undefined;
+    const baseMatch = { ...match };
+    if (searchOr) delete baseMatch.$or;
+
+    const filter: Record<string, any> = { ...baseMatch };
+
+    // Build the payment/tab $or separately so we can combine it with search via $and
+    let paymentOr: Record<string, any>[] | undefined;
 
     // When a specific status is explicitly requested, show only that status
     // (includes PENDING_PAYMENT if the admin selects that tab)
@@ -51,7 +67,7 @@ export async function GET(request: NextRequest) {
       // For PENDING status: exclude unconfirmed Maya orders
       // (COD orders always shown; Maya orders need PAYMENT_SUCCESS + valid paymentId)
       if (match.status === ORDER_STATUSES.PENDING) {
-        filter.$or = [
+        paymentOr = [
           { "paymentInfo.paymentMethod": { $ne: "maya" } },
           {
             "paymentInfo.paymentStatus": PAYMENT_STATUSES.PAYMENT_SUCCESS,
@@ -64,7 +80,7 @@ export async function GET(request: NextRequest) {
       // "Unpaid" tab: Maya orders where payment is NOT confirmed, excluding PENDING_PAYMENT
       filter.status = { $ne: ORDER_STATUSES.PENDING_PAYMENT };
       filter["paymentInfo.paymentMethod"] = "maya";
-      filter.$or = [
+      paymentOr = [
         {
           "paymentInfo.paymentStatus": {
             $ne: PAYMENT_STATUSES.PAYMENT_SUCCESS,
@@ -76,7 +92,7 @@ export async function GET(request: NextRequest) {
     } else {
       // Default / "All" tab: exclude PENDING_PAYMENT and unconfirmed Maya orders
       filter.status = { $ne: ORDER_STATUSES.PENDING_PAYMENT };
-      filter.$or = [
+      paymentOr = [
         // COD orders are always shown — payment happens on delivery
         { "paymentInfo.paymentMethod": { $ne: "maya" } },
         // Maya orders with confirmed payment (PAYMENT_SUCCESS + valid paymentId)
@@ -85,6 +101,16 @@ export async function GET(request: NextRequest) {
           "paymentInfo.paymentId": { $exists: true, $nin: [null, ""] },
         },
       ];
+    }
+
+    // Combine search $or and payment $or properly.
+    // Both must be satisfied simultaneously — use $and to prevent $or collision.
+    if (searchOr && paymentOr) {
+      filter.$and = [{ $or: searchOr }, { $or: paymentOr }];
+    } else if (searchOr) {
+      filter.$or = searchOr;
+    } else if (paymentOr) {
+      filter.$or = paymentOr;
     }
 
     const requestedBranchId = request.nextUrl.searchParams.get("branchId");
@@ -146,7 +172,9 @@ export async function GET(request: NextRequest) {
     ];
 
     const unconfirmedMayaOr = [
-      { "paymentInfo.paymentStatus": { $ne: PAYMENT_STATUSES.PAYMENT_SUCCESS } },
+      {
+        "paymentInfo.paymentStatus": { $ne: PAYMENT_STATUSES.PAYMENT_SUCCESS },
+      },
       { "paymentInfo.paymentId": { $in: [null, ""] } },
       { "paymentInfo.paymentId": { $exists: false } },
     ];
