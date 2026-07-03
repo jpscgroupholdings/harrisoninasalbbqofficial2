@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { DynamicIcon } from "@/components/ui/DynamicIcon";
+import { twMerge } from "tailwind-merge";
 
 export const OrderItemImage = ({
   image,
   name = "Order item",
+  className,
 }: {
   image?: string;
   name?: string;
+  className?: string;
 }) => {
   const [hasError, setHasError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -16,7 +19,6 @@ export const OrderItemImage = ({
     setImageLoaded(false);
     setHasError(false);
 
-    // If the image is already cached, `onLoad` won't fire — check manually
     if (imgRef.current?.complete && imgRef.current.naturalWidth > 0) {
       setImageLoaded(true);
     }
@@ -54,13 +56,16 @@ export const OrderItemImage = ({
           </div>
         </div>
       )}
+
       <img
         ref={imgRef}
         src={image}
         alt={name}
-        className={`w-full h-full object-cover transition-opacity duration-200 ${
-          imageLoaded ? "opacity-100" : "opacity-0"
-        }`}
+        className={twMerge(
+          "w-full h-full object-cover transition-opacity duration-200",
+          imageLoaded ? "opacity-100" : "opacity-0",
+          className
+        )}
         onLoad={() => setImageLoaded(true)}
         onError={() => setHasError(true)}
       />
