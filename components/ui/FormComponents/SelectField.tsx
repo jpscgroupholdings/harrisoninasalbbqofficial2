@@ -6,7 +6,7 @@ import clsx from "clsx";
 interface SelectOption {
   value: string;
   label: string;
-  disabled?: boolean
+  disabled?: boolean;
 }
 
 interface SelectFieldProps extends SelectHTMLAttributes<HTMLSelectElement> {
@@ -14,21 +14,32 @@ interface SelectFieldProps extends SelectHTMLAttributes<HTMLSelectElement> {
   errors?: string;
   options: SelectOption[];
   leftIcon?: React.ReactNode;
+  subLabel?: string;
 }
 
 export const SelectField = forwardRef<HTMLSelectElement, SelectFieldProps>(
-  ({ label, errors, options, leftIcon, className, ...props }, ref) => {
+  ({ label, errors, options, leftIcon, className,subLabel, ...props }, ref) => {
     return (
       <div className="w-full space-y-2">
-        {label && (
-          <label
-            htmlFor={props.id}
-            className="block text-sm font-semibold text-gray-700"
-          >
-            {label}
-            {props.required && <span className="text-red-500 ml-1">*</span>}
-          </label>
-        )}
+        <div className="m-0">
+          {label && (
+            <label
+              htmlFor={props.id}
+              className="block text-sm font-semibold text-gray-700 mb-1"
+            >
+              {label}
+              {props.required && <span className="text-red-500 ml-1">*</span>}
+            </label>
+          )}
+          {subLabel && (
+            <label
+              htmlFor={props.id}
+              className="block text-xs text-gray-600 mb-2"
+            >
+              {subLabel}
+            </label>
+          )}
+        </div>
 
         <div className="relative">
           {leftIcon && (
@@ -45,11 +56,15 @@ export const SelectField = forwardRef<HTMLSelectElement, SelectFieldProps>(
               leftIcon ? "pl-10" : "pl-4",
               "pr-10", // space for chevron
               errors && "border-red-500 focus:ring-red-500",
-              className
+              className,
             )}
           >
             {options.map((option) => (
-              <option key={option.value} value={option.value} disabled={option.disabled}>
+              <option
+                key={option.value}
+                value={option.value}
+                disabled={option.disabled}
+              >
                 {option.label}
               </option>
             ))}
@@ -76,7 +91,7 @@ export const SelectField = forwardRef<HTMLSelectElement, SelectFieldProps>(
         {errors && <p className="text-sm text-red-500">{errors}</p>}
       </div>
     );
-  }
+  },
 );
 
 SelectField.displayName = "SelectField";
