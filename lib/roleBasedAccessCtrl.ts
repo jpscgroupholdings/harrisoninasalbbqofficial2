@@ -86,6 +86,9 @@ export const adminPermission: Record<StaffRole, Set<string>> = {
     "settings.read",
 
     "legal.read",
+
+    "reviews.read",
+    "reviews.update",
   ]),
 
   cashier: new Set(["orders.read", "orders.update"]),
