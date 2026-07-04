@@ -1,17 +1,14 @@
 "use client";
-
-import React, { useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { BranchProduct } from "@/hooks/api/useBranchProductInfinite";
 import { STOCK_STATUSES } from "@/types/inventory_types";
-import { ShoppingBag } from "lucide-react";
 import ProductDetailModal from "./ProductDetailsModal";
 import { toast } from "sonner";
 import { ITEM_TYPES } from "@/types/products";
-import { getStoreStatus } from "@/lib/storeStatus";
-import { useSettings } from "@/hooks/api/useSettings";
 import { OrderItemImage } from "../../components/OrderItemImage";
 import { formatCurrency } from "@/helper/formatCurrency";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { DynamicIcon } from "@/components/ui/DynamicIcon";
+import { useProductReviews } from "@/hooks/api/customers/useProductReviews";
 
 interface ProductCardProps {
   item: BranchProduct;
@@ -26,6 +23,7 @@ const getStockLabel = (status: string, quantity: number | null): string => {
   return `${quantity} available`;
 };
 
+// Discount Label
 const getProductDiscountLabel = (
   discount: BranchProduct["activeProductDiscount"],
 ): string | null => {
@@ -38,6 +36,7 @@ const getProductDiscountLabel = (
   return `${formatCurrency(discount.discountAmount)} OFF`;
 };
 
+// Included items for those product type combo
 const getIncludedItemsText = (
   includedItems: BranchProduct["includedItems"],
 ): string[] =>
@@ -49,34 +48,6 @@ const getIncludedItemsText = (
       "Unavailable item";
     return i.quantity > 1 ? `${i.quantity}x ${name}` : name;
   });
-
-const StoreClosedOverlay = ({ message }: { message: string }) => {
-  // Split message into headline + detail (simple heuristic)
-  const [headline, ...rest] = message.split(". ");
-  const detail = rest.join(". ");
-
-  return (
-    <>
-      {/* Dark overlay */}
-      <div className="absolute inset-0 bg-black/60 z-10 backdrop-blur-[2px]" />
-
-      {/* Content */}
-      <div className="absolute inset-0 z-20 flex flex-col items-center justify-center text-center px-4">
-        <div className="bg-white/95 rounded-xl shadow-lg px-4 py-3 max-w-[90%]">
-          {/* Headline */}
-          <p className="text-sm font-bold text-red-600">{headline}</p>
-
-          {/* Optional detail */}
-          {detail && (
-            <p className="text-[11px] text-gray-600 mt-1 leading-tight">
-              {detail}
-            </p>
-          )}
-        </div>
-      </div>
-    </>
-  );
-};
 
 // Simple slugify helper — put this in a shared util file, e.g. @/helper/slugify.ts
 const slugify = (text: string) =>
@@ -94,7 +65,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
   selectedBranch,
   openBranchSelector,
 }) => {
-  const { data: operatingSched } = useSettings();
+  // Fetch product review stats with minimal data (limit=1 — we only need averageRating + totalReviews)
+  const { data: reviewData } = useProductReviews(item._id, { limit: 1 });
+  const averageRating = reviewData?.averageRating ?? 0;
+  const totalReviews = reviewData?.totalReviews ?? 0;
+  const hasReviews = totalReviews > 0 && averageRating > 0;
 
   const router = useRouter();
   const pathname = usePathname();
@@ -118,10 +93,6 @@ const ProductCard: React.FC<ProductCardProps> = ({
     const query = params.toString();
     router.push(query ? `${pathname}?${query}` : pathname, { scroll: false });
   };
-
-  const storeStatus = operatingSched
-    ? getStoreStatus(operatingSched.operatingHours)
-    : null;
 
   // ── Derived state (declared early, used throughout) ───────────────────────
   // Stock info is only meaningful when a branch is selected
@@ -162,10 +133,6 @@ const ProductCard: React.FC<ProductCardProps> = ({
         {/* Image */}
         <div className="aspect-square overflow-hidden bg-white relative flex items-center justify-center">
           <OrderItemImage image={item.image.url} name={item.name} />
-
-          {storeStatus && !storeStatus.isOpen && (
-            <StoreClosedOverlay message={storeStatus.message} />
-          )}
 
           {isOutOfStock && (
             <div className="absolute inset-0 bg-black/10 z-10" />
@@ -218,6 +185,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
           <h3 className="line-clamp-2 min-h-10 text-sm font-semibold leading-snug text-gray-900 md:text-base">
             {item.name}
           </h3>
+
           {hasIncludedItems && (
             <div className="flex flex-wrap gap-1 mt-1">
               {includedItemsText.map((text, index) => (
@@ -235,6 +203,27 @@ const ProductCard: React.FC<ProductCardProps> = ({
             <p className="text-[11px] font-semibold text-emerald-600">
               Good for {item.paxCount} pax
             </p>
+          )}
+
+          {/* Dynamic product rating from reviews */}
+          {hasReviews && (
+            <button
+              type="button"
+              onClick={() => router.push(`/products/${item._id}/reviews`)}
+              className="absolute top-3 inline-flex items-center gap-1 text-[11px] bg-gray-200 px-2 py-1 rounded-full group/review text-gray-500 hover:text-brand-color-500 transition-colors cursor-pointer"
+              data-tooltip-id="app-tooltip"
+              data-tooltip-content="View Reviews"
+              data-tooltip-place="left"
+              aria-label={`View ${totalReviews} reviews for ${item.name}`}
+            >
+              <DynamicIcon
+                name="Star"
+                className="fill-yellow-500 text-yellow-500 group-hover/review:fill-brand-color-500 group-hover/review:text-brand-color-500"
+              />
+              <span className="font-semibold text-gray-700">
+                {averageRating}
+              </span>
+            </button>
           )}
           <div className="mt-auto flex items-end justify-between gap-3 pt-2">
             <div className="min-w-0">
@@ -256,17 +245,18 @@ const ProductCard: React.FC<ProductCardProps> = ({
                   </div>
                 )}
             </div>
+
             <span className="hidden">PHP {item.price?.toFixed(2) ?? "--"}</span>
             <button
               type="button"
               onClick={() => {
                 !selectedBranch ? handleOpenBranchSelector() : openModal();
               }}
-              disabled={isOutOfStock || !storeStatus?.isOpen}
+              disabled={isOutOfStock}
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-color-500 text-white transition-colors hover:bg-brand-color-600 disabled:cursor-not-allowed disabled:bg-gray-300"
               aria-label={`Add ${item.name} to cart`}
             >
-              <ShoppingBag size={16} strokeWidth={2.5} />
+              <DynamicIcon name="ShoppingBag" size={16} strokeWidth={2.5} />
             </button>
           </div>
         </div>
