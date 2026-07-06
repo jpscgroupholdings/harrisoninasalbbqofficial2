@@ -29,15 +29,14 @@ export const OrderItemImage = ({
       <div
         role="img"
         aria-label={`${name} image not available`}
-        className="w-full h-full flex flex-col items-center justify-center bg-orange-50"
+        className="w-full h-full flex flex-col items-center justify-center bg-gray-50"
       >
         <DynamicIcon
-          name="Flame"
+          name="FileX"
           size={20}
-          className="text-orange-200"
+          className="text-brand-color-400"
           aria-hidden="true"
         />
-        <p className="text-xs text-gray-500">No image found</p>
       </div>
     );
   }
@@ -45,15 +44,12 @@ export const OrderItemImage = ({
   return (
     <div className="relative w-full h-full">
       {!imageLoaded && (
-        <div className="absolute inset-0 bg-gray-100 animate-pulse flex items-center justify-center">
-          <div className="flex flex-col items-center justify-center gap-2">
-            <DynamicIcon
-              name="ShoppingBag"
-              size={32}
-              className="text-gray-300"
-            />
-            <p className="text-gray-300 text-xs">Loading image...</p>
-          </div>
+        <div className="w-full h-full flex flex-col items-center justify-center bg-gray-50 ">
+          <DynamicIcon
+            name="Loader2"
+            size={20}
+            className="text-gray-300 animate-spin"
+          />
         </div>
       )}
 
@@ -64,7 +60,7 @@ export const OrderItemImage = ({
         className={twMerge(
           "w-full h-full object-cover transition-opacity duration-200",
           imageLoaded ? "opacity-100" : "opacity-0",
-          className
+          className,
         )}
         onLoad={() => setImageLoaded(true)}
         onError={() => setHasError(true)}
