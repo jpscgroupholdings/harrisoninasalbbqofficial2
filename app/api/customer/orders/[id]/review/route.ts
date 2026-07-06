@@ -5,6 +5,8 @@ import { connectDB } from "@/lib/mongodb";
 import { Order } from "@/models/Orders";
 import { Review } from "@/models/Review";
 import { ReviewBody } from "@/types/ReviewTypes";
+import { getAPIError } from "@/lib/getApiError";
+import { ORDER_STATUSES } from "@/types/orderConstants";
 
 // ─── POST /api/customer/orders/[id]/review ────────────────────────────────────
 
@@ -25,7 +27,7 @@ export async function POST(
     const order = await Order.findById(orderId).lean();
 
     if (!order) {
-      return NextResponse.json({ error: "Order not found" }, { status: 404 });
+      return getAPIError("Order not found", 404);
     }
 
     // ── 3. Authorization check ────────────────────────────────────────────
@@ -34,44 +36,32 @@ export async function POST(
     //        (orderId is a non-guessable MongoDB ObjectId, good enough for guests)
     if (sessionUserId && order.customerId) {
       if (order.customerId.toString() !== sessionUserId) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        return getAPIError("Forbidden", 403);
       }
     }
 
     // ── 4. Guard: only completed, unreviewed orders ───────────────────────
-    if (order.status !== "completed") {
-      return NextResponse.json(
-        { error: "You can only review completed orders" },
-        { status: 400 },
-      );
+    if (order.status !== ORDER_STATUSES.COMPLETED) {
+      return getAPIError("You can only review completed orders", 400);
     }
 
     if (order.isReviewed) {
-      return NextResponse.json(
-        { error: "This order has already been reviewed" },
-        { status: 409 },
-      );
+      return getAPIError("This order has already been reviewed", 409);
     }
 
     // ── 5. Validate body ──────────────────────────────────────────────────
     const body: ReviewBody = await req.json();
 
-    const { rating, comment, itemReviews = [] } = body;
+    const { rating, comment, isAnonymous = false, itemReviews = [] } = body;
 
     if (!rating || rating < 1 || rating > 5) {
-      return NextResponse.json(
-        { error: "Rating must be between 1 and 5" },
-        { status: 422 },
-      );
+      return getAPIError("Rating must be between 1 and 5", 422);
     }
 
     // Validate each item review that has a rating
     for (const item of itemReviews) {
       if (item.rating != null && (item.rating < 1 || item.rating > 5)) {
-        return NextResponse.json(
-          { error: `Invalid rating for item: ${item.name}` },
-          { status: 422 },
-        );
+        return getAPIError(`Invalid rating for item: ${item.name}`, 422);
       }
 
       // Ensure the productId actually belongs to this order
@@ -79,9 +69,9 @@ export async function POST(
         (i: any) => i.productId.toString() === item.productId,
       );
       if (!belongsToOrder) {
-        return NextResponse.json(
-          { error: `Item ${item.name} does not belong to this order` },
-          { status: 422 },
+        return getAPIError(
+          `Item ${item.name} does not belong to this order`,
+          422,
         );
       }
     }
@@ -94,6 +84,7 @@ export async function POST(
         branchId: order.branchId,
         rating,
         comment: comment?.trim() || null,
+        isAnonymous,
         itemReviews: itemReviews.map((i) => ({
           productId: i.productId,
           name: i.name,
@@ -115,16 +106,10 @@ export async function POST(
   } catch (error: any) {
     // Duplicate key — review already exists at DB level
     if (error?.code === 11000) {
-      return NextResponse.json(
-        { error: "This order has already been reviewed" },
-        { status: 409 },
-      );
+      return getAPIError("This order has already been reviewed", 409);
     }
 
     console.error("[POST /review]", error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Internal Server Error" },
-      { status: 500 },
-    );
+    return getAPIError(error, 500);
   }
 }
