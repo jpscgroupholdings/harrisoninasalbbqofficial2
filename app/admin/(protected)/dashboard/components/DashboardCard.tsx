@@ -1,11 +1,11 @@
 "use client";
 
+import MetricCard, { MetricCardProps } from "@/components/ui/MetricCard";
 import { useAdminBranchContext } from "@/contexts/AdminBranchContext";
 import { getErrorMessage } from "@/helper/getErrorMessage";
 import { apiClient } from "@/lib/apiClient";
 import type { DashboardPeriod } from "@/services/admin/dashboard.service";
 import type { DashboardStats } from "@/types/adminType";
-import { getLucideIcon } from "@/utils/iconUtils";
 import { useQuery } from "@tanstack/react-query";
 import { buildDashboardQuery } from "../helper/buildDashboardQuery";
 
@@ -43,69 +43,50 @@ const DashboardCard = ({ period }: { period: DashboardPeriod }) => {
 
   if (!dashboardStats) return null;
 
-  const cards = [
+  const { bestSellingCount } = dashboardStats;
+
+  const cards: MetricCardProps[] = [
     {
       title: "Total Orders",
       value: dashboardStats.totalOrders,
       icon: "Package",
-      color: "bg-blue-600",
-      change: "",
+      iconColor: "bg-blue-600",
     },
     {
       title: "Total Revenue",
       value: `PHP ${dashboardStats.totalRevenue.toLocaleString()}`,
       icon: "CircleDollarSign",
-      color: "bg-emerald-600",
-      change: "",
+      iconColor: "bg-emerald-600",
     },
     {
       title: "Pending Orders",
       value: dashboardStats.pendingOrders,
       icon: "ClockAlert",
-      color: "bg-[#ef4501]",
-      change: "",
+      iconColor: "bg-[#ef4501]",
     },
     {
       title: "Best Seller",
       value: dashboardStats.bestSellingProduct,
       icon: "Trophy",
-      color: "bg-amber-600",
-      change: `${dashboardStats.bestSellingCount} sold`,
+      iconColor: "bg-amber-600",
+      badge: `${bestSellingCount} old`,
+      badgeTone: bestSellingCount > 0 ? "positive" : "neutral",
     },
   ];
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {cards.map((card) => {
-        const Icon = getLucideIcon(card.icon);
-
-        return (
-          <div
-            key={card.title}
-            className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-stone-100 group"
-          >
-            <div className="flex items-start justify-between mb-4">
-              <div
-                className={`w-12 h-12 rounded ${card.color} text-white flex items-center justify-center text-2xl shadow-lg group-hover:scale-110 transition-transform duration-300`}
-              >
-                <Icon />
-              </div>
-              {card.change && (
-                <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
-                  {card.change}
-                </span>
-              )}
-            </div>
-
-            <h3 className="text-stone-500 text-sm font-medium mb-2">
-              {card.title}
-            </h3>
-            <p className="text-3xl font-semibold text-stone-800">
-              {card.value}
-            </p>
-          </div>
-        );
-      })}
+      {cards.map((card) => (
+        <MetricCard
+          key={card.title}
+          title={card.title}
+          value={card.value}
+          icon={card.icon}
+          iconColor={card.iconColor}
+          badge={card.badge}
+          badgeTone={card.badgeTone}
+        />
+      ))}
     </div>
   );
 };
