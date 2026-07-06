@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     if (!token) {
       return NextResponse.json(
         { error: "Unauthorized: No token provided" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
           error: "Invalid or expired token",
           details: jwtError.message,
         },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     if (!payload.id) {
       return NextResponse.json(
         { error: "Invalid token payload: missing id" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -52,10 +52,13 @@ export async function GET(request: NextRequest) {
       .lean();
 
     if (!adminData) {
-      return NextResponse.json(
-        { error: `Admin not found with id: ${payload.id}` },
-        { status: 404 }
+      const response = NextResponse.json(
+        { message: "Admin not found" },
+        { status: 404 },
       );
+      // clear the stale cookie so middleware stops trusting it
+      response.cookies.delete(COOKIE_NAMES.ADMIN_TOKEN);
+      return response;
     }
 
     return NextResponse.json(adminData);
@@ -64,11 +67,11 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(
       {
-        error: "Internal Server Error",
+        error: error instanceof Error ? error.message : "Internal Server Error",
         message: error?.message || "Unknown error",
         stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
