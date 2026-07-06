@@ -33,7 +33,7 @@ const ReviewStatsCard = ({
   averageLabel = "Average Rating",
   totalLabel = "Total Reviews",
 }: ReviewStatsCardProps) => {
-  
+
   const statsData: MetricCardProps[] = [
     {
       title: averageLabel,
@@ -48,7 +48,7 @@ const ReviewStatsCard = ({
     },
     {
       title: totalLabel,
-      value: stats.totalCount.toFixed(1),
+      value: stats.totalCount,
       icon: "UserStar",
       iconColor: "bg-emerald-500",
     },
