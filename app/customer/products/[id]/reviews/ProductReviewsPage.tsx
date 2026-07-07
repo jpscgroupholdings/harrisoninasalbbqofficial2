@@ -77,17 +77,26 @@ const ProductReviewsPage = ({ productId }: { productId: string }) => {
     setEditHovered(0);
   };
 
+  /**
+   * Submit edit from the product page — only updates the item-level review
+   * for this specific product. Order-level rating/comment are NOT overwritten.
+   * The route merges by productId, so other items in the same order stay untouched.
+   */
   const submitEdit = () => {
     if (!editingReviewId || editRating === 0) return;
-
-    const targetReview = reviews.find((r) => r._id === editingReviewId);
-
-    if (!targetReview) return;
 
     editReview.mutate(
       {
         reviewId: editingReviewId,
-        payload: { rating: editRating, comment: editComment.trim() || null },
+        payload: {
+          itemReviews: [
+            {
+              productId,
+              rating: editRating,
+              comment: editComment.trim() || null,
+            },
+          ],
+        },
       },
       { onSuccess: closeEditModal },
     );
