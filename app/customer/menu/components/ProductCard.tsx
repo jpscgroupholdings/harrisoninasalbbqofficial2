@@ -265,6 +265,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
       {showDetail && (
         <ProductDetailModal
           item={item}
+          reviews={{ totalReviews, averageRating }}
           selectedBranch={selectedBranch}
           onClose={closeModal}
         />

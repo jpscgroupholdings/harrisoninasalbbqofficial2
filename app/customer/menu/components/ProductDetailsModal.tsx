@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import Modal from "@/components/ui/Modal";
 import { syne } from "@/app/font";
 import { OrderItemImage } from "../../components/OrderItemImage";
+import StarRatingDisplay from "@/components/ui/StarRating";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -29,6 +30,10 @@ interface CommonlyBoughtItem {
 
 interface ProductDetailModalProps {
   item: BranchProduct;
+  reviews: {
+    totalReviews: number;
+    averageRating: number;
+  };
   selectedBranch?: string;
   onClose: () => void;
 }
@@ -91,6 +96,7 @@ const QuantityStepper = ({
 
 const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   item,
+  reviews,
   selectedBranch,
   onClose,
 }) => {
@@ -198,20 +204,10 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                     </h2>
                     <div className="flex items-center gap-2 mt-1">
                       <div className="flex">
-                        {[1, 2, 3, 4, 5].map((s) => (
-                          <Star
-                            key={s}
-                            size={12}
-                            className={
-                              s <= 4
-                                ? "fill-amber-400 text-amber-400"
-                                : "text-gray-200 fill-gray-200"
-                            }
-                          />
-                        ))}
+                       <StarRatingDisplay rating={reviews.averageRating}/>
                       </div>
                       <span className="text-xs text-gray-400">
-                        4.2 · 32 reviews
+                        {Number(reviews.averageRating).toFixed(1)} · {Number(reviews.totalReviews)} reviews
                       </span>
                     </div>
                   </div>
