@@ -1,4 +1,5 @@
 import { POLICY_SLUGS, policyFallbackMap } from "@/data/policyData";
+import { getAPIError } from "@/lib/getApiError";
 import { requireAdmin } from "@/lib/getAuth";
 import { connectDB } from "@/lib/mongodb";
 import { canAccess } from "@/lib/roleBasedAccessCtrl";
@@ -14,19 +15,13 @@ export async function GET(
     const admin = await requireAdmin(request);
 
     if (!canAccess(admin.role, "legal.read")) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return getAPIError("Forbidden", 403);
     }
 
     const { slug } = await params;
 
     if (!POLICY_SLUGS.includes(slug)) {
-      return NextResponse.json(
-        {
-          error: "Invalid policy slug",
-          validSlugs: POLICY_SLUGS,
-        },
-        { status: 400 },
-      );
+      return getAPIError("Invalid policy slug", 400);
     }
 
     const policy = await Policy.findOne({ slug }).lean();
@@ -35,10 +30,7 @@ export async function GET(
       /** Show fallback data so admin can preview before seeding */
       const fallback = policyFallbackMap.get(slug);
       if (!fallback) {
-        return NextResponse.json(
-          { error: "Policy not found" },
-          { status: 404 },
-        );
+        return getAPIError("Policy not found", 404);
       }
       return NextResponse.json(
         { data: fallback, seeded: false },
@@ -48,8 +40,8 @@ export async function GET(
 
     return NextResponse.json({ data: policy, seeded: true }, { status: 200 });
   } catch (error) {
-    return NextResponse.json({
-      error: error instanceof Error ? error.message : "Failed to fetch policy",
+    return getAPIError(error, 500, {
+      fallbackMessage: "Failed to fetch policy",
     });
   }
 }
@@ -63,16 +55,17 @@ export async function PUT(
     const admin = await requireAdmin(request);
 
     if (!canAccess(admin.role, "legal.update")) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return getAPIError("Forbidden", 403);
     }
 
     const { slug } = await params;
 
     if (!POLICY_SLUGS.includes(slug)) {
-      return NextResponse.json(
-        { error: "Invalid policy slug", validSlugs: POLICY_SLUGS },
-        { status: 400 },
-      );
+      return getAPIError("Invalid policy slug", 400, {
+        extra: {
+          validSlugs: POLICY_SLUGS,
+        },
+      });
     }
 
     const body = await request.json();
@@ -94,7 +87,7 @@ export async function PUT(
       );
     }
 
-    for (const section of body.section) {
+    for (const section of body.sections) {
       if (!section.heading || typeof section.heading !== "string") {
         return NextResponse.json(
           { error: "Each section must have a heading" },
@@ -138,10 +131,9 @@ export async function PUT(
       },
       { status: 200 },
     );
-    
   } catch (error) {
-    return NextResponse.json({
-      error: error instanceof Error ? error.message : "Failed to update policy",
+    return getAPIError(error, 500, {
+      fallbackMessage: "Failed to update policy",
     });
   }
 }

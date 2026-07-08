@@ -9,7 +9,10 @@ import {
   useUpdatePolicy,
 } from "@/hooks/api/admin/useAdminPolicies";
 import { formatDateOnly } from "@/helper/formatDate";
-import { InputField, TextareaField } from "@/components/ui/FormComponents";
+import {
+  InputField,
+  MarkdownEditorField,
+} from "@/components/ui/FormComponents";
 import type { PolicySection } from "@/hooks/api/usePolicies";
 import { DynamicIcon } from "@/components/ui/DynamicIcon";
 import LoadingPage from "@/components/ui/LoadingPage";
@@ -237,10 +240,18 @@ const PoliciesPage = () => {
         <SectionHeader
           title="Legal Policies"
           subTitle="View and update your legal policy documents"
-          btnTxt={!seeded ? "Seed Policies to Database" : undefined}
+          btnTxt={!seeded ? "+ Apply Policies to Database" : undefined}
           onClick={!seeded ? handleSeed : undefined}
           permission="legal.update"
         />
+
+        {!seeded && (
+          <div className="px-6 py-3 bg-amber-50 border-b border-amber-200 text-sm text-amber-700">
+            <strong>Note:</strong> Policies are currently showing from static
+            fallback data. Click "Apply Policies to Database" above to create
+            database records, then you can edit them dynamically.
+          </div>
+        )}
 
         {/** Policy selector tabs */}
         <div className="border border-gray-200 rounded-xl shadow">
@@ -266,7 +277,9 @@ const PoliciesPage = () => {
             <span>
               Source:{" "}
               <strong className={seeded ? "text-green-600" : "text-amber-600"}>
-                {seeded ? "Database (live)" : "Static Preview (not seeded yet)"}
+                {seeded
+                  ? "Database (live)"
+                  : "Static Preview (not applied yet)"}
               </strong>
             </span>
             {lastUpdated && (
@@ -285,16 +298,8 @@ const PoliciesPage = () => {
             )}
           </div>
 
-          {!seeded && (
-            <div className="px-6 py-3 bg-amber-50 border-b border-amber-200 text-sm text-amber-700">
-              <strong>Note:</strong> Policies are currently showing from static
-              fallback data. Click "Seed Policies to Database" above to create
-              database records, then you can edit them dynamically.
-            </div>
-          )}
-
           {/** Edit form */}
-          <form onSubmit={handleSubmit} className="p-6 space-y-6`">
+          <form onSubmit={handleSubmit} className="p-6 space-y-6">
             <InputField
               label="Policy Title"
               id="policy-title"
@@ -302,29 +307,25 @@ const PoliciesPage = () => {
               value={activeForm.title}
               onChange={(e) => setField("title", e.target.value)}
               required
+              disabled={!seeded}
             />
-            <TextareaField
+
+            <MarkdownEditorField
               label="Intro Paragraph (Subtitle)"
+              subLabel="Use the toolbar buttons for bold, italic, headings, lists, and links"
               id="policy-subtitle"
               value={activeForm.subtitle}
-              onChange={(e) => setField("subtitle", e.target.value)}
-              rows={3}
+              onChange={(val) => setField("subtitle", val)}
+              height={150}
               required
+              disabled={!seeded}
             />
 
             {/** Sections */}
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3>Total ections ({activeForm.sections.length})</h3>
-                <button
-                  type="button"
-                  onClick={addSection}
-                  className="px-4 py-2 text-sm font-semibold text-brand-color-500 border border-brand-color-500 rounded-lg hover:bg-brand-color-500/10 transition-colors flex items-center gap-1"
-                >
-                  <DynamicIcon name="Plus" size={16} />
-                  Add Section
-                </button>
-              </div>
+              <h3 className="text-brand-color-500 mt-4">
+                Total ections ({activeForm.sections.length})
+              </h3>
 
               {activeForm.sections.length === 0 && (
                 <p className="text-sm text-gray-400 text-center py-8">
@@ -347,7 +348,7 @@ const PoliciesPage = () => {
                       <button
                         type="button"
                         onClick={() => moveSection(index, "up")}
-                        disabled={index === 0}
+                        disabled={index === 0 || !seeded}
                         className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                         title="Move up"
                       >
@@ -357,7 +358,9 @@ const PoliciesPage = () => {
                       <button
                         type="button"
                         onClick={() => moveSection(index, "down")}
-                        disabled={index === activeForm.sections.length - 1}
+                        disabled={
+                          index === activeForm.sections.length - 1 || !seeded
+                        }
                         className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                         title="Move down"
                       >
@@ -367,8 +370,9 @@ const PoliciesPage = () => {
                       <button
                         type="button"
                         onClick={() => removeSection(index)}
-                        className="p-1.5 rounded hover:bg-red-50 text-red-500 transition-colors"
+                        className="p-1.5 rounded hover:bg-red-50 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-400 text-red-500 transition-colors"
                         title="Remove section"
+                        disabled={!seeded}
                       >
                         <DynamicIcon name="Trash2" size={16} />
                       </button>
@@ -384,29 +388,38 @@ const PoliciesPage = () => {
                       setSectionField(index, "heading", e.target.value)
                     }
                     required
+                    disabled={!seeded}
                   />
 
-                  <TextareaField
-                    label="Section Content (Markdown)"
-                    subLabel="Use Markdown syntax: **bold**, *italic*, - for bullet lists,
-                      ### for subheadings"
+                  <MarkdownEditorField
+                    label="Section Content"
+                    subLabel="Use the toolbar buttons for bold, italic, headings, lists, and links"
                     id={`section-content-${index}`}
                     value={section.content}
-                    onChange={(e) =>
-                      setSectionField(index, "content", e.target.value)
-                    }
-                    rows={8}
+                    onChange={(val) => setSectionField(index, "content", val)}
+                    height={250}
                     required
+                    disabled={!seeded}
                   />
                 </div>
               ))}
+
+              <button
+                type="button"
+                onClick={addSection}
+                disabled={!seeded}
+                className="px-4 py-2 text-sm font-semibold text-brand-color-500 border border-brand-color-500 rounded-lg hover:bg-brand-color-500/10 transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-400 disabled:border-gray-400 flex items-center gap-1 my-4"
+              >
+                <DynamicIcon name="Plus" size={16} />
+                Add Section
+              </button>
             </div>
             {/* Action buttons */}
             <div className="flex gap-4 pt-4 border-t border-gray-200">
               <button
                 type="button"
                 onClick={handleReset}
-                disabled={!hasChanges}
+                disabled={!hasChanges || !seeded}
                 className={`px-8 py-3 rounded-xl border border-stone-200 text-stone-600 font-semibold hover:bg-stone-100 transition-colors ${
                   !hasChanges && "opacity-40 pointer-events-none"
                 }`}
@@ -418,7 +431,8 @@ const PoliciesPage = () => {
                 disabled={
                   updatePolicy.isPending ||
                   !hasChanges ||
-                  activeForm.sections.length === 0
+                  activeForm.sections.length === 0 ||
+                  !seeded
                 }
                 className={`flex-1 px-8 py-3 rounded-xl bg-brand-color-500 text-white font-semibold hover:shadow-lg hover:scale-[1.02] transition-all disabled:opacity-60 disabled:pointer-events-none ${
                   !hasChanges && "cursor-not-allowed"
