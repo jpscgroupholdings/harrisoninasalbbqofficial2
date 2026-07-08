@@ -37,7 +37,13 @@ const DynamicPolicyContent = ({ policy }: { policy: PolicyData }) => {
           </h2>
 
           <div
-            className="text-gray-700 leading-relaxed mb-6 prose-heading:text-lg prose-headings:font-semibold prose-heading:text-gray-800 prose-headings:mt-6 prose-headings:mb-3 prose-ul:list-disc prose-ul:pl-6 prose-ul:space-y-2 porse-p:leading-relaxed prose-p:mb-4 prose-strong:font-bold"
+            className="text-justify prose prose-gray max-w-none mb-6
+    prose-headings:font-semibold prose-headings:text-gray-800 prose-headings:mt-6 prose-headings:mb-3
+    prose-h2:text-lg
+    prose-p:leading-relaxed prose-p:mb-4
+    prose-ul:list-disc prose-ul:pl-6 prose-ul:space-y-2
+    prose-li:leading-relaxed
+    prose-strong:font-bold prose-strong:text-gray-800"
             dangerouslySetInnerHTML={{
               __html: marked.parse(section.content) as string,
             }}
