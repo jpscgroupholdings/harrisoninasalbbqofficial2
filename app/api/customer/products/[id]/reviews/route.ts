@@ -161,6 +161,6 @@ export async function GET(
     });
   } catch (error: any) {
     console.error("GET /api/customer/products/[id]/reviews error:", error);
-    return getAPIError(error, 500, "Failed to fetch product reviews");
+    return getAPIError(error, 500, {fallbackMessage: "Failed to fetch product reviews"});
   }
 }

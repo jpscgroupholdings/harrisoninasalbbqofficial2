@@ -230,7 +230,7 @@ export async function GET(req: NextRequest) {
 
     // Total count for pagination (same filter, no skip/limit)
     const total = await Review.countDocuments(filter);
-  
+
     return NextResponse.json({
       data,
       pagination: buildPaginationMeta(total, page, limit),
@@ -247,6 +247,8 @@ export async function GET(req: NextRequest) {
 
     console.error("GET /api/admin/reviews error:", error);
 
-    return getAPIError(error, 500, "Failed to fetch reviews");
+    return getAPIError(error, 500, {
+      fallbackMessage: "Failed to fetch reviews",
+    });
   }
 }

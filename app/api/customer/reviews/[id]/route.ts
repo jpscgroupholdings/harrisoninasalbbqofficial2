@@ -177,6 +177,6 @@ export async function PATCH(
     });
   } catch (error: any) {
     console.error("PATCH /api/customer/reviews/[id] error:", error);
-    return getAPIError(error, 500, "Failed to update review");
+    return getAPIError(error, 500, {fallbackMessage: "Failed to update review"});
   }
 }

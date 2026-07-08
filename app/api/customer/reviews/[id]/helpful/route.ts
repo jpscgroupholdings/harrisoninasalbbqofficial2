@@ -104,6 +104,6 @@ export async function POST(
     });
   } catch (error: any) {
     console.error("POST /api/customer/reviews/[id]/helpful error:", error);
-    return getAPIError(error, 500, "Failed to update vote");
+    return getAPIError(error, 500, {fallbackMessage: "Failed to update vote"});
   }
 }

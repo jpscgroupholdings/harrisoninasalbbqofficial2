@@ -100,6 +100,6 @@ export async function PATCH(
 
     return getAPIError(`Unknown action ${action}`, 400);
   } catch (error) {
-    return getAPIError(error, 500, "Failed to update review");
+    return getAPIError(error, 500, {fallbackMessage: "Failed to update review"});
   }
 }
