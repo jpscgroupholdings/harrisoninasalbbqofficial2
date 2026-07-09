@@ -1,7 +1,17 @@
 import { Order } from "@/models/Orders";
+import { Inventory } from "@/models/Inventory";
+import { Product } from "@/models/Product";
+import { User } from "@/models/User";
 import { connectDB } from "../../lib/mongodb";
+import {
+  DashboardActivity,
+  LowStockItem,
+  NewCustomerItem,
+  PendingOrderItem,
+} from "@/app/admin/(protected)/dashboard/dashboard.types";
 import { SalesData, TopProduct } from "@/types/adminType";
 import { ORDER_STATUSES } from "@/types/orderConstants";
+import { STOCK_STATUSES } from "@/types/inventory_types";
 import { Types } from "mongoose";
 import { STAFF_ROLES, StaffRole } from "@/types/staff";
 
@@ -26,9 +36,7 @@ export type DashboardRange = "week" | "month" | "year";
  * - ?range=year&year=2025 → { range: "year", year: 2025 }
  * Defaults to { range: "week" } when no range param is present.
  */
-export function parseDashboardPeriod(
-  params: URLSearchParams,
-): DashboardPeriod {
+export function parseDashboardPeriod(params: URLSearchParams): DashboardPeriod {
   const range = params.get("range");
 
   if (!range) return { range: "week" };
@@ -201,7 +209,7 @@ export async function getDashboardStats(
 
 export async function getSalesData(
   period: DashboardPeriod,
-  filters: DashboardFilters = {}
+  filters: DashboardFilters = {},
 ): Promise<SalesData[]> {
   await connectDB();
 
@@ -240,7 +248,124 @@ export async function getSalesData(
 
 export async function getTopProducts(
   period: DashboardPeriod,
-  filters: DashboardFilters = {}
+  filters: DashboardFilters = {},
 ): Promise<TopProduct[]> {
   return getProductRanking(filters, period, 5);
+}
+
+/**
+ * Fetches dashboard activity data: pending orders, low/out-of-stock
+ * inventory items, and recently registered customers.
+ */
+export async function getDashboardActivity(
+  filters: DashboardFilters = {},
+): Promise<DashboardActivity> {
+  await connectDB();
+
+  const branchMatch = buildBranchMatch(filters);
+
+  // --- Pending Orders (last 5, sorted newest-first) ---
+  const pendingOrdersRaw = await Order.find({
+    ...branchMatch,
+    status: { $in: [ORDER_STATUSES.PENDING, ORDER_STATUSES.PREPARING] },
+  })
+    .sort({ createdAt: -1 })
+    .limit(5)
+    .select(
+      "_id paymentInfo.firstName paymentInfo.lastName total.totalAmount status fulfillmentType createdAt items",
+    )
+    .lean();
+
+  const pendingOrders: PendingOrderItem[] = pendingOrdersRaw.map((o) => ({
+    _id: o._id.toString(),
+    customerName:
+      `${o.paymentInfo?.firstName ?? ""} ${o.paymentInfo?.lastName ?? ""}`.trim(),
+    totalAmount: o.total?.totalAmount ?? 0,
+    status: o.status,
+    fulfillmentType: o.fulfillmentType,
+    createdAt: o.createdAt,
+    itemsCount: o.items?.length ?? 0,
+  }));
+
+  // --- Low / Out-of-Stock Items (max 5) ---
+  const inventoriesRaw = await Inventory.find(branchMatch).lean();
+
+  const lowStockRaw: LowStockItem[] = [];
+  for (const inv of inventoriesRaw) {
+    if (inv.quantity <= inv.reorderLevel) {
+      const product = await Product.findById(inv.productId)
+        .select("name image.url")
+        .lean();
+
+      if (!product) continue;
+
+      const reserved: number =
+        inv.reservations?.reduce(
+          (sum: number, r: { quantity?: number }) => sum + (r.quantity ?? 0),
+          0,
+        ) ?? 0;
+
+      const status: LowStockItem["status"] =
+        inv.quantity === 0
+          ? STOCK_STATUSES.OUT_OF_STOCK
+          : STOCK_STATUSES.LOW_STOCK;
+
+      lowStockRaw.push({
+        productId: inv.productId.toString(),
+        name: product.name,
+        image: product.image?.url ?? "",
+        quantity: inv.quantity,
+        reorderLevel: inv.reorderLevel,
+        available: inv.quantity - reserved,
+        status,
+      });
+    }
+  }
+
+  // Sort: OUT_OF_STOCK first, then LOW_STOCK by quantity ascending
+  lowStockRaw.sort((a, b) => {
+    if (
+      a.status === STOCK_STATUSES.OUT_OF_STOCK &&
+      b.status !== STOCK_STATUSES.OUT_OF_STOCK
+    )
+      return -1;
+    if (
+      b.status === STOCK_STATUSES.OUT_OF_STOCK &&
+      a.status !== STOCK_STATUSES.OUT_OF_STOCK
+    )
+      return 1;
+    return a.quantity - b.quantity;
+  });
+
+  const lowStockItems = lowStockRaw.slice(0, 5);
+
+  // --- New Customers (registered within last 7 days, max 5) ---
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+  const newCustomersRaw = await User.find({
+    createdAt: { $gte: sevenDaysAgo },
+  })
+    .sort({ createdAt: -1 })
+    .limit(5)
+    .select("_id name email createdAt")
+    .lean();
+
+  const newCustomers: NewCustomerItem[] = newCustomersRaw.map((c) => ({
+    _id: c._id.toString(),
+    name: c.name ?? c.email?.split("@")[0] ?? "New User",
+    email: c.email ?? "",
+    createdAt: c.createdAt,
+  }));
+
+  const newCustomersCount = await User.countDocuments({
+    createdAt: { $gte: sevenDaysAgo },
+  });
+
+  return {
+    pendingOrders,
+    lowStockItems,
+    newCustomers,
+    newCustomersCount,
+  };
 }
