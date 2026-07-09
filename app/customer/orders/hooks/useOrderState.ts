@@ -33,6 +33,7 @@ export function useOrderState(order: OrdersApiResponse["data"][number] | null) {
   const isCompleted = order.status === ORDER_STATUSES.COMPLETED;
 
   const needsReview = isCompleted && !order.isReviewed;
+  const hasReview = isCompleted && !!order.isReviewed;
 
   const needPayment =
     order.status === ORDER_STATUSES.PENDING_PAYMENT && !paymentConfirmed;
@@ -88,6 +89,7 @@ export function useOrderState(order: OrdersApiResponse["data"][number] | null) {
     isCompleted,
     isCancelled,
     needsReview,
+    hasReview,
     needPayment,
     canCancel,
     canBuyAgain,

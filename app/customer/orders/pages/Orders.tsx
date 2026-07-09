@@ -5,7 +5,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import { DynamicIcon } from "@/components/ui/DynamicIcon";
 import { GuestOrderLookup } from "./GuestPage";
 import LoadingPage from "@/components/ui/LoadingPage";
-import { useOrderActions } from "@/hooks/useOrderActions";
 import {
   FULFILLMENT_TYPE,
   ORDER_STATUSES,
@@ -21,7 +20,7 @@ import {
 import Pagination from "@/components/ui/Pagination";
 import { formatDate } from "@/helper/formatDate";
 import { useOrderState, CustomerPaymentKey } from "../hooks/useOrderState";
-import CancelOrderModal from "../components/CancelOrderModal";
+import { OrderActions } from "../components/OrderActions";
 import { OrderType } from "@/types/OrderTypes";
 import { formatCurrency } from "@/helper/formatCurrency";
 
@@ -156,34 +155,20 @@ function OrderCardSkeleton() {
 function OrderCard({
   order,
   onViewDetails,
-  onPayOrder,
-  onCancelOrder,
-  onBuyAgain,
-  onLeaveReview,
-  isLoading,
 }: {
   order: OrderType;
   onViewDetails: () => void;
-  onPayOrder: () => void;
-  onCancelOrder: () => void;
-  onBuyAgain: () => void;
-  onLeaveReview: () => void;
-  isLoading: boolean;
 }) {
   const itemNames = order.items.map((i: any) => i.name).join(", ");
-
-  const [isCancelOrder, setIsCancelOrder] = useState(false);
 
   const actions = useOrderState(order);
   if (!actions) return null;
   const {
     status,
     paymentStatusKey,
-    needPayment,
-    isCompleted,
     needsReview,
+    hasReview,
     isCancelled,
-    canCancel,
   } = actions;
 
   const isPickup =
@@ -193,7 +178,7 @@ function OrderCard({
     <div
       className={[
         "bg-white rounded-2xl border overflow-hidden transition-all duration-150",
-        needsReview ? "border-green-200" : "border-gray-100",
+        needsReview || hasReview ? "border-green-200" : "border-gray-100",
         isCancelled ? "opacity-70" : "hover:border-gray-200 hover:shadow-sm",
       ].join(" ")}
     >
@@ -248,60 +233,18 @@ function OrderCard({
             </div>
           </div>
 
-          {/* Footer row: total + primary CTA */}
+          {/* Footer row: total + actions */}
           <div className="flex items-center justify-between mt-3">
             <p className="text-[15px] font-medium text-gray-900">
               {formatCurrency(Number(order.total?.totalAmount))}
             </p>
-
-            <div className="flex gap-1.5">
-              {needPayment && (
-                <>
-                  <button
-                    onClick={onPayOrder}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-50 border border-green-200 text-green-800 text-[12px] font-medium transition-colors hover:bg-green-100"
-                  >
-                    <DynamicIcon name="ExternalLink" size={13} />
-                    Pay now
-                  </button>
-                </>
-              )}
-
-              {canCancel && (
-                <button
-                  onClick={() => setIsCancelOrder(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-red-200 text-red-700 text-[12px] font-medium transition-colors hover:bg-red-50"
-                >
-                  <DynamicIcon name="X" size={13} />
-                  Cancel
-                </button>
-              )}
-
-              {needsReview && (
-                <button
-                  onClick={onLeaveReview}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-color-500 text-white text-[12px] font-medium transition-colors hover:bg-[#c53600]"
-                >
-                  <DynamicIcon name="Star" size={13} />
-                  Leave review
-                </button>
-              )}
-            </div>
+            <OrderActions order={order} variant="compact" />
           </div>
         </div>
       </div>
 
-      {/* ── Divider + secondary actions ── */}
+      {/* ── Divider + view details ── */}
       <div className="border-t border-gray-100 px-4 py-2.5 flex justify-end gap-2">
-        {(isCompleted || isCancelled) && (
-          <button
-            onClick={onBuyAgain}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-600 text-[12px] font-medium transition-colors hover:bg-gray-50"
-          >
-            <DynamicIcon name="ShoppingCart" size={13} />
-            Buy again
-          </button>
-        )}
         <button
           onClick={onViewDetails}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-600 text-[12px] font-medium transition-colors hover:bg-gray-50"
@@ -310,15 +253,6 @@ function OrderCard({
           View details
         </button>
       </div>
-
-      {isCancelOrder && order._id && (
-        <CancelOrderModal
-          order={order}
-          setIsCancel={setIsCancelOrder}
-          handleCancelOrder={onCancelOrder}
-          isLoading={isLoading}
-        />
-      )}
     </div>
   );
 }
@@ -369,13 +303,6 @@ const Orders = () => {
   });
 
   const filteredOrders = placedOrders?.data ?? [];
-
-  const {
-    handlePayOrder,
-    handleCancelOrder,
-    handleBuyAgain,
-    isLoading: isOrderActionLoading,
-  } = useOrderActions();
 
   // Derive tab badge counts from summary (never from the filtered list)
   const getTabCount = (tab: Tab): number | undefined => {
@@ -507,11 +434,6 @@ const Orders = () => {
                 key={order._id}
                 order={order}
                 onViewDetails={() => router.push(`/orders/${order._id}`)}
-                onPayOrder={() => handlePayOrder(order._id)}
-                onCancelOrder={() => handleCancelOrder(order._id)}
-                onBuyAgain={() => handleBuyAgain(order.items)}
-                onLeaveReview={() => router.push(`/orders/${order._id}/review`)}
-                isLoading={isOrderActionLoading}
               />
             ))}
           </div>

@@ -398,8 +398,6 @@ const OrderDetailsModal = ({ orderId, role, variant }: OrderDetailsProps) => {
       )}
       {orderToView && (
         <div className="flex flex-col gap-5">
-          {role === "guest" && <OrderActions order={orderToView} />}
-
           {/* ── Header Card ── */}
           <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
             <div className="flex items-start justify-between gap-4">
@@ -430,6 +428,9 @@ const OrderDetailsModal = ({ orderId, role, variant }: OrderDetailsProps) => {
               </div>
             </div>
           </div>
+
+          {/* ── Actions (customer / guest only) ── */}
+          {(role === "guest" || role === "customer") && <OrderActions order={orderToView} />}
 
           {/* Map iframe: branch location for pickup (customer only), shipping address for delivery (admin only) */}
           {(() => {
