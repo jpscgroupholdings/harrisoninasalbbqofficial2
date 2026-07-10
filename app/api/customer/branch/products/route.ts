@@ -8,7 +8,7 @@ import { buildPaginationMeta } from "@/utils/query-helpers";
 import { getActiveProductDiscountPreviews } from "@/lib/product-promotions/product-promotion.application";
 import { fetchBranch } from "@/services/branch/branch.service";
 
-type IncludedProductAggregate = {
+type ModifierProductAggregate = {
   _id?: { toString: () => string };
   name?: string;
   price?: number | null;
@@ -19,11 +19,22 @@ type IncludedProductAggregate = {
   productType?: string;
 };
 
-type IncludedItemAggregate = {
-  product?: IncludedProductAggregate | null;
+type ModifierItemAggregate = {
+  product?: ModifierProductAggregate | null;
   quantity: number;
   label?: string | null;
+  price?: number | null;
   snapshotName?: string | null;
+  snapshotPrice?: number | null;
+};
+
+type ModifierGroupAggregate = {
+  _id?: string;
+  name: string;
+  required: boolean;
+  minSelect: number;
+  maxSelect: number;
+  items: ModifierItemAggregate[];
 };
 
 /**
@@ -96,39 +107,54 @@ export async function GET(req: NextRequest) {
       {
         $lookup: {
           from: "products",
-          localField: "includedItems.product",
+          localField: "modifierGroups.items.product",
           foreignField: "_id",
-          as: "_includedProducts",
+          as: "_modifierProducts",
         },
       },
       {
         $addFields: {
-          includedItems: {
+          modifierGroups: {
             $map: {
-              input: { $ifNull: ["$includedItems", []] },
-              as: "item",
+              input: { $ifNull: ["$modifierGroups", []] },
+              as: "group",
               in: {
-                product: {
-                  $arrayElemAt: [
-                    {
-                      $filter: {
-                        input: "$_includedProducts",
-                        as: "p",
-                        cond: { $eq: ["$$p._id", "$$item.product"] },
+                _id: "$$group._id",
+                name: "$$group.name",
+                required: "$$group.required",
+                minSelect: "$$group.minSelect",
+                maxSelect: "$$group.maxSelect",
+                items: {
+                  $map: {
+                    input: { $ifNull: ["$$group.items", []] },
+                    as: "item",
+                    in: {
+                      product: {
+                        $arrayElemAt: [
+                          {
+                            $filter: {
+                              input: "$_modifierProducts",
+                              as: "p",
+                              cond: { $eq: ["$$p._id", "$$item.product"] },
+                            },
+                          },
+                          0,
+                        ],
                       },
+                      quantity: "$$item.quantity",
+                      label: "$$item.label",
+                      price: "$$item.price",
+                      snapshotName: "$$item.snapshotName",
+                      snapshotPrice: "$$item.snapshotPrice",
                     },
-                    0,
-                  ],
+                  },
                 },
-                quantity: "$$item.quantity",
-                label: "$$item.label",
-                snapshotName: "$$item.snapshotName",
               },
             },
           },
         },
       },
-      { $unset: "_includedProducts" },
+      { $unset: "_modifierProducts" },
 
       ...(categoryName ? [{ $match: { "category.name": categoryName } }] : []),
       ...(subcategoryName
@@ -205,7 +231,7 @@ export async function GET(req: NextRequest) {
           category: { _id: "$category._id", name: "$category.name" },
           subcategory: { _id: "$subcategory._id", name: "$subcategory.name" },
           productType: 1,
-          includedItems: 1,
+          modifierGroups: 1,
           paxCount: 1,
           isPopular: 1,
           isSignature: 1,
@@ -260,23 +286,33 @@ export async function GET(req: NextRequest) {
           }
         : null,
       productType: product.productType || "solo",
-      includedItems:
-        product.includedItems?.map((item: IncludedItemAggregate) => ({
-          product: item.product
-            ? {
-                _id: item.product._id?.toString() || "",
-                name: item.product.name || "",
-                price: item.product.price ?? null,
-                image: {
-                  url: item.product.image?.url || "",
-                  public_id: item.product.image?.public_id || "",
-                },
-                productType: item.product.productType || "solo",
-              }
-            : "",
-          quantity: item.quantity,
-          label: item.label,
-          snapshotName: item.snapshotName,
+      modifierGroups:
+        product.modifierGroups?.map((group: ModifierGroupAggregate) => ({
+          _id: group._id?.toString(),
+          name: group.name,
+          required: group.required,
+          minSelect: group.minSelect,
+          maxSelect: group.maxSelect,
+          items:
+            group.items?.map((item: ModifierItemAggregate) => ({
+              product: item.product
+                ? {
+                    _id: item.product._id?.toString() || "",
+                    name: item.product.name || "",
+                    price: item.product.price ?? null,
+                    image: {
+                      url: item.product.image?.url || "",
+                      public_id: item.product.image?.public_id || "",
+                    },
+                    productType: item.product.productType || "solo",
+                  }
+                : "",
+              quantity: item.quantity,
+              label: item.label,
+              price: item.price,
+              snapshotName: item.snapshotName,
+              snapshotPrice: item.snapshotPrice,
+            })) || [],
         })) || [],
       paxCount: product.paxCount,
       isPopular: product.isPopular || false,

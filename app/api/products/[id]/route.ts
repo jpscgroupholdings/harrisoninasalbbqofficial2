@@ -44,41 +44,55 @@ export async function GET(
     {
       $lookup: {
         from: "products",
-        localField: "includedItems.product",
+        localField: "modifierGroups.items.product",
         foreignField: "_id",
-        as: "_includedItems",
+        as: "_modifierProducts",
       },
     },
     {
       $addFields: {
-        includedItems: {
+        modifierGroups: {
           $map: {
-            input: { $ifNull: ["$includedItems", []] },
-            as: "item",
+            input: { $ifNull: ["$modifierGroups", []] },
+            as: "group",
             in: {
-              product: {
-                $arrayElemAt: [
-                  {
-                    $filter: {
-                      input: "$_includedItems",
-                      as: "p",
-                      cond: { $eq: ["$$p._id", "$$item.product"] },
+              _id: "$$group._id",
+              name: "$$group.name",
+              required: "$$group.required",
+              minSelect: "$$group.minSelect",
+              maxSelect: "$$group.maxSelect",
+              items: {
+                $map: {
+                  input: { $ifNull: ["$$group.items", []] },
+                  as: "item",
+                  in: {
+                    product: {
+                      $arrayElemAt: [
+                        {
+                          $filter: {
+                            input: "$_modifierProducts",
+                            as: "p",
+                            cond: { $eq: ["$$p._id", "$$item.product"] },
+                          },
+                        },
+                        0,
+                      ],
                     },
+                    quantity: "$$item.quantity",
+                    label: "$$item.label",
+                    price: "$$item.price",
+                    snapshotName: "$$item.snapshotName",
+                    snapshotPrice: "$$item.snapshotPrice",
                   },
-                  0,
-                ],
+                },
               },
-
-              quantity: "$$item.quantity",
-              label: "$$item.label",
-              snapshotName: "$$item.snapshotName",
             },
           },
         },
       },
     },
     {
-      $unset: "_includedItems",
+      $unset: "_modifierProducts",
     },
 
     ...(branchId && mongoose.Types.ObjectId.isValid(branchId)
@@ -187,7 +201,7 @@ export async function PUT(
       isPopular,
       productType,
       paxCount,
-      includedItems,
+      modifierGroups,
     } = body;
 
     if (!id) {
@@ -264,13 +278,21 @@ export async function PUT(
         isPopular,
         productType: resolvedProductType,
         paxCount: resolvedProductType === "set" ? (paxCount ?? null) : null,
-        includedItems:
+        modifierGroups:
           resolvedProductType !== "solo"
-            ? (includedItems ?? []).map((item: any) => ({
-                product: item.product,
-                quantity: item.quantity,
-                label: item.label ?? null,
-                snapshotName: item.snapshotName ?? item.label ?? null,
+            ? (modifierGroups ?? []).map((group: any) => ({
+                name: group.name,
+                required: group.required ?? true,
+                minSelect: group.minSelect ?? 1,
+                maxSelect: group.maxSelect ?? 1,
+                items: (group.items ?? []).map((item: any) => ({
+                  product: item.product,
+                  quantity: item.quantity ?? 1,
+                  label: item.label ?? null,
+                  price: item.price ?? null,
+                  snapshotName: item.snapshotName ?? item.label ?? null,
+                  snapshotPrice: item.snapshotPrice ?? null,
+                })),
               }))
             : [],
       },

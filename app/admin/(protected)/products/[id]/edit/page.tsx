@@ -12,7 +12,7 @@ const EditProductPage = async ( context : {params: Promise<{id: string}>}) => {
   if (!isValidObjectId(id)) return notFound();
 
   const product = await ProductModel.findById(id).populate({
-    path: "includedItems.product",
+    path: "modifierGroups.items.product",
     select: "name price",
   });
 

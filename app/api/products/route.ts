@@ -14,11 +14,22 @@ import { getActiveProductDiscountPreviews } from "@/lib/product-promotions/produ
 
 // ─── Zod Schemas ──────────────────────────────────────────────────────────────
 
-const includedItemSchema = z.object({
-  product: z.string().min(1, "Included item must reference a product"),
-  quantity: z.coerce.number().int().min(1, "Quantity must be at least 1"),
+const modifierItemSchema = z.object({
+  product: z.string().min(1, "Modifier item must reference a product"),
+  quantity: z.coerce.number().int().min(1, "Quantity must be at least 1").default(1),
   label: z.string().nullable().optional(),
+  price: z.coerce.number().nullable().optional(),
   snapshotName: z.string().nullable().optional(),
+  snapshotPrice: z.coerce.number().nullable().optional(),
+});
+
+const modifierGroupSchema = z.object({
+  _id: z.string().optional(),
+  name: z.string().min(1, "Group name is required"),
+  required: z.boolean().default(true),
+  minSelect: z.coerce.number().int().min(1).default(1),
+  maxSelect: z.coerce.number().int().min(1).default(1),
+  items: z.array(modifierItemSchema).min(1, "Group must have at least one item"),
 });
 
 const productBaseSchema = z.object({
@@ -48,7 +59,7 @@ const productBaseSchema = z.object({
   isPopular: z.boolean().optional().default(false),
   productType: z.enum(["solo", "combo", "set"]).default("solo"),
   paxCount: z.coerce.number().int().positive().nullable().optional(),
-  includedItems: z.array(includedItemSchema).optional().default([]),
+  modifierGroups: z.array(modifierGroupSchema).optional().default([]),
 });
 
 const productCreateSchema = productBaseSchema
@@ -59,17 +70,17 @@ const productCreateSchema = productBaseSchema
   .refine(
     (data) => {
       if (data.productType !== "solo") {
-        return (data.includedItems ?? []).length > 0;
+        return (data.modifierGroups ?? []).length > 0;
       }
       return true;
     },
     {
-      message: "Combo and Set products must have at least one included item",
-      path: ["includedItems"],
+      message: "Combo and Set products must have at least one modifier group",
+      path: ["modifierGroups"],
     },
   );
 
-type IncludedProductAggregate = {
+type ModifierProductAggregate = {
   _id?: { toString: () => string };
   name?: string;
   price?: number | null;
@@ -80,11 +91,22 @@ type IncludedProductAggregate = {
   productType?: string;
 };
 
-type IncludedItemAggregate = {
-  product?: IncludedProductAggregate | null;
+type ModifierItemAggregate = {
+  product?: ModifierProductAggregate | null;
   quantity: number;
   label?: string | null;
+  price?: number | null;
   snapshotName?: string | null;
+  snapshotPrice?: number | null;
+};
+
+type ModifierGroupAggregate = {
+  _id?: string;
+  name: string;
+  required: boolean;
+  minSelect: number;
+  maxSelect: number;
+  items: ModifierItemAggregate[];
 };
 
 // ─── GET ──────────────────────────────────────────────────────────────────────
@@ -141,39 +163,54 @@ export async function GET(request: NextRequest) {
       {
         $lookup: {
           from: "products",
-          localField: "includedItems.product",
+          localField: "modifierGroups.items.product",
           foreignField: "_id",
-          as: "_includedProducts",
+          as: "_modifierProducts",
         },
       },
       {
         $addFields: {
-          includedItems: {
+          modifierGroups: {
             $map: {
-              input: { $ifNull: ["$includedItems", []] },
-              as: "item",
+              input: { $ifNull: ["$modifierGroups", []] },
+              as: "group",
               in: {
-                product: {
-                  $arrayElemAt: [
-                    {
-                      $filter: {
-                        input: "$_includedProducts",
-                        as: "p",
-                        cond: { $eq: ["$$p._id", "$$item.product"] },
+                _id: "$$group._id",
+                name: "$$group.name",
+                required: "$$group.required",
+                minSelect: "$$group.minSelect",
+                maxSelect: "$$group.maxSelect",
+                items: {
+                  $map: {
+                    input: { $ifNull: ["$$group.items", []] },
+                    as: "item",
+                    in: {
+                      product: {
+                        $arrayElemAt: [
+                          {
+                            $filter: {
+                              input: "$_modifierProducts",
+                              as: "p",
+                              cond: { $eq: ["$$p._id", "$$item.product"] },
+                            },
+                          },
+                          0,
+                        ],
                       },
+                      quantity: "$$item.quantity",
+                      label: "$$item.label",
+                      price: "$$item.price",
+                      snapshotName: "$$item.snapshotName",
+                      snapshotPrice: "$$item.snapshotPrice",
                     },
-                    0,
-                  ],
+                  },
                 },
-                quantity: "$$item.quantity",
-                label: "$$item.label",
-                snapshotName: "$$item.snapshotName",
               },
             },
           },
         },
       },
-      { $unset: "_includedProducts" },
+      { $unset: "_modifierProducts" },
     ];
 
     // Run count + paginated data in parallel
@@ -217,23 +254,33 @@ export async function GET(request: NextRequest) {
             _id: product.subcategory._id?.toString(),
           }
         : null,
-      includedItems:
-        product.includedItems?.map((item: IncludedItemAggregate) => ({
-          product: item.product
-            ? {
-                _id: item.product._id?.toString() || "",
-                name: item.product.name || "",
-                price: item.product.price ?? null,
-                image: {
-                  url: item.product.image?.url || "",
-                  public_id: item.product.image?.public_id || "",
-                },
-                productType: item.product.productType || "solo",
-              }
-            : "",
-          quantity: item.quantity,
-          label: item.label,
-          snapshotName: item.snapshotName,
+      modifierGroups:
+        product.modifierGroups?.map((group: ModifierGroupAggregate) => ({
+          _id: group._id?.toString(),
+          name: group.name,
+          required: group.required,
+          minSelect: group.minSelect,
+          maxSelect: group.maxSelect,
+          items:
+            group.items?.map((item: ModifierItemAggregate) => ({
+              product: item.product
+                ? {
+                    _id: item.product._id?.toString() || "",
+                    name: item.product.name || "",
+                    price: item.product.price ?? null,
+                    image: {
+                      url: item.product.image?.url || "",
+                      public_id: item.product.image?.public_id || "",
+                    },
+                    productType: item.product.productType || "solo",
+                  }
+                : "",
+              quantity: item.quantity,
+              label: item.label,
+              price: item.price,
+              snapshotName: item.snapshotName,
+              snapshotPrice: item.snapshotPrice,
+            })) || [],
         })) || [],
       activeProductDiscount:
         discountPreviews.get(product._id.toString()) ?? null,
@@ -283,7 +330,7 @@ export async function POST(request: NextRequest) {
       isPopular,
       productType,
       paxCount,
-      includedItems,
+      modifierGroups,
     } = validated;
 
     // ── Upload image ────────────────────────────────────────────────────────
@@ -325,13 +372,21 @@ export async function POST(request: NextRequest) {
       isPopular,
       productType,
       paxCount: productType === "set" ? (paxCount ?? null) : null,
-      includedItems:
+      modifierGroups:
         productType !== "solo"
-          ? (includedItems ?? []).map((item) => ({
-              product: item.product,
-              quantity: item.quantity,
-              label: item.label ?? null,
-              snapshotName: item.snapshotName ?? item.label ?? null,
+          ? (modifierGroups ?? []).map((group) => ({
+              name: group.name,
+              required: group.required ?? true,
+              minSelect: group.minSelect ?? 1,
+              maxSelect: group.maxSelect ?? 1,
+              items: (group.items ?? []).map((item) => ({
+                product: item.product,
+                quantity: item.quantity ?? 1,
+                label: item.label ?? null,
+                price: item.price ?? null,
+                snapshotName: item.snapshotName ?? item.label ?? null,
+                snapshotPrice: item.snapshotPrice ?? null,
+              })),
             }))
           : [],
     });

@@ -36,18 +36,11 @@ const getProductDiscountLabel = (
   return `${formatCurrency(discount.discountAmount)} OFF`;
 };
 
-// Included items for those product type combo
-const getIncludedItemsText = (
-  includedItems: BranchProduct["includedItems"],
+// Modifier group names for combo/set products
+const getModifierGroupNames = (
+  modifierGroups: BranchProduct["modifierGroups"],
 ): string[] =>
-  (includedItems ?? []).map((i) => {
-    const name =
-      i.label ||
-      (typeof i.product === "string" ? "" : i.product?.name) ||
-      i.snapshotName ||
-      "Unavailable item";
-    return i.quantity > 1 ? `${i.quantity}x ${name}` : name;
-  });
+  (modifierGroups ?? []).map((g) => g.name || "Unnamed group");
 
 // Simple slugify helper — put this in a shared util file, e.g. @/helper/slugify.ts
 const slugify = (text: string) =>
@@ -106,8 +99,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const isSet = item.productType === ITEM_TYPES.SET;
   const isNonSolo =
     item.productType !== ITEM_TYPES.SOLO && item.productType != null;
-  const includedItemsText = getIncludedItemsText(item.includedItems);
-  const hasIncludedItems = isNonSolo && includedItemsText.length > 0;
+  const modifierGroupNames = getModifierGroupNames(item.modifierGroups);
+  const hasModifierGroups = isNonSolo && modifierGroupNames.length > 0;
   const activeProductDiscount = item.activeProductDiscount;
   const hasProductDiscount =
     Boolean(activeProductDiscount) && activeProductDiscount!.discountAmount > 0;
@@ -186,14 +179,14 @@ const ProductCard: React.FC<ProductCardProps> = ({
             {item.name}
           </h3>
 
-          {hasIncludedItems && (
+          {hasModifierGroups && (
             <div className="flex flex-wrap gap-1 mt-1">
-              {includedItemsText.map((text, index) => (
+              {modifierGroupNames.map((name, index) => (
                 <span
                   key={index}
                   className="rounded-full bg-gray-100 px-2 py-1 text-[10px] text-gray-600"
                 >
-                  {text}
+                  {name}
                 </span>
               ))}
             </div>

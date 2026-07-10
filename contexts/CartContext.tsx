@@ -183,12 +183,35 @@ export const CartProvider: React.FC<{
 
   // ─── Cart actions (always optimistic) ───────────────────────────────────────
 
+  /**
+   * Generate a composite cart key that distinguishes combo/set items
+   * with different modifier selections from each other.
+   * Solo items just use their _id; combo items append a hash of their selections.
+   */
+  const getCartKey = useCallback((item: CartItem): string => {
+    if (!item.modifierSelections || item.modifierSelections.length === 0) {
+      return item._id;
+    }
+    // Build a stable string from the modifier selections to differentiate combos
+    const selKey = item.modifierSelections
+      .map((g) =>
+        g.items
+          .map((i) => `${i.productId}:${i.quantity}:${i.upgradePrice}`)
+          .sort()
+          .join(","),
+      )
+      .sort()
+      .join("|");
+    return `${item._id}__${selKey}`;
+  }, []);
+
   const addToCart = useCallback((item: CartItem) => {
     setCartItems((prev) => {
-      const existing = prev.find((c) => c._id === item._id);
+      const itemKey = getCartKey(item);
+      const existing = prev.find((c) => getCartKey(c) === itemKey);
       if (existing) {
         return prev.map((c) =>
-          c._id === item._id
+          getCartKey(c) === itemKey
             ? {
                 ...c,
                 activeProductDiscount: item.activeProductDiscount ?? null,
@@ -199,7 +222,7 @@ export const CartProvider: React.FC<{
       }
       return [...prev, { ...item }];
     });
-  }, []);
+  }, [getCartKey]);
 
   const removeFromCart = useCallback((id: string | number) => {
     setCartItems((prev) => prev.filter((item) => item._id !== id));

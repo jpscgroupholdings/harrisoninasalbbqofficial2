@@ -7,12 +7,12 @@ import {
   TableRow,
 } from "../../../components/ui/table";
 import { useDeleteProduct } from "@/hooks/api/useProducts";
-import Image from "next/image";
 import PermissionGuard from "@/lib/PermissionGuard";
 import { DynamicIcon } from "@/components/ui/DynamicIcon";
 import { Product } from "@/types/products";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { AppImage } from "@/components/AppImage";
 
 interface ProductTableProps {
   products: Product[];
@@ -20,7 +20,6 @@ interface ProductTableProps {
 }
 
 export default function ProductTable({ products, onEdit }: ProductTableProps) {
-
   const router = useRouter();
 
   const productHeaders = [
@@ -76,13 +75,15 @@ export default function ProductTable({ products, onEdit }: ProductTableProps) {
                   {/* IMAGE */}
                   <TableCell className="px-6 py-4 flex items-center justify-center">
                     <div className="relative w-18 h-18">
-                      <Image
-                        width={200}
-                        height={200}
-                        src={product?.image?.url || "/images/harrison_logo.png"}
-                        alt={product.name}
-                        className="w-18 h-18 object-cover rounded-md"
-                      />
+                      <div className="w-18 h-18 object-cover rounded-md">
+                        <AppImage
+                          src={
+                            product?.image?.url || "/images/harrison_logo.png"
+                          }
+                          alt={product.name}
+                          loading="lazy"
+                        />
+                      </div>
 
                       <div className="absolute top-0 left-0 flex flex-col gap-1">
                         {product.isPopular && (
@@ -106,9 +107,14 @@ export default function ProductTable({ products, onEdit }: ProductTableProps) {
                     </p>
 
                     {product.productType !== "solo" &&
-                      product.includedItems?.length > 0 && (
+                      product.modifierGroups?.length > 0 && (
                         <p className="text-xs text-slate-500 mt-1">
-                          {product.includedItems.length} items included
+                          {product.modifierGroups.length} groups ·{" "}
+                          {product.modifierGroups.reduce(
+                            (sum, g) => sum + (g.items?.length ?? 0),
+                            0,
+                          )}{" "}
+                          items
                         </p>
                       )}
                   </TableCell>
@@ -150,7 +156,8 @@ export default function ProductTable({ products, onEdit }: ProductTableProps) {
 
                   {/* ACTIONS */}
                   <TableCell className="px-6 py-4">
-                    {deleteMutation.isPending && deletingProductId === product._id ? (
+                    {deleteMutation.isPending &&
+                    deletingProductId === product._id ? (
                       <div className="flex items-center justify-center">
                         <DynamicIcon
                           name="Loader2"
@@ -169,7 +176,9 @@ export default function ProductTable({ products, onEdit }: ProductTableProps) {
                           }
                         >
                           <button
-                            onClick={() => router.push(`/products/${product._id}/edit`)}
+                            onClick={() =>
+                              router.push(`/products/${product._id}/edit`)
+                            }
                             disabled={deletingProductId === product._id}
                             className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg"
                           >
@@ -179,7 +188,7 @@ export default function ProductTable({ products, onEdit }: ProductTableProps) {
                         <PermissionGuard permission="products.delete">
                           <button
                             onClick={() => handleDeleteItem(product._id)}
-                             disabled={deletingProductId === product._id}
+                            disabled={deletingProductId === product._id}
                             className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
                           >
                             <DynamicIcon name="Trash2" size={16} />
