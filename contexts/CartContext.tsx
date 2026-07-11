@@ -22,6 +22,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { apiClient } from "@/lib/apiClient";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -101,15 +102,14 @@ export const CartProvider: React.FC<{
       if (isAuthenticated) {
         // Authenticated: fetch from DB, ignore localStorage
         try {
-          const res = await fetch("/api/customer/cart");
-          if (res.ok) {
-            const data = await res.json();
-            const items: CartItem[] = data.items ?? [];
-            setCartItems(items);
-            lastSyncedRef.current = items;
+          const cartData = await apiClient.get<{ items: CartItem[] }>(
+            "/customer/cart",
+          );
+          const items: CartItem[] = cartData.items ?? [];
+          setCartItems(items);
+          lastSyncedRef.current = items;
 
-            localStorage.removeItem(LOCALSTORAGE_KEY);
-          }
+          localStorage.removeItem(LOCALSTORAGE_KEY);
         } catch (err) {
           console.error("[CartContext] Failed to load cart from DB:", err);
         }
@@ -166,12 +166,10 @@ export const CartProvider: React.FC<{
 
     setIsSyncing(true);
     try {
-      const res = await fetch("/api/customer/cart", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items }),
+      await apiClient.put("/customer/cart", {
+        items,
       });
-      if (!res.ok) throw new Error(`PUT /api/cart → ${res.status}`);
+
       lastSyncedRef.current = items;
     } catch (err) {
       console.error("[CartContext] Failed to sync cart to DB:", err);
@@ -183,23 +181,49 @@ export const CartProvider: React.FC<{
 
   // ─── Cart actions (always optimistic) ───────────────────────────────────────
 
-  const addToCart = useCallback((item: CartItem) => {
-    setCartItems((prev) => {
-      const existing = prev.find((c) => c._id === item._id);
-      if (existing) {
-        return prev.map((c) =>
-          c._id === item._id
-            ? {
-                ...c,
-                activeProductDiscount: item.activeProductDiscount ?? null,
-                quantity: c.quantity + item.quantity,
-              }
-            : c,
-        );
-      }
-      return [...prev, { ...item }];
-    });
+  /**
+   * Generate a composite cart key that distinguishes combo/set items
+   * with different modifier selections from each other.
+   * Solo items just use their _id; combo items append a hash of their selections.
+   */
+  const getCartKey = useCallback((item: CartItem): string => {
+    if (!item.modifierSelections || item.modifierSelections.length === 0) {
+      return item._id;
+    }
+    // Build a stable string from the modifier selections to differentiate combos
+    const selKey = item.modifierSelections
+      .map((g) =>
+        g.items
+          .map((i) => `${i.productId}:${i.quantity}:${i.upgradePrice}`)
+          .sort()
+          .join(","),
+      )
+      .sort()
+      .join("|");
+    return `${item._id}__${selKey}`;
   }, []);
+
+  const addToCart = useCallback(
+    (item: CartItem) => {
+      setCartItems((prev) => {
+        const itemKey = getCartKey(item);
+        const existing = prev.find((c) => getCartKey(c) === itemKey);
+        if (existing) {
+          return prev.map((c) =>
+            getCartKey(c) === itemKey
+              ? {
+                  ...c,
+                  activeProductDiscount: item.activeProductDiscount ?? null,
+                  quantity: c.quantity + item.quantity,
+                }
+              : c,
+          );
+        }
+        return [...prev, { ...item }];
+      });
+    },
+    [getCartKey],
+  );
 
   const removeFromCart = useCallback((id: string | number) => {
     setCartItems((prev) => prev.filter((item) => item._id !== id));
@@ -244,12 +268,19 @@ export const CartProvider: React.FC<{
     cartItems.reduce((sum, item) => {
       const unitDiscount = item.activeProductDiscount?.discountAmount ?? 0;
       const lineSubtotal = multiplyMoney(item.price, item.quantity);
-      return sum + minMoney(multiplyMoney(unitDiscount, item.quantity), lineSubtotal);
+      return (
+        sum + minMoney(multiplyMoney(unitDiscount, item.quantity), lineSubtotal)
+      );
     }, 0),
   );
-  const productDiscountedSubtotal = clampMoneyMin(subtotalPrice - productDiscountAmount);
+  const productDiscountedSubtotal = clampMoneyMin(
+    subtotalPrice - productDiscountAmount,
+  );
   const promoCardDiscount = applyPromoCardDiscount
-    ? calculatePromoCardDiscount(productDiscountedSubtotal, promoCardDiscountRate)
+    ? calculatePromoCardDiscount(
+        productDiscountedSubtotal,
+        promoCardDiscountRate,
+      )
     : 0;
   const totalPrice = applyPromoCardDiscount
     ? calculatePromoCardTotal(productDiscountedSubtotal, promoCardDiscountRate)
@@ -315,12 +346,7 @@ export async function mergeGuestCartOnLogin(): Promise<void> {
 
     const guestItems: CartItem[] = JSON.parse(raw);
     if (!Array.isArray(guestItems) || guestItems.length === 0) return;
-
-    await fetch("/api/customer/cart/merge", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ guestItems }),
-    });
+    await apiClient.post("/customer/cart/merge", { guestItems });
 
     localStorage.removeItem(LOCALSTORAGE_KEY);
   } catch (err) {
