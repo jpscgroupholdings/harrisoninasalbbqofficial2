@@ -7,6 +7,8 @@ import { extractPublicId } from "@/utils/extractImagePublicId";
 import { requireSuperAdmin } from "@/lib/getAuth";
 import mongoose from "mongoose";
 import { STOCK_STATUSES } from "@/types/inventory_types";
+import { getValidObjectId } from "@/helper/getValidObjectIds";
+import { getAPIError } from "@/lib/getApiError";
 
 export async function GET(
   request: NextRequest,
@@ -16,8 +18,8 @@ export async function GET(
   const { id } = await context.params;
   const branchId = new URL(request.url).searchParams.get("branchId");
 
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    return NextResponse.json({ error: "Invalid product id" }, { status: 400 });
+  if (!getValidObjectId(id)) {
+    return getAPIError("Invalid product id", 400); 
   }
 
   const pipeline: any[] = [
@@ -44,41 +46,55 @@ export async function GET(
     {
       $lookup: {
         from: "products",
-        localField: "includedItems.product",
+        localField: "modifierGroups.items.product",
         foreignField: "_id",
-        as: "_includedItems",
+        as: "_modifierProducts",
       },
     },
     {
       $addFields: {
-        includedItems: {
+        modifierGroups: {
           $map: {
-            input: { $ifNull: ["$includedItems", []] },
-            as: "item",
+            input: { $ifNull: ["$modifierGroups", []] },
+            as: "group",
             in: {
-              product: {
-                $arrayElemAt: [
-                  {
-                    $filter: {
-                      input: "$_includedItems",
-                      as: "p",
-                      cond: { $eq: ["$$p._id", "$$item.product"] },
+              _id: "$$group._id",
+              name: "$$group.name",
+              required: "$$group.required",
+              minSelect: "$$group.minSelect",
+              maxSelect: "$$group.maxSelect",
+              items: {
+                $map: {
+                  input: { $ifNull: ["$$group.items", []] },
+                  as: "item",
+                  in: {
+                    product: {
+                      $arrayElemAt: [
+                        {
+                          $filter: {
+                            input: "$_modifierProducts",
+                            as: "p",
+                            cond: { $eq: ["$$p._id", "$$item.product"] },
+                          },
+                        },
+                        0,
+                      ],
                     },
+                    quantity: "$$item.quantity",
+                    label: "$$item.label",
+                    price: "$$item.price",
+                    snapshotName: "$$item.snapshotName",
+                    snapshotPrice: "$$item.snapshotPrice",
                   },
-                  0,
-                ],
+                },
               },
-
-              quantity: "$$item.quantity",
-              label: "$$item.label",
-              snapshotName: "$$item.snapshotName",
             },
           },
         },
       },
     },
     {
-      $unset: "_includedItems",
+      $unset: "_modifierProducts",
     },
 
     ...(branchId && mongoose.Types.ObjectId.isValid(branchId)
@@ -144,20 +160,12 @@ export async function GET(
     const [product] = await Product.aggregate(pipeline);
 
     if (!product) {
-      return NextResponse.json(
-        { error: "Product not found!" },
-        { status: 404 },
-      );
+      return getAPIError("Product not found", 404);
     }
 
     return NextResponse.json({ data: product }, { status: 200 });
   } catch (error) {
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Internal server error",
-      },
-      { status: 500 },
-    );
+    return getAPIError(error, 500, {fallbackMessage: "Failed to fetch product"});
   }
 }
 
@@ -187,20 +195,17 @@ export async function PUT(
       isPopular,
       productType,
       paxCount,
-      includedItems,
+      modifierGroups,
     } = body;
 
     if (!id) {
-      return NextResponse.json(
-        { error: "Product ID required" },
-        { status: 400 },
-      );
+      return getAPIError("Product ID is required", 400)
     }
 
     const existingProduct = await Product.findById(id);
 
     if (!existingProduct) {
-      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+      return getAPIError("Product not found", 404)
     }
 
     // ── Image handling (unchanged from your original) ─────────────────────────
@@ -264,13 +269,21 @@ export async function PUT(
         isPopular,
         productType: resolvedProductType,
         paxCount: resolvedProductType === "set" ? (paxCount ?? null) : null,
-        includedItems:
+        modifierGroups:
           resolvedProductType !== "solo"
-            ? (includedItems ?? []).map((item: any) => ({
-                product: item.product,
-                quantity: item.quantity,
-                label: item.label ?? null,
-                snapshotName: item.snapshotName ?? item.label ?? null,
+            ? (modifierGroups ?? []).map((group: any) => ({
+                name: group.name,
+                required: group.required ?? true,
+                minSelect: group.minSelect ?? 1,
+                maxSelect: group.maxSelect ?? 1,
+                items: (group.items ?? []).map((item: any) => ({
+                  product: item.product,
+                  quantity: item.quantity ?? 1,
+                  label: item.label ?? null,
+                  price: item.price ?? null,
+                  snapshotName: item.snapshotName ?? item.label ?? null,
+                  snapshotPrice: item.snapshotPrice ?? null,
+                })),
               }))
             : [],
       },
@@ -283,17 +296,9 @@ export async function PUT(
       await cloudinary.uploader.destroy(uploadResult.public_id);
     }
 
-    if (error.code === 11000) {
-      return NextResponse.json(
-        { error: "Product already exists" },
-        { status: 409 },
-      );
-    }
 
-    return NextResponse.json(
-      { error: error.message || "Failed to update product" },
-      { status: 500 },
-    );
+
+    return getAPIError(error, 500, {fallbackMessage: "Failed to update product"})
   }
 }
 
@@ -307,19 +312,13 @@ export async function DELETE(
     const { id } = await context.params;
 
     if (!id) {
-      return NextResponse.json(
-        { error: "Product ID required" },
-        { status: 400 },
-      );
+      return getAPIError("Product ID is required", 400);
     }
 
     const product = await Product.findById(id);
 
     if (!product) {
-      return NextResponse.json(
-        { error: "Product not found!" },
-        { status: 404 },
-      );
+      return getAPIError("Product not found", 404);
     }
 
     if (product.image?.public_id) {
@@ -333,9 +332,6 @@ export async function DELETE(
       { status: 200 },
     );
   } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to delete product" },
-      { status: 500 },
-    );
+    return getAPIError(error, 500, {fallbackMessage: "Failed to delete product"});
   }
 }
