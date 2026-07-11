@@ -1,5 +1,30 @@
 import mongoose, { models, Schema } from "mongoose";
 
+/** Sub-schema: a single selected modifier item within a group */
+const ModifierSelectionItemSchema = new Schema(
+  {
+    productId: { type: String, required: true },
+    name: { type: String, required: true },
+    label: { type: String, default: null },
+    upgradePrice: { type: Number, required: true, default: 0 },
+    quantity: { type: Number, required: true, default: 1, min: 1 },
+  },
+  { _id: false },
+);
+
+/** Sub-schema: a completed modifier group selection */
+const ModifierSelectionSchema = new Schema(
+  {
+    groupId: { type: String, required: true },
+    groupName: { type: String, required: true },
+    required: { type: Boolean, default: true },
+    minSelect: { type: Number, default: 1, min: 1 },
+    maxSelect: { type: Number, default: 1, min: 1 },
+    items: { type: [ModifierSelectionItemSchema], default: [] },
+  },
+  { _id: false },
+);
+
 export const CartItemSchema = new Schema(
   {
     _id: { type: String, required: true }, // preserves your MenuItem._id
@@ -10,6 +35,15 @@ export const CartItemSchema = new Schema(
     category: {
       _id: { type: String },
       name: { type: String },
+    },
+    productType: {
+      type: String,
+      enum: ["solo", "combo", "set"],
+      default: "solo",
+    },
+    modifierSelections: {
+      type: [ModifierSelectionSchema],
+      default: [],
     },
     activeProductDiscount: {
       promotionId: { type: String },
