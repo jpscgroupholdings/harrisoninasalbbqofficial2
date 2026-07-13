@@ -480,7 +480,6 @@ const ProductDetailPage: React.FC = () => {
 
                         return (
                           <button
-<<<<<<< HEAD
                             key={modProductId}
                             disabled={isOutOfStock}
                             onClick={() =>
@@ -490,8 +489,6 @@ const ProductDetailPage: React.FC = () => {
                                 group.maxSelect,
                               )
                             }
-=======
->>>>>>> 37c958908caa206fcc200a1838f4e2d0e6728171
                             className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer disabled:cursor-not-allowed ${
                               isSelected
                                 ? "border-brand-color-500 bg-brand-color-50"
@@ -514,10 +511,6 @@ const ProductDetailPage: React.FC = () => {
                                 />
                               )}
                             </div>
-<<<<<<< HEAD
-
-=======
->>>>>>> 37c958908caa206fcc200a1838f4e2d0e6728171
                             {/* Item info */}
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-start text-gray-900 truncate">
