@@ -9,8 +9,6 @@ import { useBranch } from "@/contexts/BranchContext";
 import { ModifierSelection, ModifierSelectionItem } from "@/types/MenuTypes";
 import { ModifierGroup, ModifierItem } from "@/types/products";
 import { ITEM_TYPES } from "@/types/products";
-import { syne } from "@/app/font";
-import { OrderItemImage } from "../../components/OrderItemImage";
 import StarRatingDisplay from "@/components/ui/StarRating";
 import { DynamicIcon } from "@/components/ui/DynamicIcon";
 import { useProductReviews } from "@/hooks/api/customers/useProductReviews";
@@ -21,6 +19,7 @@ import { STOCK_STATUSES } from "@/types/inventory_types";
 import { QuantityStepper } from "../../menu/components/QuantityStepper";
 import { useQuery } from "@tanstack/react-query";
 import { AppImage } from "@/components/AppImage";
+import { IconButton } from "@/components/ui/buttons";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -226,12 +225,11 @@ const ProductDetailPage: React.FC = () => {
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-4">
         <DynamicIcon name="AlertCircle" size={48} className="text-red-400" />
         <p className="text-gray-500">{error?.message || "Product not found"}</p>
-        <button
+        <IconButton
           onClick={() => router.back()}
-          className="px-4 py-2 rounded-lg bg-brand-color-500 text-white text-sm font-semibold hover:bg-brand-color-600 transition-colors cursor-pointer"
-        >
-          Go Back
-        </button>
+          text="Go back"
+          title="Back to menu"
+        />
       </div>
     );
   }
@@ -301,17 +299,17 @@ const ProductDetailPage: React.FC = () => {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className={`min-h-screen bg-gray-50 ${syne.className}`}>
+    <div className={`min-h-screen bg-gray-50`}>
       {/* Back button */}
       <div className="sticky top-22 z-30 bg-white/80 backdrop-blur-sm border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3">
-          <button
+          <IconButton
+            icon={{ name: "ArrowLeft", size: 16 }}
             onClick={() => router.back()}
-            className="flex items-center gap-1 text-sm text-gray-500 hover:text-brand-color-500 transition-colors cursor-pointer"
-          >
-            <DynamicIcon name="ArrowLeft" size={16} />
-            <span>Back to Menu</span>
-          </button>
+            text="Back to menu"
+            variant="ghost"
+            className="text-xs p-2 hover:bg-transparent hover:text-brand-color-500"
+          />
           {isCombo && (
             <span className="rounded-full bg-amber-500 px-2.5 py-1 text-[10px] font-bold text-white shadow-sm">
               COMBO
@@ -328,42 +326,34 @@ const ProductDetailPage: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="flex flex-col md:flex-row gap-6">
           {/* ── Left: Image ─────────────────────────────────────────────── */}
-        <div className="w-full max-w-md md:w-1/2 md:sticky md:top-40 md:self-start">
+          <div className="w-full max-w-md md:w-1/2 md:sticky md:top-40 md:self-start">
             <div className="relative aspect-square max-h-96 w-full place-self-center rounded-xl overflow-hidden bg-white">
               <AppImage src={product.image.url} alt={product.name} />
-              {product.isPopular && (
+              {!product.isPopular && (
                 <div className="absolute top-3 left-3 bg-brand-color-500 text-white text-[10px] font-bold px-3 py-1 rounded-full">
                   Best Seller
                 </div>
               )}
               {isOutOfStock && (
-                <div className="absolute inset-0 bg-black/10 z-10" />
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/10 z-10">
+                  <p className="text-red-500 font-bold">Out of stock</p>
+                </div>
               )}
             </div>
 
             {/* Product info / description tabs */}
             <div className="mt-4 border border-gray-200 rounded-lg">
               <div className="flex gap-0 border-b border-gray-200">
-                <button
+                <IconButton
                   onClick={() => setActiveTab("info")}
-                  className={`px-4 py-2 text-xs transition-colors cursor-pointer ${
-                    activeTab === "info"
-                      ? "bg-brand-color-500 text-white"
-                      : "text-gray-500 hover:bg-gray-50"
-                  }`}
-                >
-                  Product Info
-                </button>
-                <button
+                  variant={activeTab === "info" ? "primary" : "secondary"}
+                  text="Product Info"
+                />
+                <IconButton
                   onClick={() => setActiveTab("desc")}
-                  className={`px-4 py-2 text-xs font-semibold transition-colors cursor-pointer ${
-                    activeTab === "desc"
-                      ? "bg-brand-color-500 text-white"
-                      : "text-gray-500 hover:bg-gray-50"
-                  }`}
-                >
-                  Description
-                </button>
+                  variant={activeTab === "desc" ? "primary" : "secondary"}
+                  text="Description"
+                />
               </div>
               <div className="px-4 py-3">
                 <p className="text-sm text-gray-500 leading-relaxed">
@@ -385,22 +375,28 @@ const ProductDetailPage: React.FC = () => {
               <h1 className="text-2xl font-bold text-gray-900">
                 {product.name}
               </h1>
-              {totalReviews > 0 && averageRating > 0 && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    router.push(`/products/${product._id}/reviews`)
-                  }
-                  className="inline-flex items-center gap-1.5 mt-2 text-xs text-gray-400 hover:text-brand-color-500 transition-colors cursor-pointer"
-                >
-                  <StarRatingDisplay rating={averageRating} />
-                  <span className="font-semibold text-gray-600">
-                    {Number(averageRating).toFixed(1)}
-                  </span>
-                  <span>· {Number(totalReviews)} reviews</span>
-                </button>
-              )}
 
+              <IconButton
+                type="button"
+                onClick={() => router.push(`/products/${product._id}/reviews`)}
+                variant={"ghost"}
+                title={
+                  averageRating <= 0 || totalReviews <= 0
+                    ? "No reviews yet"
+                    : "View reviews of this product"
+                }
+                disabled={averageRating <= 0 || totalReviews <= 0}
+                className="disabled:bg-transparent disabled:hover:bg-transparent py-2 px-0"
+                children={
+                  <>
+                    <StarRatingDisplay rating={averageRating} />
+                    <span className="font-semibold text-gray-600">
+                      {Number(averageRating).toFixed(1)}
+                    </span>
+                    <span>· {Number(totalReviews)} reviews</span>
+                  </>
+                }
+              />
               {/* Price */}
               <div className="flex items-baseline gap-2 mt-3">
                 <span className="text-2xl font-bold text-brand-color-500">
@@ -428,12 +424,6 @@ const ProductDetailPage: React.FC = () => {
                 <p className="text-xs font-semibold text-emerald-600 mt-1">
                   Good for {product.paxCount} pax
                 </p>
-              )}
-
-              {isOutOfStock && (
-                <div className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-600">
-                  Out of stock
-                </div>
               )}
             </div>
 
@@ -491,6 +481,7 @@ const ProductDetailPage: React.FC = () => {
                         return (
                           <button
                             key={modProductId}
+                            disabled={isOutOfStock}
                             onClick={() =>
                               toggleModifierItem(
                                 groupId,
@@ -498,7 +489,7 @@ const ProductDetailPage: React.FC = () => {
                                 group.maxSelect,
                               )
                             }
-                            className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer ${
+                            className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer disabled:cursor-not-allowed ${
                               isSelected
                                 ? "border-brand-color-500 bg-brand-color-50"
                                 : "border-gray-200 bg-white hover:border-gray-300"
@@ -521,7 +512,6 @@ const ProductDetailPage: React.FC = () => {
                               )}
                             </div>
 
-
                             {/* Item info */}
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-start text-gray-900 truncate">
@@ -538,7 +528,9 @@ const ProductDetailPage: React.FC = () => {
                             {/* Upgrade price */}
                             <div className="text-right shrink-0">
                               <span className="text-sm font-bold text-brand-color-500">
-                                {upgradePrice === 0 ? '0' : `+ ${formatCurrency(upgradePrice)}`}
+                                {upgradePrice === 0
+                                  ? "0"
+                                  : `+ ${formatCurrency(upgradePrice)}`}
                               </span>
                               {hasDiscount && savings > 0 && (
                                 <span className="block text-[10px] font-semibold text-green-600">
@@ -571,36 +563,31 @@ const ProductDetailPage: React.FC = () => {
             )}
 
             {/* ── Add to cart footer ────────────────────────────────────────── */}
-            <div className="sticky bottom-0 bg-white border-t border-gray-100 py-4 -mx-4 px-4 md:mx-0 md:px-0 md:border-t-0 md:pt-0">
-              <div className="flex items-center gap-3">
+            <div className="sticky bottom-0 bg-gray-50 border-t border-gray-100 py-4 -mx-4 px-4 md:mx-0 md:px-0 md:border-t-0 md:pt-0">
+              <div className="flex items-center gap-3 mt-4">
                 <QuantityStepper
                   value={mainQty}
                   min={1}
                   onChange={setMainQty}
                 />
-                <button
+                <IconButton
+                  text={
+                    isAdded
+                      ? "Added!"
+                      : `Add to cart · ${formatCurrency(total)}`
+                  }
+                  variant={
+                    isAdded
+                      ? "success"
+                      : canAddToCart && !isOutOfStock
+                        ? "primary"
+                        : "disabled"
+                  }
+                  className="p-3 rounded-lg w-full"
+                  icon={{ name: isAdded ? "Check" : "ShoppingBag" }}
                   onClick={handleAddToCart}
                   disabled={isAdded || !canAddToCart || isOutOfStock}
-                  className={`flex-1 py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all ${
-                    isAdded
-                      ? "bg-green-500 text-white cursor-default"
-                      : canAddToCart && !isOutOfStock
-                        ? "bg-brand-color-500 hover:bg-brand-color-600 text-white cursor-pointer"
-                        : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                  }`}
-                >
-                  {isAdded ? (
-                    <>
-                      <DynamicIcon name="Check" size={16} />
-                      Added!
-                    </>
-                  ) : (
-                    <>
-                      <DynamicIcon name="ShoppingBag" size={16} />
-                      Add to cart · {formatCurrency(total)}
-                    </>
-                  )}
-                </button>
+                />
               </div>
             </div>
           </div>

@@ -186,6 +186,7 @@ const CartDrawer = () => {
               icon={{ name: "X", size: 20 }}
               onClick={() => setIsCartOpen(false)}
               title="Close cart drawer"
+              variant="ghost"
             />
           </div>
         </div>
@@ -296,14 +297,16 @@ const CartDrawer = () => {
                                 }}
                                 title="Edit selections"
                                 onClick={() => handleEdit(item, cartKey)}
-                                className=" hover:bg-green-100 rounded-none"
+                                className=" hover:bg-green-100 rounded-none cursor-pointer p-2"
+                                variant="ghost"
                               />
                             )}
                             <IconButton
                               icon={{ name: "Trash2" }}
                               title="Remove Item"
                               onClick={() => removeFromCart(cartKey)}
-                              className=" hover:bg-red-100 text-red-500 rounded-none"
+                              className=" hover:bg-red-100 text-red-500 rounded-none cursor-pointer p-2"
+                              variant="ghost"
                             />
                           </div>
                         </div>
@@ -363,48 +366,50 @@ const CartDrawer = () => {
                     {/*Break down */}
                     <div className="p-2">
                       {/* Price breakdown */}
-                      {(hasModifiers || hasProductDiscount) && showBreakdown.has(cartKey) && (
-                        <div className="my-3 space-y-0.5 bg-brand-color-50 rounded-lg p-2">
-                          {hasModifiers ? (
-                            <>
+                      {(hasModifiers || hasProductDiscount) &&
+                        showBreakdown.has(cartKey) && (
+                          <div className="my-3 space-y-0.5 bg-brand-color-50 rounded-lg p-2">
+                            {hasModifiers ? (
+                              <>
+                                <div className="flex justify-between text-xs text-gray-500">
+                                  <span>Base price</span>
+                                  <span>{formatCurrency(basePrice)}</span>
+                                </div>
+                                <div className="flex justify-between text-xs text-gray-500">
+                                  <span>Upgrades</span>
+                                  <span>+{formatCurrency(upgradeTotal)}</span>
+                                </div>
+                                <div className="flex justify-between text-xs font-medium text-gray-700 border-t border-gray-200 pt-1 mt-1">
+                                  <span>Unit price</span>
+                                  <span>{formatCurrency(item.price)}</span>
+                                </div>
+                              </>
+                            ) : hasProductDiscount ? (
+                              <>
+                                <div className="flex justify-between text-xs text-gray-500">
+                                  <span>Unit price</span>
+                                  <span className="line-through">
+                                    {formatCurrency(item.price)}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between text-xs font-medium text-green-600">
+                                  <span>Discounted</span>
+                                  <span>
+                                    {formatCurrency(
+                                      item.activeProductDiscount!
+                                        .discountedPrice,
+                                    )}
+                                  </span>
+                                </div>
+                              </>
+                            ) : (
                               <div className="flex justify-between text-xs text-gray-500">
-                                <span>Base price</span>
-                                <span>{formatCurrency(basePrice)}</span>
-                              </div>
-                              <div className="flex justify-between text-xs text-gray-500">
-                                <span>Upgrades</span>
-                                <span>+{formatCurrency(upgradeTotal)}</span>
-                              </div>
-                              <div className="flex justify-between text-xs font-medium text-gray-700 border-t border-gray-200 pt-1 mt-1">
                                 <span>Unit price</span>
                                 <span>{formatCurrency(item.price)}</span>
                               </div>
-                            </>
-                          ) : hasProductDiscount ? (
-                            <>
-                              <div className="flex justify-between text-xs text-gray-500">
-                                <span>Unit price</span>
-                                <span className="line-through">
-                                  {formatCurrency(item.price)}
-                                </span>
-                              </div>
-                              <div className="flex justify-between text-xs font-medium text-green-600">
-                                <span>Discounted</span>
-                                <span>
-                                  {formatCurrency(
-                                    item.activeProductDiscount!.discountedPrice,
-                                  )}
-                                </span>
-                              </div>
-                            </>
-                          ) : (
-                            <div className="flex justify-between text-xs text-gray-500">
-                              <span>Unit price</span>
-                              <span>{formatCurrency(item.price)}</span>
-                            </div>
-                          )}
-                        </div>
-                      )}
+                            )}
+                          </div>
+                        )}
                       {/* Quantity stepper + line total */}
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 bg-white rounded-full border border-gray-200">
@@ -414,9 +419,10 @@ const CartDrawer = () => {
                               updateQuantity(cartKey, item.quantity - 1)
                             }
                             icon={{ name: "Minus" }}
-                            className="hover:bg-gray-100 disabled:opacity-40"
+                            variant="secondary"
                             title="Decrease quantity"
                             disabled={item.quantity <= 1}
+                            className="rounded-full p-2"
                           />
 
                           <span className="font-semibold text-sm w-6 text-center">
@@ -427,8 +433,9 @@ const CartDrawer = () => {
                               updateQuantity(cartKey, item.quantity + 1)
                             }
                             icon={{ name: "Plus" }}
-                            className="hover:bg-gray-100"
+                            className="rounded-full p-2"
                             title="Increase Quantity"
+                            variant="primary"
                           />
                         </div>
                         <span className="font-bold text-sm text-brand-color-500">
