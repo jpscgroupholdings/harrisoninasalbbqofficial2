@@ -17,3 +17,4 @@ import "@/models/Setting";
 import "@/models/User";
 import "@/models/Voucher";
 import "@/models/Cart"
+import "@/models/ModifierGroupTemplate"

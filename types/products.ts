@@ -35,6 +35,7 @@ export interface ModifierItemUI {
 
 export interface ModifierGroup {
   _id?: string;
+  templateId?: string | null;
   name: string;
   required: boolean;
   minSelect: number;
@@ -45,11 +46,42 @@ export interface ModifierGroup {
 // UI-only type — lives inside the admin form, never sent to API
 export interface ModifierGroupUI {
   _id?: string;
+  templateId?: string | null;
   name: string;
   required: boolean;
   minSelect: number;
   maxSelect: number;
   items: ModifierItemUI[];
+}
+
+// ─── Modifier Group Template (reusable) ──────────────────────────────────────
+
+export interface ModifierGroupTemplateItem {
+  product: string | Product; // string when sending, populated Product when receiving from API
+  quantity: number;
+  label: string | null;
+  price: number | null;
+  snapshotName?: string | null;
+  snapshotPrice?: number | null;
+}
+
+export interface ModifierGroupTemplate {
+  _id: string;
+  name: string;
+  required: boolean;
+  minSelect: number;
+  maxSelect: number;
+  items: ModifierGroupTemplateItem[];
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface ModifierGroupTemplatePayload {
+  name: string;
+  required?: boolean;
+  minSelect?: number;
+  maxSelect?: number;
+  items: ModifierGroupTemplateItem[];
 }
 
 export const ITEM_TYPES = {

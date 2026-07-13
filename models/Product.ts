@@ -12,6 +12,7 @@ const ModifierItemSchema = new Schema({
 
 // A group of choices the customer must fill — e.g. "Grilled", "Drink"
 const ModifierGroupSchema = new Schema({
+  templateId: { type: Schema.Types.ObjectId, ref: "ModifierGroupTemplate", default: null },
   name: { type: String, required: true },
   required: { type: Boolean, default: true },
   minSelect: { type: Number, default: 1, min: 1 },
