@@ -120,7 +120,7 @@ const ProductDetailPage: React.FC = () => {
       for (const modItem of group.items) {
         if (selectedIds.has(modItem.product._id)) {
           const upgradePrice = modItem.price ?? modItem.product.price ?? 0;
-          sum += upgradePrice * modItem.quantity;
+          // sum += upgradePrice * modItem.quantity;
         }
       }
     }
@@ -250,7 +250,6 @@ const ProductDetailPage: React.FC = () => {
                 name: modItem.product.name,
                 label: modItem.label,
                 upgradePrice: modItem.price ?? modItem.product.price ?? 0,
-                quantity: modItem.quantity,
               }));
             return {
               groupId: group._id ?? "",

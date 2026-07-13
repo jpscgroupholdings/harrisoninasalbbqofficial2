@@ -11,7 +11,6 @@ export interface ModifierSelectionItem {
   name: string;
   label: string | null;
   upgradePrice: number;
-  quantity: number;
 }
 
 /**

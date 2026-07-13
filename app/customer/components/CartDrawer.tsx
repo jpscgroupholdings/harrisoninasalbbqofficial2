@@ -225,13 +225,7 @@ const CartDrawer = () => {
                             sum,
                             group.items.reduce(
                               (gSum, modItem) =>
-                                addMoney(
-                                  gSum,
-                                  multiplyMoney(
-                                    modItem.upgradePrice,
-                                    modItem.quantity,
-                                  ),
-                                ),
+                                addMoney(gSum, modItem.upgradePrice),
                               0,
                             ),
                           ),
@@ -338,8 +332,6 @@ const CartDrawer = () => {
                                   >
                                     <span className="text-gray-500">
                                       {modItem.label ?? modItem.name}
-                                      {modItem.quantity > 1 &&
-                                        ` (×${modItem.quantity})`}
                                     </span>
                                     <span className="text-gray-400">
                                       {modItem.upgradePrice > 0
