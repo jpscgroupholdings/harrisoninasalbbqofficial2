@@ -83,7 +83,7 @@ const ModifierGroupsSection = ({
   const fetchAllProducts = async () => {
     setLoadingProducts(true);
     try {
-      const res = await fetch(`/api/products`);
+      const res = await fetch(`/api/products?limit=100`);
       const data = await res.json();
       setAllProducts(
         Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [],
