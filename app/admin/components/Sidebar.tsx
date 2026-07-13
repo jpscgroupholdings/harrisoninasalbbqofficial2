@@ -11,6 +11,7 @@ import { DynamicIcon } from "@/components/ui/DynamicIcon";
 import { ORDER_STATUSES } from "@/types/orderConstants";
 import AdminBranchSelector from "./AdminBranchSelector";
 import { useAdminBranchContext } from "@/contexts/AdminBranchContext";
+import { IconButton } from "@/components/ui/buttons";
 
 interface SidebarProps {
   isMobileOpen: boolean;
@@ -59,7 +60,11 @@ const navSections: NavSection[] = [
         icon: "ChartLine",
         permission: "reports.read",
       },
-      { name: "Reviews", path: null, icon: "Star", permission: "reviews.read",
+      {
+        name: "Reviews",
+        path: null,
+        icon: "Star",
+        permission: "reviews.read",
         children: [
           { name: "Order Reviews", path: "/reviews/orders" },
           { name: "Product Reviews", path: "/reviews/products" },
@@ -72,12 +77,32 @@ const navSections: NavSection[] = [
   {
     title: "Operations",
     items: [
+      // Product management
       {
-        name: "Products",
-        path: "/products",
-        icon: "Package",
+        name: "Product Management",
+        path: null,
+        icon: "Utensils",
         permission: "products.read",
+        children: [
+          {
+            name: "Products",
+            path: `/products`,
+          },
+          {
+            name: "Modifier Templates",
+            path: `/modifier-groups`,
+          },
+          {
+            name: "Categories",
+            path: `/categories`,
+          },
+          {
+            name: "SubCategories",
+            path: `/subcategories`,
+          },
+        ],
       },
+      // Promotions
       {
         name: "Promotions",
         path: null,
@@ -106,33 +131,12 @@ const navSections: NavSection[] = [
           },
         ],
       },
+      // Inventories
       {
         name: "Inventory",
         path: "/inventories",
         icon: "Archive",
         permission: "inventories.read",
-      },
-      {
-        name: "Categories",
-        path: null,
-        icon: "Folder",
-        permission: "categories.read",
-        children: [
-          {
-            name: "Categories",
-            path: "/categories",
-          },
-          {
-            name: "SubCategories",
-            path: "/subcategories",
-          },
-        ],
-      },
-      {
-        name: "Modifier Groups",
-        path: "/modifier-groups",
-        icon: "SlidersHorizontal",
-        permission: "modifier-groups.read",
       },
     ],
   },
@@ -244,12 +248,12 @@ const Sidebar = ({ isMobileOpen, onClose }: SidebarProps) => {
         <div className="h-20 flex items-center justify-between px-4 border-b border-gray-200">
           <BrandLogo />
           {/** Mobile close button */}
-          <button
+          <IconButton 
             onClick={onClose}
-            className="lg:hidden p-2 hover:bg-white/50 rounded-lg transition-colors"
-          >
-            <DynamicIcon name="X" size={20} />
-          </button>
+            icon={{name: "X", size: 20}}
+            className="lg:hidden"
+            variant="ghost"
+          />
         </div>
 
         <nav className="flex-1 py-4 px-3 overflow-y-auto min-h-0">
