@@ -65,7 +65,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
         {(label || subLabel) && (
           <div className="flex-1 min-w-0">
             {label && (
-              <span className="block text-sm text-gray-700 truncate">
+              <span className="block text-sm text-gray-800 truncate">
                 {label}
               </span>
             )}

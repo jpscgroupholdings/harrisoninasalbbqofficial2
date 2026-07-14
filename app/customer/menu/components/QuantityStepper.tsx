@@ -1,6 +1,8 @@
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
+import { IconButton } from "@/components/ui/buttons";
 import { DynamicIcon } from "@/components/ui/DynamicIcon";
+import { InputField } from "@/components/ui/FormComponents";
 
 export const QuantityStepper = ({
   value,
@@ -28,28 +30,26 @@ export const QuantityStepper = ({
   };
 
   return (
-    <div className="flex items-center gap-0 border border-gray-200 rounded-lg overflow-hidden h-full">
-      <button
+    <div className="flex items-center gap-0 border border-gray-200 overflow-hidden h-full">
+      <IconButton
         onClick={() => onChange(Math.max(min, value - 1))}
-        className="w-7 h-7 flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors cursor-pointer"
-      >
-        <DynamicIcon name="Minus" size={12} />
-      </button>
+        icon={{ name: "Minus", size: 12 }}
+        variant="secondary"
+        className="place-self-stretch"
+      />
 
-      <input
+      <InputField
         type="number"
         value={value}
         min={min}
         onChange={handleInputChange}
-        className="w-10 text-center outline-none"
+        className="max-w-32 p-0 rounded-none outline-none border-0 text-center"
       />
-
-      <button
+      <IconButton
         onClick={() => onChange(value + 1)}
-        className="w-7 h-7 flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors cursor-pointer"
-      >
-        <DynamicIcon name="Plus" size={12} />
-      </button>
+        icon={{ name: "Plus", size: 12 }}
+        className="place-self-stretch"
+      />
     </div>
   );
 };

@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useCart } from "@/contexts/CartContext";
-import { getCartKey } from "@/contexts/CartContext";
+import { useCart, getCartKey } from "@/contexts/CartContext";
 import { useRouter } from "next/navigation";
 import OrderNowButton from "@/components/ui/OrderNowButton";
 import { DynamicIcon } from "@/components/ui/DynamicIcon";
@@ -32,6 +31,8 @@ import { useQuery } from "@tanstack/react-query";
 import { PromotionDiscountDay } from "@/types/promotions/promotion-constant";
 import { AppImage } from "@/components/AppImage";
 import { IconButton } from "@/components/ui/buttons";
+import { Checkbox, InputField } from "@/components/ui/FormComponents";
+import { cn } from "@/lib/utils";
 
 const CartDrawer = () => {
   const router = useRouter();
@@ -150,6 +151,34 @@ const CartDrawer = () => {
     });
   };
 
+  const SummaryStyle = ({
+    title,
+    subTitle,
+    className,
+  }: {
+    title: string;
+    subTitle: string;
+    className?: {
+      parent?: string;
+      title?: string;
+      subTitle?: string;
+    };
+  }) => {
+    return (
+      <div
+        className={cn(
+          "flex items-center justify-between text-sm text-gray-500",
+          className?.parent,
+        )}
+      >
+        <span className={cn("truncate min-w-0", className?.title)}>
+          {title}
+        </span>
+        <span className={cn("", className?.subTitle)}>{subTitle}</span>
+      </div>
+    );
+  };
+
   if (!isCartOpen) return null;
 
   return (
@@ -227,7 +256,10 @@ const CartDrawer = () => {
                               (gSum, modItem) =>
                                 addMoney(
                                   gSum,
-                                  multiplyMoney(modItem.upgradePrice, modItem.quantity),
+                                  multiplyMoney(
+                                    modItem.upgradePrice,
+                                    modItem.quantity,
+                                  ),
                                 ),
                               0,
                             ),
@@ -309,15 +341,17 @@ const CartDrawer = () => {
                         </div>
 
                         {(hasModifiers || hasProductDiscount) && (
-                          <button
+                          <IconButton
                             type="button"
                             onClick={() => toggleBreakdown(cartKey)}
-                            className="text-xs text-gray-500 underline"
-                          >
-                            {showBreakdown.has(cartKey)
-                              ? "Hide details"
-                              : "Show details"}
-                          </button>
+                            variant="underline"
+                            text={
+                              showBreakdown.has(cartKey)
+                                ? "Hide details"
+                                : "Show details"
+                            }
+                            className="px-0 text-xs text-gray-600"
+                          />
                         )}
 
                         {/* Modifier selections by group */}
@@ -370,49 +404,50 @@ const CartDrawer = () => {
                         showBreakdown.has(cartKey) && (
                           <div className="my-3 space-y-0.5 bg-brand-color-50 rounded-lg p-2">
                             {hasModifiers ? (
-                              <>
-                                <div className="flex justify-between text-xs text-gray-500">
-                                  <span>Base price</span>
-                                  <span>{formatCurrency(basePrice)}</span>
+                              <div className="space-y-2">
+                                <SummaryStyle
+                                  title="Base price"
+                                  subTitle={formatCurrency(basePrice)}
+                                  className={{ parent: "text-xs" }}
+                                />
+                                <SummaryStyle
+                                  title="Upgrades"
+                                  subTitle={`+${formatCurrency(upgradeTotal)}`}
+                                  className={{ parent: "text-xs" }}
+                                />
+                                <div className="border-t border-gray-200 pt-1 mt-1">
+                                  <SummaryStyle
+                                    title="Unit price"
+                                    subTitle={formatCurrency(item.price)}
+                                  />
                                 </div>
-                                <div className="flex justify-between text-xs text-gray-500">
-                                  <span>Upgrades</span>
-                                  <span>+{formatCurrency(upgradeTotal)}</span>
-                                </div>
-                                <div className="flex justify-between text-xs font-medium text-gray-700 border-t border-gray-200 pt-1 mt-1">
-                                  <span>Unit price</span>
-                                  <span>{formatCurrency(item.price)}</span>
-                                </div>
-                              </>
+                              </div>
                             ) : hasProductDiscount ? (
                               <>
-                                <div className="flex justify-between text-xs text-gray-500">
-                                  <span>Unit price</span>
-                                  <span className="line-through">
-                                    {formatCurrency(item.price)}
-                                  </span>
-                                </div>
-                                <div className="flex justify-between text-xs font-medium text-green-600">
-                                  <span>Discounted</span>
-                                  <span>
-                                    {formatCurrency(
-                                      item.activeProductDiscount!
-                                        .discountedPrice,
-                                    )}
-                                  </span>
-                                </div>
+                                <SummaryStyle
+                                  title="Unit price"
+                                  subTitle={formatCurrency(item.price)}
+                                  className={{ subTitle: "line-through" }}
+                                />
+                                <SummaryStyle
+                                  title="Discounted"
+                                  subTitle={formatCurrency(
+                                    item.activeProductDiscount!.discountedPrice,
+                                  )}
+                                  className={{ parent: "text-green-600" }}
+                                />
                               </>
                             ) : (
-                              <div className="flex justify-between text-xs text-gray-500">
-                                <span>Unit price</span>
-                                <span>{formatCurrency(item.price)}</span>
-                              </div>
+                              <SummaryStyle
+                                title="Unit price"
+                                subTitle={formatCurrency(item.price)}
+                              />
                             )}
                           </div>
                         )}
                       {/* Quantity stepper + line total */}
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 bg-white rounded-full border border-gray-200">
+                      <div className="flex items-center justify-between px-2">
+                        <div className="flex items-center bg-white border border-gray-200 max-w-32">
                           <IconButton
                             onClick={() =>
                               item.quantity > 1 &&
@@ -422,18 +457,22 @@ const CartDrawer = () => {
                             variant="secondary"
                             title="Decrease quantity"
                             disabled={item.quantity <= 1}
-                            className="rounded-full p-2"
+                            className="p-1"
                           />
-
-                          <span className="font-semibold text-sm w-6 text-center">
-                            {item.quantity}
-                          </span>
+                          <InputField
+                            type="number"
+                            value={item.quantity}
+                            onChange={(e) =>
+                              updateQuantity(cartKey, Number(e.target.value))
+                            }
+                            className="text-center py-0 px-2 rounded-none outline-0 border-0 text-sm font-semibold"
+                          />
                           <IconButton
                             onClick={() =>
                               updateQuantity(cartKey, item.quantity + 1)
                             }
                             icon={{ name: "Plus" }}
-                            className="rounded-full p-2"
+                            className="p-1"
                             title="Increase Quantity"
                             variant="primary"
                           />
@@ -459,57 +498,51 @@ const CartDrawer = () => {
           <div className="border-t border-gray-100 p-6 space-y-4">
             <div className="space-y-2">
               {isPromoCardEnabled && (
-                <label className="flex items-start gap-3 rounded-xl bg-orange-50 p-3 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={applyPromoCardDiscount}
-                    onChange={(event) =>
-                      setApplyPromoCardDiscount(event.target.checked)
-                    }
-                    disabled={!canUsePromoCardDiscount}
-                    className="mt-1 h-4 w-4 accent-brand-color-500"
-                  />
-                  <span>
-                    <span className="block font-semibold text-gray-800">
-                      Apply {promoCardConfig.name}
-                    </span>
-                    <span className="block text-xs text-gray-500">
-                      {canUsePromoCardDiscount
-                        ? `${(activeDiscountRate * 100).toFixed(0)}% discount today`
-                        : "Paid promo card required"}
-                    </span>
-                  </span>
-                </label>
+                <Checkbox
+                  checked={applyPromoCardDiscount}
+                  onChange={(event) =>
+                    setApplyPromoCardDiscount(event.target.checked)
+                  }
+                  disabled={!canUsePromoCardDiscount}
+                  label={`Apply ${promoCardConfig.name}`}
+                  subLabel={
+                    canUsePromoCardDiscount
+                      ? `${(activeDiscountRate * 100).toFixed(0)}% discount today`
+                      : "Paid promo card required"
+                  }
+                  wrapperClassName="bg-orange-50"
+                />
               )}
-              <div className="flex items-center justify-between text-sm text-gray-500">
-                <span>Subtotal</span>
-                <span>₱{subtotalPrice.toFixed(2)}</span>
-              </div>
+              <SummaryStyle
+                title="Subtotal"
+                subTitle={formatCurrency(subtotalPrice)}
+              />
               {productDiscountAmount > 0 && (
-                <div className="flex items-center justify-between text-sm font-semibold text-green-600">
-                  <span>Product discounts</span>
-                  <span>-PHP {productDiscountAmount.toFixed(2)}</span>
-                </div>
+                <SummaryStyle
+                  title="Product discounts"
+                  subTitle={`-${formatCurrency(productDiscountAmount)}`}
+                  className={{ parent: "text-green-600" }}
+                />
               )}
               {promoCardDiscount > 0 && (
-                <div className="flex items-center justify-between text-sm font-semibold text-green-600">
-                  <span>Promo card discount</span>
-                  <span>-₱{promoCardDiscount.toFixed(2)}</span>
-                </div>
+                <SummaryStyle
+                  title="Promo card discount"
+                  subTitle={`-${formatCurrency(promoCardDiscount)}`}
+                  className={{ parent: "text-green-600" }}
+                />
               )}
               {orderDiscountAmount > 0 && (
-                <div className="flex items-center justify-between gap-3 text-sm font-semibold text-green-600">
-                  <span className="min-w-0 truncate">
-                    {orderDiscountPromotion?.name}
-                  </span>
-                  <span>-₱{orderDiscountAmount.toFixed(2)}</span>
-                </div>
+                <SummaryStyle
+                  title={orderDiscountPromotion?.name ?? "Order Discount"}
+                  subTitle={`-${formatCurrency(orderDiscountAmount)}`}
+                  className={{ parent: "text-green-600" }}
+                />
               )}
               {orderDiscountAmount === 0 && nextOrderDiscountHint && (
                 <p className="block font-extralight text-brand-color-500 text-sm">
                   Spend{" "}
                   <span className="font-bold">
-                    ₱{nextOrderDiscountHint.amountUntilEligible.toFixed(2)}
+                    {formatCurrency(nextOrderDiscountHint.amountUntilEligible)}
                   </span>{" "}
                   more to use {nextOrderDiscountHint.name}.
                 </p>
@@ -520,41 +553,44 @@ const CartDrawer = () => {
                     Voucher balance available
                   </span>
                   <span className="mt-1 block text-xs text-gray-500">
-                    Use up to ₱{availableVoucherBalance.toFixed(2)} at checkout.
+                    Use up to {formatCurrency(availableVoucherBalance)} at
+                    checkout.
                   </span>
                 </div>
               )}
-              <div className="flex items-center justify-between text-sm text-gray-500">
-                <span>VATable Sales</span>
-                <span>₱{displayVatableSales.toFixed(2)}</span>
-              </div>
-              <div className="flex items-center justify-between text-sm text-gray-500">
-                <span>VAT (12%)</span>
-                <span>₱{displayVatAmount.toFixed(2)}</span>
-              </div>
-              <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                <span className="font-semibold text-gray-900">
-                  Total (VAT Inc)
-                </span>
-                <span className="font-bold text-xl text-brand-color-500">
-                  ₱{displayTotalPrice.toFixed(2)}
-                </span>
-              </div>
-            </div>
-            <button
-              onClick={handleCheckout}
-              className="w-full bg-brand-color-500 hover:bg-[#c13500] text-white py-4 rounded-xl font-bold text-lg transition-colors shadow-lg hover:shadow-xl flex items-center justify-center gap-2 cursor-pointer"
-            >
-              Proceed to checkout
-              <DynamicIcon name="ArrowRight" size={20} />
-            </button>
+              <SummaryStyle
+                title="VATable Sales"
+                subTitle={formatCurrency(displayVatableSales)}
+              />
 
-            <button
-              onClick={clearCart}
-              className="w-full text-gray-500 hover:text-red-500 py-2 text-sm transition-colors cursor-pointer"
-            >
-              Clear Cart
-            </button>
+              <SummaryStyle
+                title="VAT (12%)"
+                subTitle={formatCurrency(displayVatAmount)}
+              />
+
+              <SummaryStyle
+                title="Total (VAT Inc)"
+                subTitle={formatCurrency(displayTotalPrice)}
+                className={{
+                  title: "font-semibold text-gray-900",
+                  subTitle: "font-bold text-xl text-brand-color-500",
+                  parent: "pt-2 border-t border-gray-100 text-lg",
+                }}
+              />
+            </div>
+            <div className="space-y-2">
+              <IconButton
+                onClick={handleCheckout}
+                text="Proceed to checkout"
+                icon={{ name: "ArrowRight", size: 20 }}
+                className="w-full py-4 rounded-lg"
+              />
+              <IconButton
+                text="Clear cart"
+                variant="ghost"
+                className="w-full"
+              />
+            </div>
           </div>
         )}
       </div>

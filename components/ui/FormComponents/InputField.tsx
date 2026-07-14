@@ -53,6 +53,7 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
               leftIcon ? "pl-10" : "pl-4",
               rightElement ? "pr-12" : "pr-4", // 🔥 dynamic padding
               error && "border-red-500 focus:ring-red-500",
+              props.type === "number" && "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none",
               className,
             )}
           />

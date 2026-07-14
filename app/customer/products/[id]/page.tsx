@@ -202,7 +202,13 @@ const ProductDetailPage: React.FC = () => {
         ).length;
         // If this is a new selection (was 0 or absent), ensure we don't exceed maxSelect
         if (!groupMap.has(productId) && currentSelectedCount >= maxSelect) {
-          return prev; // no change — already at max
+          if (maxSelect === 1) {
+            // Radio-style group: switch selection instead of blocking
+            groupMap.clear();
+          } else {
+            // Checkbox-style group already at capacity — require manual deselect
+            return prev; // no change — already at max
+          }
         }
         groupMap.set(productId, newQty);
       }
@@ -239,7 +245,9 @@ const ProductDetailPage: React.FC = () => {
             if (!groupQtyMap) return null;
             // Only include items with quantity > 0
             const items: ModifierSelectionItem[] = group.items
-              .filter((modItem) => (groupQtyMap.get(modItem.product._id) ?? 0) > 0)
+              .filter(
+                (modItem) => (groupQtyMap.get(modItem.product._id) ?? 0) > 0,
+              )
               .map((modItem) => ({
                 productId: modItem.product._id,
                 name: modItem.product.name,
@@ -477,23 +485,37 @@ const ProductDetailPage: React.FC = () => {
                         return (
                           <div
                             key={modProductId}
-                            className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
+                            role="button"
+                            tabIndex={isOutOfStock ? -1 : 0}
+                            aria-disabled={isOutOfStock}
+                            onClick={() =>
+                              setModifierItemQty(
+                                groupId,
+                                modProductId,
+                                group.maxSelect,
+                                isSelected ? 0 : 1,
+                              )
+                            }
+                            onKeyDown={(e) => {
+                              if (isOutOfStock) return;
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                setModifierItemQty(
+                                  groupId,
+                                  modProductId,
+                                  group.maxSelect,
+                                  isSelected ? 0 : 1,
+                                );
+                              }
+                            }}
+                            className={`flex w-full items-center cursor-pointer  gap-3 p-3 rounded-lg border transition-all ${
                               isSelected
                                 ? "border-brand-color-500 bg-brand-color-50"
                                 : "border-gray-200 bg-white hover:border-gray-300"
                             }`}
                           >
                             {/* Selection indicator + click to toggle */}
-                            <button
-                              disabled={isOutOfStock}
-                              onClick={() =>
-                                setModifierItemQty(
-                                  groupId,
-                                  modProductId,
-                                  group.maxSelect,
-                                  isSelected ? 0 : 1,
-                                )
-                              }
+                            <div
                               className={`w-5 h-5 flex items-center justify-center rounded-${isRadio ? "full" : "md"} border-2 transition-colors cursor-pointer disabled:cursor-not-allowed ${
                                 isSelected
                                   ? "border-brand-color-500 bg-brand-color-500"
@@ -507,7 +529,7 @@ const ProductDetailPage: React.FC = () => {
                                   className="text-white"
                                 />
                               )}
-                            </button>
+                            </div>
                             {/* Item info */}
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-start text-gray-900 truncate">
@@ -535,18 +557,20 @@ const ProductDetailPage: React.FC = () => {
                             </div>
                             {/* Quantity stepper — visible only when selected */}
                             {isSelected && (
-                              <QuantityStepper
-                                value={itemQty}
-                                min={1}
-                                onChange={(val) =>
-                                  setModifierItemQty(
-                                    groupId,
-                                    modProductId,
-                                    group.maxSelect,
-                                    val,
-                                  )
-                                }
-                              />
+                              <div onClick={(e) => e.stopPropagation()} className="max-w-28">
+                                <QuantityStepper
+                                  value={itemQty}
+                                  min={1}
+                                  onChange={(val) =>
+                                    setModifierItemQty(
+                                      groupId,
+                                      modProductId,
+                                      group.maxSelect,
+                                      val,
+                                    )
+                                  }
+                                />
+                              </div>
                             )}
                           </div>
                         );
@@ -575,11 +599,13 @@ const ProductDetailPage: React.FC = () => {
             {/* ── Add to cart footer ────────────────────────────────────────── */}
             <div className="sticky bottom-0 bg-gray-50 border-t border-gray-100 py-4 -mx-4 px-4 md:mx-0 md:px-0 md:border-t-0 md:pt-0">
               <div className="flex items-center gap-3 mt-4">
-                <QuantityStepper
-                  value={mainQty}
-                  min={1}
-                  onChange={setMainQty}
-                />
+                <div className="place-self-stretch">
+                  <QuantityStepper
+                    value={mainQty}
+                    min={1}
+                    onChange={setMainQty}
+                  />
+                </div>
                 <IconButton
                   text={
                     isAdded
