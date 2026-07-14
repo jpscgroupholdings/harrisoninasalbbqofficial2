@@ -4,13 +4,15 @@ import { Category } from "./category";
 import type { ActiveProductDiscountPreview } from "./products";
 
 /**
- * A selected modifier item within a combo/set order
+ * A selected modifier item within a combo/set order.
+ * Customer controls `quantity` (e.g. ordering 2 cokes in a combo).
  */
 export interface ModifierSelectionItem {
   productId: string;
   name: string;
   label: string | null;
   upgradePrice: number;
+  quantity: number;
 }
 
 /**

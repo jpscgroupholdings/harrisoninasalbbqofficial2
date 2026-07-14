@@ -7,35 +7,7 @@ import { getActiveProductDiscountPreviews } from "@/lib/product-promotions/produ
 import { getAPIError } from "@/lib/getApiError";
 import mongoose from "mongoose";
 import { getValidObjectId } from "@/helper/getValidObjectIds";
-
-type ModifierProductAggregate = {
-  _id?: { toString: () => string };
-  name?: string;
-  price?: number | null;
-  image?: {
-    url?: string;
-    public_id?: string;
-  };
-  productType?: string;
-};
-
-type ModifierItemAggregate = {
-  product?: ModifierProductAggregate | null;
-  label?: string | null;
-  price?: number | null;
-  snapshotName?: string | null;
-  snapshotPrice?: number | null;
-};
-
-type ModifierGroupAggregate = {
-  _id?: string;
-  templateId?: string;
-  name: string;
-  required: boolean;
-  minSelect: number;
-  maxSelect: number;
-  items: ModifierItemAggregate[];
-};
+import type { ModifierGroupAggregate, ModifierItemAggregate } from "@/types/modifier-aggregate";
 
 /**
  * GET /api/customer/products/[id]

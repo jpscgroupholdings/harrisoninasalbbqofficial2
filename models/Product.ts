@@ -3,7 +3,6 @@ import mongoose, { Schema, models } from "mongoose";
 // A selectable item option within a modifier group
 const ModifierItemSchema = new Schema({
   product: { type: Schema.Types.ObjectId, ref: "Product", required: true },
-  quantity: { type: Number, default: 1, min: 1 },
   label: { type: String, default: null },
   price: { type: Number, default: null, min: 0 },
   snapshotName: { type: String, default: null },

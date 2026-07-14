@@ -69,7 +69,7 @@ export function getCartKey(item: CartItem): string {
   const selKey = item.modifierSelections
     .map((g) =>
       g.items
-        .map((i) => `${i.productId}:${i.upgradePrice}`)
+        .map((i) => `${i.productId}:${i.quantity}:${i.upgradePrice}`)
         .sort()
         .join(","),
     )

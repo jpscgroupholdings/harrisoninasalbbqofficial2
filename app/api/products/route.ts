@@ -1,37 +1,18 @@
 import { connectDB } from "@/lib/mongodb";
-import { Product } from "@/models/Product";
-import { Inventory } from "@/models/Inventory";
-import { Branch } from "@/models/Branch";
+import { Product, Inventory, Branch } from "@/models";
 import { NextResponse, NextRequest } from "next/server";
 import cloudinary from "@/lib/cloudinary";
 import { z } from "zod";
-import "@/models/Category";
-import "@/models/SubCategory";
+import "@/lib/registerModels"
 import { extractPublicId } from "@/utils/extractImagePublicId";
-import { requireAdmin, requireSuperAdmin } from "@/lib/getAuth";
+import { requireSuperAdmin } from "@/lib/getAuth";
 import { buildPaginationMeta, parseRequestQuery } from "@/utils/query-helpers";
 import { getActiveProductDiscountPreviews } from "@/lib/product-promotions/product-promotion.application";
 import { getAPIError } from "@/lib/getApiError";
+import { modifierGroupSchema } from "@/types/modifier-zod";
+import type { ModifierGroupAggregate, ModifierItemAggregate } from "@/types/modifier-aggregate";
 
 // ─── Zod Schemas ──────────────────────────────────────────────────────────────
-
-const modifierItemSchema = z.object({
-  product: z.string().min(1, "Modifier item must reference a product"),
-  label: z.string().nullable().optional(),
-  price: z.coerce.number().nullable().optional(),
-  snapshotName: z.string().nullable().optional(),
-  snapshotPrice: z.coerce.number().nullable().optional(),
-});
-
-const modifierGroupSchema = z.object({
-  _id: z.string().optional(),
-  templateId: z.string().nullable().optional(),
-  name: z.string().min(1, "Group name is required"),
-  required: z.boolean().default(true),
-  minSelect: z.coerce.number().int().min(1).default(1),
-  maxSelect: z.coerce.number().int().min(1).default(1),
-  items: z.array(modifierItemSchema).min(1, "Group must have at least one item"),
-});
 
 const productBaseSchema = z.object({
   name: z
@@ -80,35 +61,6 @@ const productCreateSchema = productBaseSchema
       path: ["modifierGroups"],
     },
   );
-
-type ModifierProductAggregate = {
-  _id?: { toString: () => string };
-  name?: string;
-  price?: number | null;
-  image?: {
-    url?: string;
-    public_id?: string;
-  };
-  productType?: string;
-};
-
-type ModifierItemAggregate = {
-  product?: ModifierProductAggregate | null;
-  label?: string | null;
-  price?: number | null;
-  snapshotName?: string | null;
-  snapshotPrice?: number | null;
-};
-
-type ModifierGroupAggregate = {
-  _id?: string;
-  templateId?: string;
-  name: string;
-  required: boolean;
-  minSelect: number;
-  maxSelect: number;
-  items: ModifierItemAggregate[];
-};
 
 // ─── GET ──────────────────────────────────────────────────────────────────────
 

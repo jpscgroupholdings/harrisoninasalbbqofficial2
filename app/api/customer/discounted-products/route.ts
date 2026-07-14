@@ -13,6 +13,10 @@ import type {
   PromotionDiscountDayMode,
   PromotionDiscountType,
 } from "@/types/promotions/promotion-constant";
+import type {
+  ModifierGroupAggregate,
+  ModifierItemAggregate,
+} from "@/types/modifier-aggregate";
 import { buildPaginationMeta, parsePagination } from "@/utils/query-helpers";
 import mongoose, { type PipelineStage } from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
@@ -31,35 +35,6 @@ type ProductDiscountPromotionRecord = {
   redemptionCount: number;
   discountType: PromotionDiscountType;
   discountValue: number;
-};
-
-type ModifierProductAggregate = {
-  _id?: { toString: () => string };
-  name?: string;
-  price?: number | null;
-  image?: {
-    url?: string;
-    public_id?: string;
-  };
-  productType?: string;
-};
-
-type ModifierItemAggregate = {
-  product?: ModifierProductAggregate | null;
-  label?: string | null;
-  price?: number | null;
-  snapshotName?: string | null;
-  snapshotPrice?: number | null;
-};
-
-type ModifierGroupAggregate = {
-  _id?: string;
-  templateId?: string;
-  name: string;
-  required: boolean;
-  minSelect: number;
-  maxSelect: number;
-  items: ModifierItemAggregate[];
 };
 
 type DiscountedProductAggregate = {

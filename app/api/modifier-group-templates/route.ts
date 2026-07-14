@@ -6,16 +6,9 @@ import { z } from "zod";
 import { requireSuperAdmin } from "@/lib/getAuth";
 import { getAPIError } from "@/lib/getApiError";
 import { canAccess } from "@/lib/roleBasedAccessCtrl";
+import { modifierItemSchema } from "@/types/modifier-zod";
 
 // ─── Zod Schemas ──────────────────────────────────────────────────────────────
-
-const modifierTemplateItemSchema = z.object({
-  product: z.string().min(1, "Item must reference a product"),
-  label: z.string().nullable().optional(),
-  price: z.coerce.number().nullable().optional(),
-  snapshotName: z.string().nullable().optional(),
-  snapshotPrice: z.coerce.number().nullable().optional(),
-});
 
 const templateCreateSchema = z.object({
   name: z.string().min(1, "Template name is required"),
@@ -23,7 +16,7 @@ const templateCreateSchema = z.object({
   minSelect: z.coerce.number().int().min(1).default(1),
   maxSelect: z.coerce.number().int().min(1).default(1),
   items: z
-    .array(modifierTemplateItemSchema)
+    .array(modifierItemSchema)
     .min(1, "Template must have at least one item"),
 });
 

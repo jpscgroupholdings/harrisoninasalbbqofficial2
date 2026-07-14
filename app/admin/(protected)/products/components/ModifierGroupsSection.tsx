@@ -110,7 +110,6 @@ const ModifierGroupsSection = ({
         .filter((p) => !existingItems.some((i) => i.product === p._id))
         .map((p) => ({
           product: p._id,
-          quantity: 1,
           label: null,
           price: p.price ?? null,
           snapshotName: p.name,
