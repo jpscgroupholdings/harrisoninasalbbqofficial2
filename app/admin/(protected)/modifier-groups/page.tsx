@@ -95,10 +95,29 @@ const TemplateFormModal = ({
   const [minSelect, setMinSelect] = useState(template?.minSelect ?? 1);
   const [maxSelect, setMaxSelect] = useState(template?.maxSelect ?? 1);
   const [items, setItems] = useState<ModifierGroupTemplateItem[]>(
-    template?.items ?? [],
+    (template?.items ?? []).map((item, idx) => ({ ...item, position: idx + 1 })),
   );
 
-  // Product selection modal
+  // ── Drag-and-drop state for item reorder ────────────────────────────────────
+
+  const [dragItemIndex, setDragItemIndex] = useState<number | null>(null);
+  const [dragOverItemIndex, setDragOverItemIndex] = useState<number | null>(null);
+
+  /** Reorder items within the template via drag-and-drop (local state only) */
+  const handleItemDrop = (targetIndex: number) => {
+    if (dragItemIndex === null || dragItemIndex === targetIndex) return;
+    setItems((prev) => {
+      const reordered = [...prev];
+      const [moved] = reordered.splice(dragItemIndex, 1);
+      reordered.splice(targetIndex, 0, moved);
+      return reordered.map((item, i) => ({ ...item, position: i + 1 }));
+    });
+    setDragItemIndex(null);
+    setDragOverItemIndex(null);
+  };
+
+  // ── Product selection modal ─────────────────────────────────────────────────
+
   const [showProductModal, setShowProductModal] = useState(false);
 
   const openProductModal = () => {
@@ -111,19 +130,20 @@ const TemplateFormModal = ({
     );
     const newItems: ModifierGroupTemplateItem[] = selectedProducts
       .filter((p) => !existingIds.includes(p._id))
-      .map((p) => ({
+      .map((p, idx) => ({
         product: p._id,
         label: null,
         price: p.price ?? null,
         snapshotName: p.name,
         snapshotPrice: p.price ?? null,
+        position: items.length + idx + 1,
       }));
     setItems([...items, ...newItems]);
     setShowProductModal(false);
   };
 
   const removeItem = (index: number) => {
-    setItems(items.filter((_, i) => i !== index));
+    setItems(items.filter((_, i) => i !== index).map((item, i) => ({ ...item, position: i + 1 })));
   };
 
   const updateItem = (index: number, field: string, value: any) => {
@@ -148,7 +168,7 @@ const TemplateFormModal = ({
       required,
       minSelect,
       maxSelect,
-      items: items.map((item) => ({
+      items: items.map((item, idx) => ({
         product:
           typeof item.product === "string"
             ? item.product
@@ -157,6 +177,7 @@ const TemplateFormModal = ({
         price: item.price ?? null,
         snapshotName: item.snapshotName ?? null,
         snapshotPrice: item.snapshotPrice ?? null,
+        position: item.position ?? idx + 1,
       })),
     });
   };
@@ -246,7 +267,6 @@ const TemplateFormModal = ({
         {items.length > 0 ? (
           <div className="space-y-2">
             {items.map((item, i) => {
-              // Use snapshot data for display (no longer maintain allProducts locally)
               const displayName =
                 item.snapshotName ||
                 item.label ||
@@ -254,17 +274,43 @@ const TemplateFormModal = ({
                   ? item.product?.name
                   : `Item ${i + 1}`);
               const soloPrice = item.snapshotPrice ?? null;
-              // Derive image from populated product object if available
               const itemImageUrl =
                 typeof item.product === "object" && item.product?.image?.url
                   ? item.product.image.url
                   : "";
+              const isDraggingItem = dragItemIndex === i;
+              const isDragOverItem = dragOverItemIndex === i;
 
               return (
                 <div
                   key={i}
-                  className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg relative"
+                  draggable
+                  onDragStart={() => {
+                    setDragItemIndex(i);
+                    setDragOverItemIndex(null);
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setDragOverItemIndex(i);
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    handleItemDrop(i);
+                  }}
+                  className={`flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg relative transition-all duration-150 select-none
+                    ${isDraggingItem ? "opacity-40" : ""}
+                    ${isDragOverItem ? "border-t-2 border-t-brand-color-500" : ""}`}
                 >
+                  {/* Drag handle */}
+                  <DynamicIcon
+                    name="GripVertical"
+                    className="text-gray-400 cursor-grab active:cursor-grabbing shrink-0"
+                    size={16}
+                  />
+                  <span className="text-xs font-mono text-gray-500 shrink-0">
+                    {item.position ?? i + 1}
+                  </span>
+
                   <IconButton
                     type="button"
                     onClick={() => removeItem(i)}

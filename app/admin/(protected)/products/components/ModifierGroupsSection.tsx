@@ -54,6 +54,16 @@ const ModifierGroupsSection = ({
     initialModifierGroups,
   );
 
+  // ── Drag-and-drop state (group-level) ───────────────────────────────────────
+
+  const [dragGroupIndex, setDragGroupIndex] = useState<number | null>(null);
+  const [dragOverGroupIndex, setDragOverGroupIndex] = useState<number | null>(null);
+
+  // ── Drag-and-drop state (item-level, scoped within a single group) ──────────
+
+  const [dragItemKey, setDragItemKey] = useState<string | null>(null); // "groupIdx-itemIdx"
+  const [dragOverItemKey, setDragOverItemKey] = useState<string | null>(null);
+
   // ── Product selection modal state ───────────────────────────────────────────
 
   const [showProductSelectionModal, setShowProductSelectionModal] =
@@ -108,11 +118,12 @@ const ModifierGroupsSection = ({
       // Only add products that aren't already in this group
       const newItems: ModifierItemUI[] = selectedProducts
         .filter((p) => !existingItems.some((i) => i.product === p._id))
-        .map((p) => ({
+        .map((p, idx) => ({
           product: p._id,
           label: null,
           price: p.price ?? null,
           snapshotName: p.name,
+          position: existingItems.length + idx + 1,
           _name: p.name,
           _price: p.price ?? null,
           _imageUrl: p.image?.url ?? null,
@@ -142,6 +153,7 @@ const ModifierGroupsSection = ({
         required: true,
         minSelect: 1,
         maxSelect: 1,
+        position: prev.length + 1,
         items: [],
       },
     ]);
@@ -151,7 +163,7 @@ const ModifierGroupsSection = ({
 
   /** Apply a modifier group template — copies template data into the product with templateId reference */
   const applyTemplate = (template: ModifierGroupTemplate) => {
-    const templateItems: ModifierItemUI[] = template.items.map((item) => {
+    const templateItems: ModifierItemUI[] = template.items.map((item, idx) => {
       // The template API already populates product objects with name, price, image
       const populatedProduct =
         typeof item.product === "object" ? item.product : null;
@@ -164,6 +176,7 @@ const ModifierGroupsSection = ({
         label: item.label ?? null,
         price: item.price ?? populatedProduct?.price ?? null,
         snapshotName: item.snapshotName ?? populatedProduct?.name ?? null,
+        position: idx + 1,
         _name:
           populatedProduct?.name ||
           item.snapshotName ||
@@ -183,6 +196,7 @@ const ModifierGroupsSection = ({
         required: template.required,
         minSelect: template.minSelect,
         maxSelect: template.maxSelect,
+        position: prev.length + 1,
         items: templateItems,
       },
     ]);
@@ -215,7 +229,7 @@ const ModifierGroupsSection = ({
         return;
       }
 
-      const syncedItems: ModifierItemUI[] = template.items.map((item) => {
+      const syncedItems: ModifierItemUI[] = template.items.map((item, idx) => {
         // The template API already populates product objects with name, price, image
         const populatedProduct =
           typeof item.product === "object" ? item.product : null;
@@ -228,6 +242,7 @@ const ModifierGroupsSection = ({
           label: item.label ?? null,
           price: item.price ?? populatedProduct?.price ?? null,
           snapshotName: item.snapshotName ?? populatedProduct?.name ?? null,
+          position: idx + 1,
           _name:
             populatedProduct?.name ||
             item.snapshotName ||
@@ -271,9 +286,46 @@ const ModifierGroupsSection = ({
     toast.success("Detached from template — group is now standalone");
   };
 
-  /** Remove a modifier group by index */
+  /** Remove a modifier group by index and recalculate positions */
   const removeModifierGroup = (groupIndex: number) => {
-    setModifierGroups((prev) => prev.filter((_, i) => i !== groupIndex));
+    setModifierGroups((prev) =>
+      prev.filter((_, i) => i !== groupIndex).map((g, i) => ({ ...g, position: i + 1 })),
+    );
+  };
+
+  /** Reorder modifier groups via drag-and-drop */
+  const handleGroupDrop = (targetGroupIndex: number) => {
+    if (dragGroupIndex === null || dragGroupIndex === targetGroupIndex) return;
+    setModifierGroups((prev) => {
+      const reordered = [...prev];
+      const [moved] = reordered.splice(dragGroupIndex, 1);
+      reordered.splice(targetGroupIndex, 0, moved);
+      return reordered.map((g, i) => ({ ...g, position: i + 1 }));
+    });
+    setDragGroupIndex(null);
+    setDragOverGroupIndex(null);
+  };
+
+  /** Reorder items within a group via drag-and-drop */
+  const handleItemDrop = (groupIndex: number, targetItemIndex: number) => {
+    const key = `${groupIndex}-${targetItemIndex}`;
+    if (!dragItemKey || dragItemKey === key) return;
+    const [fromGroupIdx, fromItemIdx] = dragItemKey.split("-").map(Number);
+    // Only reorder within the same group
+    if (fromGroupIdx !== groupIndex) return;
+    setModifierGroups((prev) => {
+      const groups = [...prev];
+      const items = [...groups[groupIndex].items];
+      const [moved] = items.splice(fromItemIdx, 1);
+      items.splice(targetItemIndex, 0, moved);
+      groups[groupIndex] = {
+        ...groups[groupIndex],
+        items: items.map((item, i) => ({ ...item, position: i + 1 })),
+      };
+      return groups;
+    });
+    setDragItemKey(null);
+    setDragOverItemKey(null);
   };
 
   /** Update a group-level field (name, required, minSelect, maxSelect) */
@@ -289,13 +341,15 @@ const ModifierGroupsSection = ({
     });
   };
 
-  /** Remove an item from a specific group */
+  /** Remove an item from a specific group and recalculate positions */
   const removeItemFromGroup = (groupIndex: number, itemIndex: number) => {
     setModifierGroups((prev) => {
       const groups = [...prev];
       groups[groupIndex] = {
         ...groups[groupIndex],
-        items: groups[groupIndex].items.filter((_, i) => i !== itemIndex),
+        items: groups[groupIndex].items
+          .filter((_, i) => i !== itemIndex)
+          .map((item, i) => ({ ...item, position: i + 1 })),
       };
       return groups;
     });
@@ -336,12 +390,48 @@ const ModifierGroupsSection = ({
 
       {/* Group list */}
       {modifierGroups.map((group, groupIndex) => (
-        <ProductSectionCard
+        <div
           key={group._id ?? groupIndex}
+          draggable
+          onDragStart={(e) => {
+            setDragGroupIndex(groupIndex);
+            setDragOverGroupIndex(null);
+          }}
+          onDragOver={(e) => {
+            // Only respond to group-level drag (not item drag)
+            if (dragGroupIndex !== null) {
+              e.preventDefault();
+              setDragOverGroupIndex(groupIndex);
+            }
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            // Only handle group-level drops
+            if (dragGroupIndex !== null) {
+              handleGroupDrop(groupIndex);
+            }
+          }}
+          className={`transition-all duration-150 select-none
+            ${dragGroupIndex === groupIndex ? "opacity-40" : ""}
+            ${dragOverGroupIndex === groupIndex ? "ring-2 ring-brand-color-500" : ""}`}
+        >
+        <ProductSectionCard
           title={modifierGroups[groupIndex].name || `Group ${groupIndex + 1}`}
           iconName="Utensils"
           className="space-y-3"
         >
+          {/* Drag handle + group header */}
+          <div className="flex items-center gap-2">
+            <DynamicIcon
+              name="GripVertical"
+              className="text-gray-400 cursor-grab active:cursor-grabbing shrink-0"
+              size={18}
+            />
+            <span className="text-xs font-mono text-gray-500 shrink-0">
+              {group.position ?? groupIndex + 1}
+            </span>
+          </div>
+
           {/* Template reference badge + group header */}
           <div className="flex items-stretch gap-3">
             <InputField
@@ -455,12 +545,46 @@ const ModifierGroupsSection = ({
                 const soloPrice = item._price ?? 0;
                 const isDiscountedUpgrade =
                   upgradePrice < soloPrice && soloPrice > 0;
+                const itemKey = `${groupIndex}-${itemIndex}`;
+                const isDraggingItem = dragItemKey === itemKey;
+                const isDragOverItem = dragOverItemKey === itemKey;
 
                 return (
                   <div
                     key={itemIndex}
-                    className="flex gap-4 p-3 bg-gray-50 border border-gray-200 rounded-lg relative"
+                    draggable
+                    onDragStart={(e) => {
+                      e.stopPropagation(); // prevent group-level drag
+                      setDragItemKey(itemKey);
+                      setDragOverItemKey(null);
+                    }}
+                    onDragOver={(e) => {
+                      // Only respond to item-level drag within same group
+                      if (dragItemKey !== null && dragItemKey.startsWith(`${groupIndex}-`)) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setDragOverItemKey(itemKey);
+                      }
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation(); // prevent group-level drop
+                      if (dragItemKey !== null && dragItemKey.startsWith(`${groupIndex}-`)) {
+                        handleItemDrop(groupIndex, itemIndex);
+                      }
+                    }}
+                    className={`flex gap-4 p-3 bg-gray-50 border border-gray-200 rounded-lg relative transition-all duration-150 select-none
+                      ${isDraggingItem ? "opacity-40" : ""}
+                      ${isDragOverItem ? "border-t-2 border-t-brand-color-500" : ""}`}
                   >
+                    {/* Drag handle */}
+                    <div className="flex flex-col items-center justify-center shrink-0 gap-1">
+                      <DynamicIcon
+                        name="GripVertical"
+                        className="text-gray-400 cursor-grab active:cursor-grabbing"
+                        size={16}
+                      />
+                    </div>
                     <IconButton
                       type="button"
                       onClick={() => removeItemFromGroup(groupIndex, itemIndex)}
@@ -542,7 +666,15 @@ const ModifierGroupsSection = ({
             </p>
           )}
         </ProductSectionCard>
+        </div>
       ))}
+
+      {/* Reorder hint */}
+      {modifierGroups.length > 1 && (
+        <p className="text-xs text-gray-500 text-center">
+          Drag ⠿ to reorder groups and items
+        </p>
+      )}
 
       {/* Add group buttons */}
       <div className="flex items-center gap-2">
