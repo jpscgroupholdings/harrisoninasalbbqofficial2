@@ -5,10 +5,11 @@ import { STOCK_STATUSES } from "@/types/inventory_types";
 import ProductDetailModal from "./ProductDetailsModal";
 import { toast } from "sonner";
 import { ITEM_TYPES } from "@/types/products";
-import { OrderItemImage } from "../../components/OrderItemImage";
 import { formatCurrency } from "@/helper/formatCurrency";
 import { DynamicIcon } from "@/components/ui/DynamicIcon";
 import { useProductReviews } from "@/hooks/api/customers/useProductReviews";
+import { IconButton } from "@/components/ui/buttons";
+import { AppImage } from "@/components/AppImage";
 
 interface ProductCardProps {
   item: BranchProduct;
@@ -131,7 +132,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
       >
         {/* Image */}
         <div className="aspect-square overflow-hidden bg-white relative flex items-center justify-center">
-          <OrderItemImage image={item.image.url} name={item.name} />
+          <AppImage src={item.image.url} alt={item.name} />
 
           {isOutOfStock && (
             <div className="absolute inset-0 bg-black/10 z-10" />
@@ -203,6 +204,12 @@ const ProductCard: React.FC<ProductCardProps> = ({
               )}
             </div>
           )}
+
+          {item.description && (
+            <p className="line-clamp-3 text-xs leading-5 text-gray-500">
+              {item.description}
+            </p>
+          )}
           {isSet && item.paxCount && (
             <p className="text-[11px] font-semibold text-emerald-600">
               Good for {item.paxCount} pax
@@ -229,9 +236,9 @@ const ProductCard: React.FC<ProductCardProps> = ({
               </span>
             </button>
           )}
-          <div className="mt-auto flex items-end justify-between gap-3 pt-2">
+          <div className="mt-auto flex items-center justify-between gap-3 pt-2">
             <div className="min-w-0">
-              <span className="block text-base font-bold leading-none text-gray-950 md:text-lg">
+              <span className="block text-base font-semibold leading-none text-slate-900 md:text-lg">
                 {formatCurrency(displayPrice)}
               </span>
 
@@ -249,17 +256,14 @@ const ProductCard: React.FC<ProductCardProps> = ({
                   </div>
                 )}
             </div>
-
-            <span className="hidden">PHP {item.price?.toFixed(2) ?? "--"}</span>
-            <button
+            <IconButton
               type="button"
               onClick={() => openDetail()}
               disabled={isOutOfStock}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-color-500 text-white transition-colors hover:bg-brand-color-600 disabled:cursor-not-allowed disabled:bg-gray-300"
               aria-label={`Add ${item.name} to cart`}
-            >
-              <DynamicIcon name="ShoppingBag" size={16} strokeWidth={2.5} />
-            </button>
+              icon={{ name: "ShoppingBag", size: 16 }}
+              className="rounded-full"
+            />
           </div>
         </div>
       </div>
