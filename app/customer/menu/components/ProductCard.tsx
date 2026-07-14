@@ -39,8 +39,7 @@ const getProductDiscountLabel = (
 // Modifier group names for combo/set products
 const getModifierGroupNames = (
   modifierGroups: BranchProduct["modifierGroups"],
-): string[] =>
-  (modifierGroups ?? []).map((g) => g.name || "Unnamed group");
+): string[] => (modifierGroups ?? []).map((g) => g.name || "Unnamed group");
 
 // Simple slugify helper — put this in a shared util file, e.g. @/helper/slugify.ts
 const slugify = (text: string) =>
@@ -124,7 +123,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="relative">
+    <div className="relative h-full">
       <div
         className={`group flex h-full flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-brand-color-500 hover:shadow-md ${
           isOutOfStock ? "opacity-70" : ""
@@ -188,7 +187,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
           {hasModifierGroups && (
             <div className="flex flex-wrap gap-1 mt-1">
-              {modifierGroupNames.map((name, index) => (
+              {modifierGroupNames.slice(0, 4).map((name, index) => (
                 <span
                   key={index}
                   className="rounded-full bg-gray-100 px-2 py-1 text-[10px] text-gray-600"
@@ -196,9 +195,14 @@ const ProductCard: React.FC<ProductCardProps> = ({
                   {name}
                 </span>
               ))}
+
+              {modifierGroupNames.length > 4 && (
+                <span className="rounded-full bg-gray-200 px-2 py-1 text-[10px] font-medium text-gray-700">
+                  +{modifierGroupNames.length - 4}
+                </span>
+              )}
             </div>
           )}
-
           {isSet && item.paxCount && (
             <p className="text-[11px] font-semibold text-emerald-600">
               Good for {item.paxCount} pax
