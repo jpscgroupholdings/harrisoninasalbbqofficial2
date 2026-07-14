@@ -82,6 +82,7 @@ export async function GET(request: NextRequest) {
                 price: "$$item.price",
                 snapshotName: "$$item.snapshotName",
                 snapshotPrice: "$$item.snapshotPrice",
+                position: "$$item.position",
               },
             },
           },
@@ -143,12 +144,13 @@ export async function POST(request: NextRequest) {
       required: validated.required,
       minSelect: validated.minSelect,
       maxSelect: validated.maxSelect,
-      items: validated.items.map((item) => ({
+      items: validated.items.map((item, idx) => ({
         product: item.product,
         label: item.label ?? null,
         price: item.price ?? null,
         snapshotName: item.snapshotName ?? item.label ?? null,
         snapshotPrice: item.snapshotPrice ?? null,
+        position: item.position ?? idx + 1,
       })),
     });
 

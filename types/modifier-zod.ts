@@ -12,6 +12,7 @@ export const modifierItemSchema = z.object({
   price: z.coerce.number().nullable().optional(),
   snapshotName: z.string().nullable().optional(),
   snapshotPrice: z.coerce.number().nullable().optional(),
+  position: z.coerce.number().int().min(0).optional(),
 });
 
 /** Validates a modifier group (with embedded items) in a product request body */
@@ -22,5 +23,6 @@ export const modifierGroupSchema = z.object({
   required: z.boolean().default(true),
   minSelect: z.coerce.number().int().min(1).default(1),
   maxSelect: z.coerce.number().int().min(1).default(1),
+  position: z.coerce.number().int().min(0).optional(),
   items: z.array(modifierItemSchema).min(1, "Group must have at least one item"),
 });

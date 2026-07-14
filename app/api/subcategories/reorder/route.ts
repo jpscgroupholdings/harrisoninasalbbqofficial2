@@ -1,20 +1,24 @@
-import { connectDB } from "@/lib/mongodb";
+import { getAPIError } from "@/lib/getApiError";
 import { requireSuperAdmin } from "@/lib/getAuth";
+import { handleReorderRequest } from "@/lib/reorder";
 import { SubCategory } from "@/models/SubCategory";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(request: NextRequest) {
   try {
-    await connectDB();
     await requireSuperAdmin(request);
+
     const { subcategories } = await request.json();
-    await Promise.all(
-      subcategories.map(({ id, position }: { id: string; position: number }) =>
-        SubCategory.findByIdAndUpdate(id, { position })
-      )
+    const result = await handleReorderRequest(
+      SubCategory,
+      subcategories,
+      "Subcategories",
     );
-    return NextResponse.json({ success: true });
+    
+    return NextResponse.json(result, { status: 200 });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof  Error ? error.message : "Failed to reorder" }, { status: 500 });
+    return getAPIError(error, 500, {
+      fallbackMessage: "Failded to reorder subcategories",
+    });
   }
 }

@@ -7,6 +7,7 @@ const ModifierTemplateItemSchema = new Schema({
   price: { type: Number, default: null, min: 0 },
   snapshotName: { type: String, default: null },
   snapshotPrice: { type: Number, default: null },
+  position: { type: Number, default: 0 },
 }, { _id: false });
 
 // A reusable modifier group template — can be applied to multiple combo/set products

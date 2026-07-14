@@ -7,6 +7,7 @@ const ModifierItemSchema = new Schema({
   price: { type: Number, default: null, min: 0 },
   snapshotName: { type: String, default: null },
   snapshotPrice: { type: Number, default: null },
+  position: { type: Number, default: 0 },
 }, { _id: false });
 
 // A group of choices the customer must fill — e.g. "Grilled", "Drink"
@@ -16,6 +17,7 @@ const ModifierGroupSchema = new Schema({
   required: { type: Boolean, default: true },
   minSelect: { type: Number, default: 1, min: 1 },
   maxSelect: { type: Number, default: 1, min: 1 },
+  position: { type: Number, default: 0 },
   items: { type: [ModifierItemSchema], default: [] },
 }, { _id: true });
 

@@ -18,6 +18,7 @@ export interface ModifierItem {
   price?: number | null; // override price for this item in the combo context
   snapshotName?: string | null;
   snapshotPrice?: number | null;
+  position?: number;
 }
 
 // UI-only type — lives inside the admin form, never sent to API
@@ -27,6 +28,7 @@ export interface ModifierItemUI {
   price: number | null; // override price (defaults to solo price, admin can edit)
   snapshotName?: string | null;
   snapshotPrice?: number | null;
+  position?: number;
   _name: string; // display only
   _price: number | null; // original solo price — display only
   _imageUrl?: string | null; // product image URL — display only
@@ -39,6 +41,7 @@ export interface ModifierGroup {
   required: boolean;
   minSelect: number;
   maxSelect: number;
+  position?: number;
   items: ModifierItem[];
 }
 
@@ -50,6 +53,7 @@ export interface ModifierGroupUI {
   required: boolean;
   minSelect: number;
   maxSelect: number;
+  position?: number;
   items: ModifierItemUI[];
 }
 
@@ -61,6 +65,7 @@ export interface ModifierGroupTemplateItem {
   price: number | null;
   snapshotName?: string | null;
   snapshotPrice?: number | null;
+  position?: number;
 }
 
 export interface ModifierGroupTemplate {

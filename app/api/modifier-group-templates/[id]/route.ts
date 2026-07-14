@@ -94,6 +94,7 @@ export async function GET(
                 price: "$$item.price",
                 snapshotName: "$$item.snapshotName",
                 snapshotPrice: "$$item.snapshotPrice",
+                position: "$$item.position",
               },
             },
           },
@@ -177,6 +178,7 @@ export async function PUT(
         price: item.price ?? null,
         snapshotName: item.snapshotName ?? item.label ?? null,
         snapshotPrice: item.snapshotPrice ?? null,
+        position: item.position ?? null,
       }));
     }
 
