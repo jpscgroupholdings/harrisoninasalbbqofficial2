@@ -216,7 +216,7 @@ const CartDrawer = () => {
                 const cartKey = getCartKey(item);
                 const hasModifiers = (item.modifierSelections?.length ?? 0) > 0;
 
-                // Compute upgrade total from modifier selections
+                // Compute upgrade total from modifier selections (upgradePrice × item quantity)
                 const upgradeTotal = hasModifiers
                   ? roundMoney(
                       item.modifierSelections!.reduce(
@@ -225,7 +225,10 @@ const CartDrawer = () => {
                             sum,
                             group.items.reduce(
                               (gSum, modItem) =>
-                                addMoney(gSum, modItem.upgradePrice),
+                                addMoney(
+                                  gSum,
+                                  multiplyMoney(modItem.upgradePrice, modItem.quantity),
+                                ),
                               0,
                             ),
                           ),
@@ -332,11 +335,16 @@ const CartDrawer = () => {
                                   >
                                     <span className="text-gray-500">
                                       {modItem.label ?? modItem.name}
+                                      {modItem.quantity > 1 &&
+                                        ` (×${modItem.quantity})`}
                                     </span>
                                     <span className="text-gray-400">
                                       {modItem.upgradePrice > 0
                                         ? `+${formatCurrency(
-                                            modItem.upgradePrice,
+                                            multiplyMoney(
+                                              modItem.upgradePrice,
+                                              modItem.quantity,
+                                            ),
                                           )}`
                                         : "₱0.00"}
                                     </span>

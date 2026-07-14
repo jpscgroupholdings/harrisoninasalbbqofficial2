@@ -13,7 +13,10 @@
       "Bash(rmdir *)",
       "Bash(del *)",
       "Bash(select-object *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(git checkout *)",
+      "Bash(git diff *)",
+      "Bash(select-string *)"
     ]
   },
   "$version": 4

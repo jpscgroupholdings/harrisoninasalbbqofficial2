@@ -92,11 +92,12 @@ const ProductDetailPage: React.FC = () => {
   const totalReviews = reviewData?.totalReviews ?? 0;
 
   // ── Modifier state ──────────────────────────────────────────────────────────
+  // Maps groupId → (productId → quantity). Quantity 0 means "not selected".
   const [activeTab, setActiveTab] = useState<"info" | "desc">("info");
   const [mainQty, setMainQty] = useState(1);
   const [isAdded, setIsAdded] = useState(false);
-  const [modifierSelections, setModifierSelections] = useState<
-    Map<string, Set<string>>
+  const [modifierQuantities, setModifierQuantities] = useState<
+    Map<string, Map<string, number>>
   >(new Map());
 
   // ── Derived state ──────────────────────────────────────────────────────────
@@ -115,17 +116,18 @@ const ProductDetailPage: React.FC = () => {
     if (!hasModifierGroups) return 0;
     let sum = 0;
     for (const group of populatedGroups) {
-      const selectedIds = modifierSelections.get(group._id ?? "");
-      if (!selectedIds) continue;
+      const groupQtyMap = modifierQuantities.get(group._id ?? "");
+      if (!groupQtyMap) continue;
       for (const modItem of group.items) {
-        if (selectedIds.has(modItem.product._id)) {
+        const qty = groupQtyMap.get(modItem.product._id) ?? 0;
+        if (qty > 0) {
           const upgradePrice = modItem.price ?? modItem.product.price ?? 0;
-          // sum += upgradePrice * modItem.quantity;
+          sum += upgradePrice * qty;
         }
       }
     }
     return roundMoney(sum);
-  }, [hasModifierGroups, populatedGroups, modifierSelections]);
+  }, [hasModifierGroups, populatedGroups, modifierQuantities]);
 
   const basePrice = product?.price ?? 0;
   const activeProductDiscount = product?.activeProductDiscount;
@@ -143,14 +145,17 @@ const ProductDetailPage: React.FC = () => {
     if (!hasModifierGroups) return [];
     const errors: string[] = [];
     for (const group of populatedGroups) {
-      const selectedIds = modifierSelections.get(group._id ?? "");
-      const selectedCount = selectedIds?.size ?? 0;
+      const groupQtyMap = modifierQuantities.get(group._id ?? "");
+      // Count how many distinct items have quantity > 0
+      const selectedCount = groupQtyMap
+        ? [...groupQtyMap.values()].filter((q) => q > 0).length
+        : 0;
       if (group.required && selectedCount < group.minSelect) {
         errors.push(`${group.name}: select at least ${group.minSelect}`);
       }
     }
     return errors;
-  }, [hasModifierGroups, populatedGroups, modifierSelections]);
+  }, [hasModifierGroups, populatedGroups, modifierQuantities]);
 
   const canAddToCart = modifierValidationErrors.length === 0;
 
@@ -176,47 +181,36 @@ const ProductDetailPage: React.FC = () => {
   }, [product]);
 
   // ── Modifier selection handlers ──────────────────────────────────────────────
-  const toggleModifierItem = (
+  /** Toggle a modifier item on/off and set/update its quantity */
+  const setModifierItemQty = (
     groupId: string,
     productId: string,
     maxSelect: number,
+    newQty: number,
   ) => {
-    setModifierSelections((prev) => {
+    setModifierQuantities((prev) => {
       const next = new Map(prev);
-      const current = next.get(groupId) ?? new Set<string>();
+      const groupMap = new Map(next.get(groupId) ?? new Map<string, number>());
 
-      if (maxSelect === 1) {
-        if (current.has(productId)) {
-          next.set(groupId, new Set());
-        } else {
-          next.set(groupId, new Set([productId]));
-        }
+      if (newQty <= 0) {
+        // Remove the item
+        groupMap.delete(productId);
       } else {
-        const updated = new Set(current);
-        if (updated.has(productId)) {
-          updated.delete(productId);
-        } else {
-          if (updated.size >= maxSelect) return prev;
-          updated.add(productId);
+        // Check maxSelect constraint: count distinct selected items (qty > 0)
+        const currentSelectedCount = [...groupMap.values()].filter(
+          (q) => q > 0,
+        ).length;
+        // If this is a new selection (was 0 or absent), ensure we don't exceed maxSelect
+        if (!groupMap.has(productId) && currentSelectedCount >= maxSelect) {
+          return prev; // no change — already at max
         }
-        next.set(groupId, updated);
+        groupMap.set(productId, newQty);
       }
+
+      next.set(groupId, groupMap);
       return next;
     });
   };
-
-  // ── Fire ViewContent pixel ────────────────────────────────────────────────
-  React.useEffect(() => {
-    if (!product) return;
-    trackViewContent({
-      content_ids: [product._id],
-      content_type: "product",
-      content_name: product.name,
-      content_category: product.category?.name ?? "Menu Item",
-      currency: "PHP",
-      value: product.price ?? 0,
-    });
-  }, [product]);
 
   // ── Loading / error states ──────────────────────────────────────────────────
   if (isLoading) return <ProductDetailSkeleton />;
@@ -241,16 +235,19 @@ const ProductDetailPage: React.FC = () => {
     const selections: ModifierSelection[] = hasModifierGroups
       ? (populatedGroups
           .map((group) => {
-            const selectedIds = modifierSelections.get(group._id ?? "");
-            if (!selectedIds || selectedIds.size === 0) return null;
+            const groupQtyMap = modifierQuantities.get(group._id ?? "");
+            if (!groupQtyMap) return null;
+            // Only include items with quantity > 0
             const items: ModifierSelectionItem[] = group.items
-              .filter((modItem) => selectedIds.has(modItem.product._id))
+              .filter((modItem) => (groupQtyMap.get(modItem.product._id) ?? 0) > 0)
               .map((modItem) => ({
                 productId: modItem.product._id,
                 name: modItem.product.name,
                 label: modItem.label,
                 upgradePrice: modItem.price ?? modItem.product.price ?? 0,
+                quantity: groupQtyMap.get(modItem.product._id) ?? 1,
               }));
+            if (items.length === 0) return null;
             return {
               groupId: group._id ?? "",
               groupName: group.name,
@@ -430,7 +427,7 @@ const ProductDetailPage: React.FC = () => {
             {hasModifierGroups &&
               populatedGroups.map((group) => {
                 const groupId = group._id ?? "";
-                const selectedIds = modifierSelections.get(groupId);
+                const groupQtyMap = modifierQuantities.get(groupId);
                 const isRadio = group.maxSelect === 1;
 
                 return (
@@ -464,8 +461,8 @@ const ProductDetailPage: React.FC = () => {
                     <div className="space-y-2">
                       {group.items.map((modItem) => {
                         const modProductId = modItem.product._id;
-                        const isSelected =
-                          selectedIds?.has(modProductId) ?? false;
+                        const itemQty = groupQtyMap?.get(modProductId) ?? 0;
+                        const isSelected = itemQty > 0;
                         const upgradePrice =
                           modItem.price ?? modItem.product.price ?? 0;
                         const soloPrice = modItem.product.price ?? 0;
@@ -478,25 +475,26 @@ const ProductDetailPage: React.FC = () => {
                           : 0;
 
                         return (
-                          <button
+                          <div
                             key={modProductId}
-                            disabled={isOutOfStock}
-                            onClick={() =>
-                              toggleModifierItem(
-                                groupId,
-                                modProductId,
-                                group.maxSelect,
-                              )
-                            }
-                            className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer disabled:cursor-not-allowed ${
+                            className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
                               isSelected
                                 ? "border-brand-color-500 bg-brand-color-50"
                                 : "border-gray-200 bg-white hover:border-gray-300"
                             }`}
                           >
-                            {/* Selection indicator */}
-                            <div
-                              className={`w-5 h-5 flex items-center justify-center rounded-${isRadio ? "full" : "md"} border-2 transition-colors ${
+                            {/* Selection indicator + click to toggle */}
+                            <button
+                              disabled={isOutOfStock}
+                              onClick={() =>
+                                setModifierItemQty(
+                                  groupId,
+                                  modProductId,
+                                  group.maxSelect,
+                                  isSelected ? 0 : 1,
+                                )
+                              }
+                              className={`w-5 h-5 flex items-center justify-center rounded-${isRadio ? "full" : "md"} border-2 transition-colors cursor-pointer disabled:cursor-not-allowed ${
                                 isSelected
                                   ? "border-brand-color-500 bg-brand-color-500"
                                   : "border-gray-300"
@@ -509,7 +507,7 @@ const ProductDetailPage: React.FC = () => {
                                   className="text-white"
                                 />
                               )}
-                            </div>
+                            </button>
                             {/* Item info */}
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-start text-gray-900 truncate">
@@ -535,7 +533,22 @@ const ProductDetailPage: React.FC = () => {
                                 </span>
                               )}
                             </div>
-                          </button>
+                            {/* Quantity stepper — visible only when selected */}
+                            {isSelected && (
+                              <QuantityStepper
+                                value={itemQty}
+                                min={1}
+                                onChange={(val) =>
+                                  setModifierItemQty(
+                                    groupId,
+                                    modProductId,
+                                    group.maxSelect,
+                                    val,
+                                  )
+                                }
+                              />
+                            )}
+                          </div>
                         );
                       })}
                     </div>
