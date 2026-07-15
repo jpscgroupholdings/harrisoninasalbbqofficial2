@@ -4,7 +4,7 @@ import { DynamicIcon } from "../DynamicIcon";
 
 type IconPosition = "left" | "right";
 
-interface IconButtonProps extends ComponentPropsWithoutRef<"button"> {
+export interface IconButtonProps extends ComponentPropsWithoutRef<"button"> {
   icon?: {
     name: string;
     size?: number;

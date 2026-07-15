@@ -7,7 +7,10 @@ interface ComboPricePreviewProps {
   modifierGroups: ModifierGroupUI[];
 }
 
-const ComboPricePreview = ({ price, modifierGroups }: ComboPricePreviewProps) => {
+const ComboPricePreview = ({
+  price,
+  modifierGroups,
+}: ComboPricePreviewProps) => {
   return (
     <div className="px-4 py-3 bg-brand-color-500/5 border border-brand-color-500/20 rounded-xl space-y-2">
       <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-brand-color-500">
@@ -45,13 +48,8 @@ const ComboPricePreview = ({ price, modifierGroups }: ComboPricePreviewProps) =>
                         : "text-gray-700"
                     }
                   >
-                    +{formatCurrency(upgradePrice)}
+                    {upgradePrice === 0 ? "PHP 0.00" : `+ ${formatCurrency(upgradePrice)}`}
                   </span>
-                  {isDiscounted && (
-                    <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-semibold">
-                      saves {formatCurrency(soloPrice - upgradePrice)}
-                    </span>
-                  )}
                 </span>
               </div>
             );
