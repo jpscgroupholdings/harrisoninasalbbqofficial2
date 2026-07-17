@@ -16,43 +16,119 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { useQuery } from "@tanstack/react-query";
+import { useAdminBranchContext } from "@/contexts/AdminBranchContext";
+import { apiClient } from "@/lib/apiClient";
+import { getErrorMessage } from "@/helper/getErrorMessage";
+import type { DashboardPeriod } from "@/services/admin/dashboard.service";
+import type { ReportsData } from "@/services/admin/reports.service";
+import { buildDashboardQuery as buildReportsQuery } from "../dashboard/helper/buildDashboardQuery";
+import DashboardFilter from "../dashboard/components/DashboardFilter";
+import { NoDataFound } from "../(components)/dashboard/NoDataFound";
+import { formatCurrency } from "@/helper/formatter";
 
-const monthlyData = [
-  { month: "Jan", revenue: 38500, orders: 142 },
-  { month: "Feb", revenue: 45670, orders: 168 },
-  { month: "Mar", revenue: 42300, orders: 155 },
-  { month: "Apr", revenue: 51200, orders: 189 },
-  { month: "May", revenue: 48900, orders: 176 },
-  { month: "Jun", revenue: 55600, orders: 203 },
-];
+// ============================================
+// HELPERS
+// ============================================
 
-const categoryData = [
-  { name: "Main Course", value: 48, color: "#f97316" },
-  { name: "Desserts", value: 22, color: "#dc2626" },
-  { name: "Extras", value: 18, color: "#eab308" },
-  { name: "Soup", value: 12, color: "#78350f" },
-];
+/** Renders the % change badge — green for positive, amber for negative, gray for flat */
+function ChangeBadge({ percent }: { percent: number }) {
+  if (percent === 0) {
+    return (
+      <p className="text-sm text-stone-400 font-semibold mt-2">
+        No change from previous period
+      </p>
+    );
+  }
 
-const peakHours = [
-  { hour: "9 AM", orders: 12 },
-  { hour: "10 AM", orders: 18 },
-  { hour: "11 AM", orders: 35 },
-  { hour: "12 PM", orders: 52 },
-  { hour: "1 PM", orders: 48 },
-  { hour: "2 PM", orders: 28 },
-  { hour: "3 PM", orders: 15 },
-  { hour: "6 PM", orders: 42 },
-  { hour: "7 PM", orders: 58 },
-  { hour: "8 PM", orders: 45 },
-];
+  const isPositive = percent > 0;
+  const color = isPositive ? "text-emerald-600" : "text-amber-600";
+  const sign = isPositive ? "+" : "";
+
+  return (
+    <p className={`text-sm ${color} font-semibold mt-2`}>
+      {sign}
+      {percent}% from previous period
+    </p>
+  );
+}
+
+// ============================================
+// KEY METRICS CARD
+// ============================================
+
+function MetricCard({
+  label,
+  value,
+  previousValue,
+  percentChange,
+  isCurrency,
+  isPercentage,
+  isLoading,
+}: {
+  label: string;
+  value: number;
+  previousValue: number;
+  percentChange: number;
+  isCurrency: boolean;
+  isPercentage: boolean;
+  isLoading: boolean;
+}) {
+  const displayValue = isLoading
+    ? "—"
+    : isCurrency
+      ? formatCurrency(value)
+      : isPercentage
+        ? `${value}%`
+        : value.toLocaleString();
+
+  return (
+    <div className="bg-white rounded-xl p-6 border border-stone-100">
+      <p className="text-sm text-stone-500 mb-2">{label}</p>
+      <p className="text-3xl font-bold text-stone-800">{displayValue}</p>
+      {isLoading ? (
+        <p className="text-sm text-stone-400 font-semibold mt-2">Loading...</p>
+      ) : (
+        <ChangeBadge percent={percentChange} />
+      )}
+    </div>
+  );
+}
+
+// ============================================
+// MAIN PAGE
+// ============================================
 
 const ReportsPage = () => {
-  const [dateRange, setDateRange] = useState("month");
+  const { selectedBranchId } = useAdminBranchContext();
+  const [period, setPeriod] = useState<DashboardPeriod>({
+    range: "month",
+    month: new Date().getMonth() + 1,
+    year: new Date().getFullYear(),
+  });
+
+  const { data, isLoading, isError, error } = useQuery({
+    queryKey: ["admin-reports", selectedBranchId, period],
+    queryFn: () =>
+      apiClient.get<ReportsData>(
+        `/admin/reports?${buildReportsQuery(period, selectedBranchId)}`,
+      ),
+  });
+
+  const keyMetrics = data?.keyMetrics ?? [];
+  const trend = data?.trend ?? [];
+  const categorySales = data?.categorySales ?? [];
+  const peakHours = data?.peakHours ?? [];
+  const errorMessage = isError ? getErrorMessage(error) : null;
+
+  const hasTrendData = trend.length > 0;
+  const hasCategoryData = categorySales.length > 0;
+  const hasPeakHourData = peakHours.some((h) => h.orders > 0);
 
   return (
     <section className="space-y-6">
-      {/**Header */}
-      <div className="flex items-center justify-between">
+      {/** Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-stone-800 mb-2">
             Reports & Analytics
@@ -61,128 +137,170 @@ const ReportsPage = () => {
             Detailed insights into your business performance
           </p>
         </div>
-        <div className="flex gap-3">
-          <select
-            value={dateRange}
-            onChange={(e) => setDateRange(e.target.value)}
-            className="px-6 py-3 rounded-xl border border-stone-200 bg-white font-medium text-stone-700 focus:outline-none focus:ring-2 focus:ring-orange-500"
-          >
-            <option value="week">This Week</option>
-            <option value="month">This Month</option>
-            <option value="year">This Year</option>
-          </select>
-          <button className="px-6 py-3 bg-[#ef4501] text-white rounded-xl font-semibold hover:shadow-lg transition-all">
-            Export Report
-          </button>
-        </div>
+        <DashboardFilter value={period} onChange={setPeriod} />
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white rounded-xl p-6 border border-stone-100">
-          <p className="text-sm text-stone-500 mb-2">Monthly Revenue</p>
-          <p className="text-3xl font-bold text-stone-800">₱45,670</p>
-          <p className="text-sm text-emerald-600 font-semibold mt-2">
-            +15.3% from last month
-          </p>
-        </div>
-        <div className="bg-white rounded-xl p-6 border border-stone-100">
-          <p className="text-sm text-stone-500 mb-2">Total Orders</p>
-          <p className="text-3xl font-bold text-stone-800">168</p>
-          <p className="text-sm text-emerald-600 font-semibold mt-2">
-            +8.2% from last month
-          </p>
-        </div>
-        <div className="bg-white rounded-xl p-6 border border-stone-100">
-          <p className="text-sm text-stone-500 mb-2">Average Order Value</p>
-          <p className="text-3xl font-bold text-stone-800">₱272</p>
-          <p className="text-sm text-amber-600 font-semibold mt-2">
-            -2.1% from last month
-          </p>
-        </div>
-        <div className="bg-white rounded-xl p-6 border border-stone-100">
-          <p className="text-sm text-stone-500 mb-2">Customer Retention</p>
-          <p className="text-3xl font-bold text-stone-800">68%</p>
-          <p className="text-sm text-emerald-600 font-semibold mt-2">
-            +5.4% from last month
-          </p>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {isLoading ? (
+          <>
+            {[1, 2, 3, 4].map((i) => (
+              <div
+                key={i}
+                className="bg-white rounded-xl p-6 border border-stone-100"
+              >
+                <p className="text-sm text-stone-500 mb-2">Loading...</p>
+                <p className="text-3xl font-bold text-stone-300">—</p>
+                <p className="text-sm text-stone-400 font-semibold mt-2">
+                  Loading...
+                </p>
+              </div>
+            ))}
+          </>
+        ) : isError ? (
+          <div className="col-span-full">
+            <NoDataFound
+              iconName="CircleAlert"
+              text={errorMessage ?? "Failed to load reports"}
+              subText="Try to refresh the page or select a different time period."
+            />
+          </div>
+        ) : keyMetrics.length > 0 ? (
+          keyMetrics.map((metric) => (
+            <MetricCard
+              key={metric.label}
+              label={metric.label}
+              value={metric.value}
+              previousValue={metric.previousValue}
+              percentChange={metric.percentChange}
+              isCurrency={metric.isCurrency}
+              isPercentage={metric.isPercentage}
+              isLoading={false}
+            />
+          ))
+        ) : (
+          <div className="col-span-full">
+            <NoDataFound
+              iconName="BadgeDollarSign"
+              text="No data for this period"
+              subText="Try selecting a different time period to see your metrics."
+            />
+          </div>
+        )}
       </div>
 
-      {/**Revenue & Orders Trend */}
+      {/** Revenue & Orders Trend */}
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
         <div className="mb-6">
           <h3 className="text-lg font-bold text-stone-800">
             Revenue & Orders Trend
           </h3>
           <p className="text-sm text-stone-500 mt-1">
-            Monthly performance over the last 6 months
+            Performance over the selected period
           </p>
         </div>
-        <ResponsiveContainer width="100%" height={350}>
-          <LineChart data={monthlyData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-            <XAxis
-              dataKey="month"
-              stroke="#9ca3af"
-              style={{ fontSize: "12px" }}
-            />
-            <YAxis
-              yAxisId="left"
-              stroke="#9ca3af"
-              style={{ fontSize: "12px" }}
-            />
-            <YAxis
-              yAxisId="right"
-              orientation="right"
-              stroke="#9ca3af"
-              style={{ fontSize: "12px" }}
-            />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: "#fff",
-                border: "1px solid #e5e7eb",
-                borderRadius: "12px",
-                padding: "12px",
-              }}
-            />
-            <Legend />
-            <Line
-              yAxisId="left"
-              type="monotone"
-              dataKey="revenue"
-              stroke="#f97316"
-              strokeWidth={3}
-              name="Revenue (₱)"
-            />
-            <Line
-              yAxisId="right"
-              type="monotone"
-              dataKey="orders"
-              stroke="#dc2626"
-              strokeWidth={3}
-              name="Orders"
-            />
-          </LineChart>
-        </ResponsiveContainer>
+        {isLoading ? (
+          <NoDataFound
+            iconName="Loader"
+            text="Loading trend data"
+            subText="Charts are being refreshed."
+          />
+        ) : isError ? (
+          <NoDataFound
+            iconName="CircleAlert"
+            text={errorMessage ?? "Failed to load trend"}
+            subText="Try to refresh the page."
+          />
+        ) : hasTrendData ? (
+          <ResponsiveContainer width="100%" height={350}>
+            <LineChart data={trend}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis
+                dataKey="date"
+                stroke="#9ca3af"
+                style={{ fontSize: "12px" }}
+              />
+              <YAxis
+                yAxisId="left"
+                stroke="#9ca3af"
+                style={{ fontSize: "12px" }}
+              />
+              <YAxis
+                yAxisId="right"
+                orientation="right"
+                stroke="#9ca3af"
+                style={{ fontSize: "12px" }}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "#fff",
+                  border: "1px solid #e5e7eb",
+                  borderRadius: "12px",
+                  padding: "12px",
+                }}
+                formatter={(value, name) =>
+                  name === "Revenue (₱)"
+                    ? [formatCurrency(Number(value)), name]
+                    : [value, name]
+                }
+              />
+              <Legend />
+              <Line
+                yAxisId="left"
+                type="monotone"
+                dataKey="revenue"
+                stroke="#f97316"
+                strokeWidth={3}
+                name="Revenue (₱)"
+              />
+              <Line
+                yAxisId="right"
+                type="monotone"
+                dataKey="orders"
+                stroke="#dc2626"
+                strokeWidth={3}
+                name="Orders"
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        ) : (
+          <NoDataFound
+            iconName="TrendingUp"
+            text="No trend data yet"
+            subText="Revenue and order trends will appear here once orders are completed."
+          />
+        )}
       </div>
 
-      {/**Sales by Category & Peak Hours */}
+      {/** Sales by Category & Peak Hours */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/**Category Distribution */}
+        {/** Category Distribution */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
           <div className="mb-6">
             <h3 className="text-lg font-bold text-stone-800">
               Sales by Category
             </h3>
             <p className="text-sm text-stone-500 mt-1">
-              Revenue distribution across menu categories
+              Item quantity distribution across menu categories
             </p>
-
+          </div>
+          {isLoading ? (
+            <NoDataFound
+              iconName="Loader"
+              text="Loading category data"
+              subText="Category breakdown is being computed."
+            />
+          ) : isError ? (
+            <NoDataFound
+              iconName="CircleAlert"
+              text={errorMessage ?? "Failed to load categories"}
+              subText="Try to refresh the page."
+            />
+          ) : hasCategoryData ? (
             <ResponsiveContainer width={"100%"} height={300}>
               <PieChart>
                 <Pie
-                  data={categoryData}
+                  data={categorySales}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
@@ -193,14 +311,20 @@ const ReportsPage = () => {
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {categoryData.map((entry, index) => (
+                  {categorySales.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
                 <Tooltip />
               </PieChart>
             </ResponsiveContainer>
-          </div>
+          ) : (
+            <NoDataFound
+              iconName="ChartPie"
+              text="No category data yet"
+              subText="Sales by category will show here once completed orders have items."
+            />
+          )}
         </div>
 
         {/* Peak Hours */}
@@ -213,27 +337,46 @@ const ReportsPage = () => {
               Busiest hours of the day
             </p>
           </div>
-
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={peakHours}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis
-                dataKey="hour"
-                stroke="#9ca3af"
-                style={{ fontSize: "11px" }}
-              />
-              <YAxis stroke="#9ca3af" style={{ fontSize: "12px" }} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#fff",
-                  border: "1px solid #e5e7eb",
-                  borderRadius: "12px",
-                  padding: "12px",
-                }}
-              />
-              <Bar dataKey="orders" fill="#f97316" radius={[8, 8, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          {isLoading ? (
+            <NoDataFound
+              iconName="Loader"
+              text="Loading peak hours"
+              subText="Hourly analysis is being computed."
+            />
+          ) : isError ? (
+            <NoDataFound
+              iconName="CircleAlert"
+              text={errorMessage ?? "Failed to load peak hours"}
+              subText="Try to refresh the page."
+            />
+          ) : hasPeakHourData ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={peakHours}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis
+                  dataKey="hour"
+                  stroke="#9ca3af"
+                  style={{ fontSize: "11px" }}
+                />
+                <YAxis stroke="#9ca3af" style={{ fontSize: "12px" }} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#fff",
+                    border: "1px solid #e5e7eb",
+                    borderRadius: "12px",
+                    padding: "12px",
+                  }}
+                />
+                <Bar dataKey="orders" fill="#f97316" radius={[8, 8, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <NoDataFound
+              iconName="Clock"
+              text="No peak hours data yet"
+              subText="Hourly order patterns will appear here once orders are completed."
+            />
+          )}
         </div>
       </div>
     </section>
