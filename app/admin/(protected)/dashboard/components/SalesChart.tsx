@@ -20,30 +20,7 @@ import {
   YAxis,
 } from "recharts";
 import { buildDashboardQuery } from "../helper/buildDashboardQuery";
-
-const NotDataFound = ({
-  iconName = "CircleOff",
-  text = "No data yet",
-  subText = "Data will show here. Try to refresh the page",
-}: {
-  iconName: string;
-  text: string;
-  subText: string;
-}) => (
-  <div className="flex flex-col items-center justify-center h-70 text-center px-6">
-    <div className="relative mb-4">
-      <div className="w-16 h-16 bg-brand-color-100 rounded-2xl flex items-center justify-center">
-        <DynamicIcon
-          name={iconName}
-          size={24}
-          className="text-brand-color-500"
-        />
-      </div>
-    </div>
-    <p className="text-sm font-semibold text-gray-800 mb-1">{text}</p>
-    <p className="text-xs text-gray-400 leading-relaxed max-w-50">{subText}</p>
-  </div>
-);
+import { NoDataFound } from "../../(components)/dashboard/NoDataFound";
 
 type SalesChartResponse = {
   salesData: SalesData[];
@@ -89,13 +66,13 @@ export default function SalesChartClient({ period }: { period: DashboardPeriod }
           <p className="text-sm text-gray-500 mt-1">{rangeLabel} revenue trend</p>
         </div>
         {dashboardQuery.isLoading ? (
-          <NotDataFound
+          <NoDataFound
             iconName="Loader"
             text="Loading revenue data"
             subText="Dashboard charts are being refreshed."
           />
         ) : errorMessage ? (
-          <NotDataFound
+          <NoDataFound
             iconName="CircleAlert"
             text={errorMessage}
             subText="Try to refresh the dashboard."
@@ -129,7 +106,7 @@ export default function SalesChartClient({ period }: { period: DashboardPeriod }
             </LineChart>
           </ResponsiveContainer>
         ) : (
-          <NotDataFound
+          <NoDataFound
             iconName="BadgeDollarSign"
             text="No revenue data yet"
             subText="Revenue trends will appear here once your store starts receiving orders."
@@ -147,13 +124,13 @@ export default function SalesChartClient({ period }: { period: DashboardPeriod }
           </p>
         </div>
         {dashboardQuery.isLoading ? (
-          <NotDataFound
+          <NoDataFound
             iconName="Loader"
             text="Loading product data"
             subText="Top products are being refreshed."
           />
         ) : errorMessage ? (
-          <NotDataFound
+          <NoDataFound
             iconName="CircleAlert"
             text={errorMessage}
             subText="Try to refresh the dashboard."
@@ -180,7 +157,7 @@ export default function SalesChartClient({ period }: { period: DashboardPeriod }
             </BarChart>
           </ResponsiveContainer>
         ) : (
-          <NotDataFound
+          <NoDataFound
             iconName="ChartColumnBig"
             text="No top sellers yet"
             subText="Your best-performing products will show up here once sales come in."
