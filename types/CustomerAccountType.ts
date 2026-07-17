@@ -34,8 +34,8 @@ export type CustomersListResponse = {
     page: number;
     limit: number;
     totalPages: number;
-    hasNext: boolean;
-    hasPrev: boolean;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
   };
   summary: {
     totalCustomers: number;

@@ -3,7 +3,6 @@ import { requireAdmin } from "@/lib/getAuth";
 import { connectDB } from "@/lib/mongodb";
 import { User } from "@/models/User";
 import { NextRequest, NextResponse } from "next/server";
-import mongoose from "mongoose";
 import { getValidObjectId } from "@/helper/getValidObjectIds";
 import { getAPIError } from "@/lib/getApiError";
 
