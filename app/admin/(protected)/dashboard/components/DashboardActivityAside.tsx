@@ -267,7 +267,7 @@ export default function DashboardActivityAside() {
   if (!activity) return null;
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-4">
       {/* ── Pending Orders ── */}
       <ActivitySection sectionKey="pendingOrders">
         {activity.pendingOrders.length > 0

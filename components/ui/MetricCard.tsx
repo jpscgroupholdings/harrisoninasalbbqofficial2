@@ -36,11 +36,11 @@ const MetricCard = ({
   subtitle,
 }: MetricCardProps) => {
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-stone-100 group">
-      <div className="flex items-start justify-between mb-4">
+    <div className="bg-white rounded-2xl p-4 md:p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-stone-100 group">
+      <div className="flex items-start justify-between mb-3 md:mb-4">
         {icon && (
           <div
-            className={`w-12 h-12 rounded ${iconColor} text-white flex items-center justify-center text-2xl shadow-lg group-hover:scale-110 transition-transform duration-300`}
+            className={`w-10 h-10 md:w-12 md:h-12 rounded ${iconColor} text-white flex items-center justify-center text-xl md:text-2xl shadow-lg group-hover:scale-110 transition-transform duration-300`}
           >
             <DynamicIcon name={icon} />
           </div>
@@ -55,8 +55,8 @@ const MetricCard = ({
         )}
       </div>
 
-      <h3 className="text-stone-500 text-sm font-medium mb-2">{title}</h3>
-      <p className="text-3xl font-semibold text-stone-800">{value}</p>
+      <h3 className="text-stone-500 text-xs md:text-sm font-medium mb-1 md:mb-2">{title}</h3>
+      <p className="text-xl md:text-2xl xl:text-3xl font-semibold text-stone-800 break-words">{value}</p>
       {subtitle && <div className="mt-2">{subtitle}</div>}
     </div>
   );
