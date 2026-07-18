@@ -56,9 +56,9 @@ export interface ModifierGroupUI {
   isMain: boolean;
   linkedToGroupId?: string | null;
   required: boolean;
-  minSelect: number;
-  maxSelect: number;
-  maxQty: number;
+  minSelect: number | string;
+  maxSelect: number | string;
+  maxQty: number | string;
   position?: number;
   items: ModifierItemUI[];
 }

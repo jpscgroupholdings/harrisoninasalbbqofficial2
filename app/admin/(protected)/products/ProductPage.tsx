@@ -275,6 +275,20 @@ const ProductFormPage = ({ editProduct = null }: ProductFormPageProps) => {
       if (!imageData)
         throw new Error("Please provide an image via upload, URL, or gallery");
 
+      // Validate modifier group number fields are filled (not empty strings)
+      if (isComboOrSet) {
+        const emptyGroup = modifierGroupsState.find(
+          (g) =>
+            !g.linkedToGroupId &&
+            (g.minSelect === "" || g.maxSelect === "" || g.maxQty === ""),
+        );
+        if (emptyGroup) {
+          throw new Error(
+            `Fill in Min, Max, and Max Quantity for "${emptyGroup.name || "modifier group"}"`,
+          );
+        }
+      }
+
       if (
         categorySelection.showCustomCategory &&
         categorySelection.customCategory
@@ -311,26 +325,37 @@ const ProductFormPage = ({ editProduct = null }: ProductFormPageProps) => {
         productType: formData.productType,
         paxCount: formData.paxCount ? parseInt(formData.paxCount) : null,
         modifierGroups: isComboOrSet
-          ? modifierGroupsState.map((group) => ({
-              templateId: group.templateId ?? null,
-              name: group.name,
-              isMain: group.isMain ?? false,
-              linkedToGroupId: group.linkedToGroupId ?? null,
-              required: group.required,
-              minSelect: group.minSelect,
-              maxSelect: group.maxSelect,
-              maxQty:
-                group.maxQty ?? Math.max(group.minSelect, group.maxSelect),
-              items: group.items.map(
-                ({ product, label, price, _name, _price }) => ({
-                  product,
-                  label,
-                  price: price ?? null,
-                  snapshotName: _name || label || null,
-                  snapshotPrice: _price ?? null,
-                }),
-              ),
-            }))
+          ? modifierGroupsState.map((group) => {
+              // Parse string | number → number. Empty string (cleared input)
+              // defaults to 1 so the API always receives valid integers.
+              const min =
+                typeof group.minSelect === "number" ? group.minSelect : 1;
+              const max =
+                typeof group.maxSelect === "number" ? group.maxSelect : min;
+              const qty =
+                typeof group.maxQty === "number"
+                  ? group.maxQty
+                  : Math.max(min, max);
+              return {
+                templateId: group.templateId ?? null,
+                name: group.name,
+                isMain: group.isMain ?? false,
+                linkedToGroupId: group.linkedToGroupId ?? null,
+                required: group.required,
+                minSelect: min,
+                maxSelect: max,
+                maxQty: qty,
+                items: group.items.map(
+                  ({ product, label, price, _name, _price }) => ({
+                    product,
+                    label,
+                    price: price ?? null,
+                    snapshotName: _name || label || null,
+                    snapshotPrice: _price ?? null,
+                  }),
+                ),
+              };
+            })
           : [],
       };
 

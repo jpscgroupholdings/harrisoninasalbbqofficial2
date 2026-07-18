@@ -92,8 +92,14 @@ const TemplateFormModal = ({
 
   const [name, setName] = useState(template?.name ?? "");
   const [required, setRequired] = useState(template?.required ?? true);
-  const [minSelect, setMinSelect] = useState(template?.minSelect ?? 1);
-  const [maxSelect, setMaxSelect] = useState(template?.maxSelect ?? 1);
+  // Stored as string | number so the input can be fully cleared (empty string)
+  // without producing NaN. Parsing to number happens on submit.
+  const [minSelect, setMinSelect] = useState<number | string>(
+    template?.minSelect ?? 1,
+  );
+  const [maxSelect, setMaxSelect] = useState<number | string>(
+    template?.maxSelect ?? 1,
+  );
   const [items, setItems] = useState<ModifierGroupTemplateItem[]>(
     (template?.items ?? []).map((item, idx) => ({ ...item, position: idx + 1 })),
   );
@@ -163,11 +169,21 @@ const TemplateFormModal = ({
       toast.error("Template must have at least one item");
       return;
     }
+
+    if (minSelect === "" || maxSelect === "") {
+      toast.error("Minimum and Maximum to select are required");
+      return;
+    }
+
+    // Parse string | number → number. Empty fields are caught above.
+    const parsedMin = typeof minSelect === "number" && minSelect >= 1 ? minSelect : 1;
+    const parsedMax = typeof maxSelect === "number" && maxSelect >= 1 ? maxSelect : parsedMin;
+
     onSave({
       name: name.trim(),
       required,
-      minSelect,
-      maxSelect,
+      minSelect: parsedMin,
+      maxSelect: parsedMax,
       items: items.map((item, idx) => ({
         product:
           typeof item.product === "string"
@@ -240,16 +256,26 @@ const TemplateFormModal = ({
             type="number"
             min={1}
             max={items.length || 1}
+            placeholder="Required"
+            required
             value={minSelect}
-            onChange={(e) => setMinSelect(parseInt(e.target.value) || 1)}
+            onChange={(e) => {
+              const raw = e.target.value;
+              setMinSelect(raw === "" ? "" : parseInt(raw, 10));
+            }}
           />
           <InputField
             label="Maximum to select"
             type="number"
-            min={minSelect}
+            min={typeof minSelect === "number" ? minSelect : 1}
             max={items.length || 1}
+            placeholder="Required"
+            required
             value={maxSelect}
-            onChange={(e) => setMaxSelect(parseInt(e.target.value) || 1)}
+            onChange={(e) => {
+              const raw = e.target.value;
+              setMaxSelect(raw === "" ? "" : parseInt(raw, 10));
+            }}
           />
         </div>
 
@@ -369,7 +395,13 @@ const TemplateFormModal = ({
           <IconButton
             type="button"
             onClick={handleSubmit}
-            disabled={isSaving || !name.trim() || items.length === 0}
+            disabled={
+              isSaving ||
+              !name.trim() ||
+              items.length === 0 ||
+              minSelect === "" ||
+              maxSelect === ""
+            }
             variant={isSaving ? "disabled" : isEdit ? "success" : "primary"}
             text={
               isSaving

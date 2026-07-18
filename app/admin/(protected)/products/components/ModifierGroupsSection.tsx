@@ -373,13 +373,18 @@ const ModifierGroupsSection = ({
       const groups = [...prev];
       const updated = { ...groups[groupIndex], [field]: value };
 
-      // Auto-bump maxQty so it never falls below minSelect (avoids conflicting constraints)
+      // Auto-bump maxQty so it never falls below minSelect / maxSelect
+      // (avoids conflicting constraints). Only applies when value is a number —
+      // empty string means the admin is mid-edit and will fill it later.
       if (field === "minSelect" && typeof value === "number") {
-        if (updated.maxQty < value) updated.maxQty = value;
+        const currentMaxQty =
+          typeof updated.maxQty === "number" ? updated.maxQty : 0;
+        if (currentMaxQty < value) updated.maxQty = value;
       }
-      // Auto-bump minSelect ceiling — maxQty must always be >= maxSelect too
       if (field === "maxSelect" && typeof value === "number") {
-        if (updated.maxQty < value) updated.maxQty = value;
+        const currentMaxQty =
+          typeof updated.maxQty === "number" ? updated.maxQty : 0;
+        if (currentMaxQty < value) updated.maxQty = value;
       }
 
       groups[groupIndex] = updated;
@@ -606,49 +611,62 @@ const ModifierGroupsSection = ({
                 {/* Min select — minimum distinct items */}
                 <InputField
                   type="number"
-                  placeholder="Min"
+                  placeholder="Required"
                   label="Min items to select"
                   min={1}
                   max={group.items.length || 1}
+                  required
                   value={group.minSelect}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    const raw = e.target.value;
                     updateModifierGroup(
                       groupIndex,
                       "minSelect",
-                      parseInt(e.target.value) || 1,
-                    )
-                  }
+                      raw === "" ? "" : parseInt(raw, 10),
+                    );
+                  }}
                 />
                 {/* Max select — maximum distinct items */}
                 <InputField
                   label="Max items to select"
                   type="number"
-                  min={group.minSelect}
+                  placeholder="Required"
+                  required
+                  min={typeof group.minSelect === "number" ? group.minSelect : 1}
                   max={group.items.length || 1}
                   value={group.maxSelect}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    const raw = e.target.value;
                     updateModifierGroup(
                       groupIndex,
                       "maxSelect",
-                      parseInt(e.target.value) || 1,
-                    )
-                  }
+                      raw === "" ? "" : parseInt(raw, 10),
+                    );
+                  }}
                 />
 
                 {/* Max qty — total quantity across the whole group */}
                 <InputField
                   label="Max quantity"
                   type="number"
-                  min={Math.max(group.minSelect, group.maxSelect)}
+                  placeholder="Required"
+                  required
+                  min={
+                    Math.max(
+                      typeof group.minSelect === "number" ? group.minSelect : 1,
+                      typeof group.maxSelect === "number" ? group.maxSelect : 1,
+                    )
+                  }
                   max={99}
                   value={group.maxQty}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    const raw = e.target.value;
                     updateModifierGroup(
                       groupIndex,
                       "maxQty",
-                      parseInt(e.target.value) || 1,
-                    )
-                  }
+                      raw === "" ? "" : parseInt(raw, 10),
+                    );
+                  }}
                 />
               </div>
             )}
