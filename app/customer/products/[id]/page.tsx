@@ -134,21 +134,22 @@ const ProductDetailPage: React.FC = () => {
           0,
         )
       : 0;
-    const mainSelectedCount = mainQtyMap
-      ? [...mainQtyMap.values()].filter((q) => q > 0).length
-      : 0;
 
     for (const group of populatedGroups) {
       const gid = group._id ?? "";
 
       if (group.linkedToGroupId && mainGroup) {
-        // Fully derived from main group at runtime
+        // Fully derived from main group at runtime.
+        // Linked group total qty must match main's total qty,
+        // but customers can freely choose different items (e.g. 1 Coke + 1 Water)
+        // rather than being forced to mirror the main group's item distribution.
         map.set(gid, {
           // Required only when main group has items selected
           required: mainTotalQty > 0,
-          // Distinct items must match main's distinct items
-          minSelect: mainSelectedCount,
-          maxSelect: mainSelectedCount,
+          // At least one distinct item when main has selections
+          minSelect: mainTotalQty > 0 ? 1 : 0,
+          // Allow up to mainTotalQty distinct items so each unit can be a different choice
+          maxSelect: mainTotalQty,
           // Total qty must match main's total qty
           maxQty: mainTotalQty,
           isLinked: true,
@@ -563,8 +564,8 @@ const ProductDetailPage: React.FC = () => {
                           </span>
                         )}
                         {eff.isLinked && (
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded">
-                            Linked
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 bg-purple-50 px-1.5 py-0.5 rounded">
+                            Side
                           </span>
                         )}
                         {eff.required && (
