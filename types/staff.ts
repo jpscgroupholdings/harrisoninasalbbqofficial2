@@ -30,6 +30,12 @@ export type Staff = {
     name: string;
     code: string;
   };
+
+  image?: {
+    url: string;
+    public_id?: string;
+  };
+
   isActive: boolean;
   createdAt?: string;
 };

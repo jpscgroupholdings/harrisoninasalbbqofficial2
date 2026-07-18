@@ -12,6 +12,10 @@ export interface IStaff {
   phone?: string;
   role: StaffRole;
   branch?: mongoose.Schema.Types.ObjectId | null;
+  image?: {
+    url: string;
+    public_id?: string;
+  };
   isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -63,6 +67,10 @@ const staffSchema = new mongoose.Schema<IStaff>(
       required: function (this: { role: StaffRole }) {
         return this.role === STAFF_ROLES.ADMIN;
       },
+    },
+    image: {
+      url: { type: String, required: true },
+      public_id: { type: String, required: true, trim: true },
     },
     isActive: {
       type: Boolean,
