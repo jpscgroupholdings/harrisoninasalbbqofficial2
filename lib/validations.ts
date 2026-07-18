@@ -93,6 +93,23 @@ export const customerPhoneSchema = z
   .regex(/^(09|\+639)\d{9}$/, "Invalid phone number. Use 09XXXXXXXXX or +639XXXXXXXXX.");
 
 // ---------------------------------------------------------------------------
+// Admin profile self-update — limited to name, phone, and image
+// ---------------------------------------------------------------------------
+
+/** Schema for an admin updating their own profile (no role/email/password changes). */
+export const updateProfileSchema = z.object({
+  firstName: nameSchema,
+  lastName: nameSchema,
+  phone: staffPhoneSchema,
+  image: z
+    .object({
+      url: z.string().url(),
+      public_id: z.string().optional(),
+    })
+    .optional(),
+});
+
+// ---------------------------------------------------------------------------
 // Change-password — shared between admin and customer change-password routes
 // ---------------------------------------------------------------------------
 
