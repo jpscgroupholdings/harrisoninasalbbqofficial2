@@ -4,6 +4,7 @@
 import SectionHeader from "@/app/admin/components/SectionHeader";
 import { InputField } from "@/components/ui/FormComponents/InputField";
 import Modal from "@/components/ui/Modal";
+import { StatCard, StatCardProps } from "@/components/ui/StatCard";
 import {
   Table,
   TableBody,
@@ -12,7 +13,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getLucideIcon } from "@/utils/iconUtils";
 import { Branch, BranchFormData, BranchFormErrors } from "@/types/branch";
 import { Ban, Loader2, Search } from "lucide-react";
 import { useState } from "react";
@@ -101,48 +101,31 @@ export default function BranchManagement() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 my-6">
-        {[
-          { label: "Total Branches", value: branches.length, icon: "Store" },
+        {([
+          { label: "Total Branches", value: branches.length, hasPreviousData: false },
           {
             label: "Active",
             value: branches.filter((b) => b.isActive).length,
-            icon: "ShieldCheck",
+            hasPreviousData: false,
           },
           {
             label: "Inactive",
             value: branches.filter((b) => !b.isActive).length,
-            icon: "ShieldOff",
+            hasPreviousData: false,
           },
           {
             label: "Opening Soon",
             value: branches.filter((b) => b.openingSoon).length,
-            icon: "Clock",
+            hasPreviousData: false,
           },
           {
             label: "Busy",
             value: branches.filter((b) => b.isBusy).length,
-            icon: "Truck",
+            hasPreviousData: false,
           },
-        ].map((s) => {
-          const Icon = getLucideIcon(s.icon);
-          return (
-            <div
-              key={s.label}
-              className="relative bg-white rounded-xl py-5 px-6 border border-gray-200 overflow-hidden"
-            >
-              <Icon
-                size={80}
-                className="absolute right-4 bottom-2 text-gray-100"
-              />
-              <p className="text-sm text-gray-500 uppercase tracking-widest mb-4 relative z-10">
-                {s.label}
-              </p>
-              <div className="text-3xl font-bold text-gray-700 relative z-10">
-                {s.value}
-              </div>
-            </div>
-          );
-        })}
+        ] as StatCardProps[]).map((card) => (
+          <StatCard key={card.label} {...card} />
+        ))}
       </div>
 
       {/* Search */}

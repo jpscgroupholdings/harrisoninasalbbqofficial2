@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/table";
 import { apiClient } from "@/lib/apiClient";
 import { buildQueryString } from "@/utils/buildQueryString";
+import { StatCard, StatCardProps } from "@/components/ui/StatCard";
 import type {
   CustomerFilter,
   CustomerSortBy,
@@ -123,74 +124,32 @@ const CustomersPage = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl p-5 border border-stone-100">
-          <div className="flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0">
-              <DynamicIcon name="Users" size={22} />
-            </div>
-            <div>
-              <p className="text-xs text-stone-500 uppercase tracking-wider">
-                Total Customers
-              </p>
-              <p className="text-xl font-bold text-stone-800">
-                {summary?.totalCustomers ??
-                  pagination?.total ??
-                  customerList.length}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl p-5 border border-stone-100">
-          <div className="flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0">
-              <DynamicIcon name="Star" size={22} />
-            </div>
-            <div>
-              <p className="text-xs text-stone-500 uppercase tracking-wider">
-                VIP Customers
-              </p>
-              <p className="text-xl font-bold text-stone-800">
-                {summary?.vipCustomers ?? 0}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl p-5 border border-stone-100">
-          <div className="flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-brand-color-500 text-white flex items-center justify-center shrink-0">
-              <DynamicIcon name="Wallet" size={22} />
-            </div>
-            <div>
-              <p className="text-xs text-stone-500 uppercase tracking-wider">
-                Avg. Value
-              </p>
-              <p className="text-xl font-bold text-stone-800">
-                ₱
-                {average.toLocaleString(undefined, {
-                  maximumFractionDigits: 0,
-                })}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl p-5 border border-stone-100">
-          <div className="flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0">
-              <DynamicIcon name="UserPlus" size={22} />
-            </div>
-            <div>
-              <p className="text-xs text-stone-500 uppercase tracking-wider">
-                New (30 days)
-              </p>
-              <p className="text-xl font-bold text-stone-800">
-                {summary?.newCustomers ?? 0}
-              </p>
-            </div>
-          </div>
-        </div>
+        {(
+          [
+            {
+              label: "Total Customers",
+              value:
+                summary?.totalCustomers ??
+                pagination?.total ??
+                customerList.length,
+            },
+            {
+              label: "VIP Customers",
+              value: summary?.vipCustomers ?? 0,
+            },
+            {
+              label: "Avg. Value",
+              value: Math.round(average),
+              isCurrency: true,
+            },
+            {
+              label: "New (30 days)",
+              value: summary?.newCustomers ?? 0,
+            },
+          ] as StatCardProps[]
+        ).map((card) => (
+          <StatCard key={card.label} {...card} />
+        ))}
       </div>
 
       {/* ── Toolbar: Search + Filter + Sort ── */}

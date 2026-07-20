@@ -10,20 +10,11 @@ import {
   buildBranchMatch,
 } from "./dashboard.service";
 import { formatHour } from "@/helper/formatter";
+import { StatCardProps } from "@/components/ui/StatCard";
 
 // ============================================
 // TYPES
 // ============================================
-
-export type ReportsKeyMetric = {
-  label: string;
-  value: number;
-  previousValue: number;
-  percentChange: number;
-  isCurrency: boolean;
-  isPercentage: boolean;
-};
-
 export type ReportsTrendPoint = {
   date: string;
   revenue: number;
@@ -42,7 +33,7 @@ export type ReportsPeakHour = {
 };
 
 export type ReportsData = {
-  keyMetrics: ReportsKeyMetric[];
+  keyMetrics: StatCardProps[];
   trend: ReportsTrendPoint[];
   categorySales: ReportsCategorySale[];
   peakHours: ReportsPeakHour[];
@@ -53,7 +44,16 @@ export type ReportsData = {
 // ============================================
 
 /** Stable colors for category pie chart — assigned by sorted order */
-const CATEGORY_COLORS = ["#f97316", "#dc2626", "#eab308", "#78350f", "#2563eb", "#7c3aed", "#059669", "#d946ef"];
+const CATEGORY_COLORS = [
+  "#f97316",
+  "#dc2626",
+  "#eab308",
+  "#78350f",
+  "#2563eb",
+  "#7c3aed",
+  "#059669",
+  "#d946ef",
+];
 
 /**
  * Computes the previous period's date range for comparison.
@@ -114,8 +114,6 @@ async function getRevenueAndOrders(
       },
     },
   ]);
-
-  
   return {
     revenue: result[0]?.revenue ?? 0,
     orders: result[0]?.orders ?? 0,
@@ -126,7 +124,9 @@ async function getRevenueAndOrders(
  * Computes customer retention rate: percentage of customers who ordered
  * more than once within the date range.
  */
-async function getRetentionRate(match: Record<string, unknown>): Promise<number> {
+async function getRetentionRate(
+  match: Record<string, unknown>,
+): Promise<number> {
   const result = await Order.aggregate([
     { $match: match },
     { $group: { _id: "$customerId", orderCount: { $sum: 1 } } },
@@ -157,7 +157,7 @@ async function getRetentionRate(match: Record<string, unknown>): Promise<number>
 export async function getReportsKeyMetrics(
   period: DashboardPeriod,
   filters: DashboardFilters = {},
-): Promise<ReportsKeyMetric[]> {
+): Promise<StatCardProps[]> {
   await connectDB();
 
   const branchMatch = buildBranchMatch(filters);
@@ -185,34 +185,38 @@ export async function getReportsKeyMetrics(
     {
       label: "Total Revenue",
       value: current.revenue,
-      previousValue: previous.revenue,
       percentChange: calcPercentChange(current.revenue, previous.revenue),
       isCurrency: true,
       isPercentage: false,
+      hasPreviousData:
+        calcPercentChange(current.revenue, previous.revenue) !== undefined,
     },
     {
       label: "Total Orders",
       value: current.orders,
-      previousValue: previous.orders,
       percentChange: calcPercentChange(current.orders, previous.orders),
       isCurrency: false,
       isPercentage: false,
+      hasPreviousData:
+        calcPercentChange(current.orders, previous.orders) !== undefined,
     },
     {
       label: "Average Order Value",
       value: Math.round(avgOrderValue),
-      previousValue: Math.round(prevAvgOrderValue),
       percentChange: calcPercentChange(avgOrderValue, prevAvgOrderValue),
       isCurrency: true,
       isPercentage: false,
+      hasPreviousData:
+        calcPercentChange(current.orders, prevAvgOrderValue) !== undefined,
     },
     {
       label: "Customer Retention",
       value: currentRetention,
-      previousValue: prevRetention,
       percentChange: calcPercentChange(currentRetention, prevRetention),
       isCurrency: false,
       isPercentage: true,
+      hasPreviousData:
+        calcPercentChange(current.orders, prevRetention) !== undefined,
     },
   ];
 }
@@ -288,20 +292,23 @@ export async function getReportsCategorySales(
   // Resolve category names from ObjectIds
   const categoryIds = result
     .map((r) => r._id)
-    .filter((id): id is Types.ObjectId => id != null && Types.ObjectId.isValid(id));
+    .filter(
+      (id): id is Types.ObjectId => id != null && Types.ObjectId.isValid(id),
+    );
 
-  const categories = categoryIds.length > 0
-    ? await Category.find({ _id: { $in: categoryIds } })
-        .select("name")
-        .lean()
-    : [];
+  const categories =
+    categoryIds.length > 0
+      ? await Category.find({ _id: { $in: categoryIds } })
+          .select("name")
+          .lean()
+      : [];
 
-  const nameMap = new Map(
-    categories.map((c) => [c._id.toString(), c.name]),
-  );
+  const nameMap = new Map(categories.map((c) => [c._id.toString(), c.name]));
 
   return result.map((r, i) => ({
-    name: r._id ? (nameMap.get(r._id.toString()) ?? "Uncategorized") : "Uncategorized",
+    name: r._id
+      ? (nameMap.get(r._id.toString()) ?? "Uncategorized")
+      : "Uncategorized",
     value: r.quantity,
     color: CATEGORY_COLORS[i % CATEGORY_COLORS.length],
   }));

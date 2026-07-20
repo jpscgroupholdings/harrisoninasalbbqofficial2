@@ -1,6 +1,7 @@
 "use client";
 import { InputField } from "@/components/ui/FormComponents/InputField";
 import Modal from "@/components/ui/Modal";
+import { StatCard, StatCardProps } from "@/components/ui/StatCard";
 import {
   Table,
   TableBody,
@@ -9,7 +10,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getLucideIcon } from "@/utils/iconUtils";
 import { useBranches } from "@/hooks/api/useBranch";
 import {
   useStaff,
@@ -26,13 +26,17 @@ import {
   ROLE_COLORS,
   ROLE_LABELS,
 } from "@/types/staff";
-import { Ban, Loader2, Search } from "lucide-react";
 import { ChangeEvent, useState } from "react";
 import SectionHeader from "../../components/SectionHeader";
 import { SelectField } from "@/components/ui/FormComponents/SelectField";
 import { PasswordRequirementHint } from "@/components/ui/PasswordRequirementHint";
-import { ADMIN_EMAIL_DOMAINS, isAllowedAdminDomain } from "@/lib/isAllowedEmails";
+import {
+  ADMIN_EMAIL_DOMAINS,
+  isAllowedAdminDomain,
+} from "@/lib/isAllowedEmails";
 import { isPasswordSecure } from "@/lib/validations";
+import { DynamicIcon } from "@/components/ui/DynamicIcon";
+import { IconButton } from "@/components/ui/buttons";
 
 const ROLES: { value: StaffRole; label: string }[] = [
   { value: STAFF_ROLES.SUPERADMIN, label: "Super Admin" },
@@ -97,7 +101,11 @@ export default function StaffManagement() {
       e.password = "Password is required.";
     else if (!staffToEdit && !isPasswordSecure(form.password))
       e.password = "Password must meet all the requirements below.";
-    else if (staffToEdit && form.password.trim() && !isPasswordSecure(form.password))
+    else if (
+      staffToEdit &&
+      form.password.trim() &&
+      !isPasswordSecure(form.password)
+    )
       e.password = "Password must meet all the requirements below.";
 
     if (!form.role) e.role = "Role is required.";
@@ -179,46 +187,39 @@ export default function StaffManagement() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 my-6">
-        {[
-          { label: "Total Staff", value: staffList.length, icon: "Users" },
-          {
-            label: "Active",
-            value: staffList.filter((s) => s.isActive).length,
-            icon: "ShieldCheck",
-          },
-          {
-            label: "Inactive",
-            value: staffList.filter((s) => !s.isActive).length,
-            icon: "ShieldOff",
-          },
-          { label: "Branches", value: branches.length, icon: "Store" },
-        ].map((s) => {
-          const Icon = getLucideIcon(s.icon);
-          return (
-            <div
-              key={s.label}
-              className="relative bg-white rounded-xl py-5 px-6 border border-gray-200 overflow-hidden"
-            >
-              <Icon
-                size={80}
-                className="absolute right-4 bottom-2 text-gray-100"
-              />
-              <p className="text-sm text-gray-500 uppercase tracking-widest mb-4 relative z-10">
-                {s.label}
-              </p>
-              <div className="text-3xl font-bold text-gray-700 relative z-10">
-                {s.value}
-              </div>
-            </div>
-          );
-        })}
+        {(
+          [
+            {
+              label: "Total Staff",
+              value: staffList.length,
+              hasPreviousData: false,
+            },
+            {
+              label: "Active",
+              value: staffList.filter((s) => s.isActive).length,
+              hasPreviousData: false,
+            },
+            {
+              label: "Inactive",
+              value: staffList.filter((s) => !s.isActive).length,
+              hasPreviousData: false,
+            },
+            {
+              label: "Branches",
+              value: branches.length,
+              hasPreviousData: false,
+            },
+          ] as StatCardProps[]
+        ).map((card) => (
+          <StatCard key={card.label} {...card} />
+        ))}
       </div>
 
       {/* Search */}
       <div className="mb-6">
         <InputField
           placeholder="Search by name, email, role, or branch..."
-          leftIcon={<Search size={18} />}
+          leftIcon={<DynamicIcon name="Search" size={18} />}
           name="search"
           autoComplete="new-search"
           value={search}
@@ -252,8 +253,12 @@ export default function StaffManagement() {
               <TableRow>
                 <TableCell colSpan={7}>
                   <div className="flex justify-center items-center gap-2 p-8 text-gray-400">
-                    <Loader2 size={20} className="animate-spin" /> Loading
-                    staff...
+                    <DynamicIcon
+                      name="Loader2"
+                      size={20}
+                      className="animate-spin"
+                    />{" "}
+                    Loading staff...
                   </div>
                 </TableCell>
               </TableRow>
@@ -261,7 +266,7 @@ export default function StaffManagement() {
               <TableRow>
                 <TableCell colSpan={7}>
                   <div className="flex flex-col items-center text-gray-500 gap-2 p-8">
-                    <Ban size={24} /> No staff found.
+                    <DynamicIcon name="Ban" size={24} /> No staff found.
                   </div>
                 </TableCell>
               </TableRow>
@@ -339,19 +344,19 @@ export default function StaffManagement() {
                   {/* Actions */}
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <button
+                      <IconButton
                         onClick={() => handleEditClick(staff)}
-                        className="text-xs font-medium py-1.5 px-2.5 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-brand-color-500 hover:text-white hover:border-brand-color-600 transition-colors"
-                      >
-                        Edit
-                      </button>
-                      <button
+                        variant="outline"
+                        text="Edit"
+                        className="px-4 rounded-lg text-xs py-1.5 hover:bg-brand-color-500 hover:text-white"
+                      />
+                      <IconButton
                         onClick={() => toggleStatus.mutate(staff._id)}
                         disabled={toggleStatus.isPending}
-                        className="text-xs font-medium py-1.5 px-2.5 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-brand-color-500 hover:text-white hover:border-brand-color-600 transition-colors disabled:opacity-50"
-                      >
-                        {staff.isActive ? "Deactivate" : "Activate"}
-                      </button>
+                        variant="danger"
+                        text={staff.isActive ? "Deactivate" : "Activate"}
+                        className="px-4 rounded-lg text-xs py-1.5 hover:bg-brand-color-500 hover:text-white"
+                      />
                     </div>
                   </TableCell>
                 </TableRow>
@@ -421,29 +426,28 @@ export default function StaffManagement() {
               />
 
               {/* Password */}
-              <div className="relative">
-                <InputField
-                  label={
-                    staffToEdit
-                      ? "New Password (leave blank to keep current)"
-                      : "Password"
-                  }
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  value={form.password}
-                  onChange={handleChangeForm}
-                  placeholder="Min. 8 characters, 1 uppercase, 1 number, 1 symbol"
-                  error={errors.password}
-                  required={!staffToEdit}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((p) => !p)}
-                  className="absolute right-3 top-8.5 text-gray-400 hover:text-gray-600 text-xs"
-                >
-                  {showPassword ? "Hide" : "Show"}
-                </button>
-              </div>
+              <InputField
+                label={
+                  staffToEdit
+                    ? "New Password (leave blank to keep current)"
+                    : "Password"
+                }
+                name="password"
+                type={showPassword ? "text" : "password"}
+                value={form.password}
+                onChange={handleChangeForm}
+                placeholder="Min. 8 characters, 1 uppercase, 1 number, 1 symbol"
+                error={errors.password}
+                required={!staffToEdit}
+                rightElement={
+                  <IconButton
+                    onClick={() => setShowPassword((p) => !p)}
+                    text={showPassword ? "Hide" : "Show"}
+                    variant="ghost"
+                    className="text-xs"
+                  />
+                }
+              />
               {form.password && (
                 <PasswordRequirementHint password={form.password} />
               )}
@@ -475,9 +479,7 @@ export default function StaffManagement() {
                 options={[
                   {
                     value: "",
-                    label: form.role
-                      ? `All Branches`
-                      : "Select a role first",
+                    label: form.role ? `All Branches` : "Select a role first",
                     disabled: roleRequiresBranch(form.role),
                   },
                   ...branches
@@ -492,34 +494,37 @@ export default function StaffManagement() {
                 errors={errors.branch}
                 required
               />
-              
             </div>
 
             {/* Actions */}
             <div className="flex gap-2 justify-end">
-              <button
+              <IconButton
                 onClick={() => {
                   setShowModal(false);
                   setStaffToEdit(null);
                 }}
-                className="py-1.5 px-4 rounded-lg border border-gray-300 text-gray-600 text-sm font-medium hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
+                variant="outline"
+                text="Cancel"
+                className="px-4 rounded-lg"
+              />
+              <IconButton
                 onClick={handleSubmit}
                 disabled={isPending}
-                className="py-1.5 px-4 rounded-lg bg-brand-color-500 hover:bg-brand-color-600 text-sm text-white font-medium disabled:opacity-50 flex items-center gap-1.5"
-              >
-                {isPending && <Loader2 size={14} className="animate-spin" />}
-                {isPending
-                  ? staffToEdit
-                    ? "Saving..."
-                    : "Creating..."
-                  : staffToEdit
-                    ? "Save Changes"
-                    : "Add Staff"}
-              </button>
+                icon={{
+                  name: isPending ? "Loader2" : null,
+                  className: "animate-spin",
+                }}
+                text={
+                  isPending
+                    ? staffToEdit
+                      ? "Saving..."
+                      : "Creating..."
+                    : staffToEdit
+                      ? "Save Changes"
+                      : "Add Staff"
+                }
+                className="px-4 rounded-lg"
+              />
             </div>
           </div>
         </Modal>

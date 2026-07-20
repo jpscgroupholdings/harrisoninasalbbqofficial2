@@ -5,9 +5,11 @@ import ProductTable from "@/app/admin/components/ProductTable";
 import SectionHeader from "@/app/admin/components/SectionHeader";
 import LoadingPage from "@/components/ui/LoadingPage";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Pagination from "@/components/ui/Pagination";
 import { SearchBar } from "@/components/ui/SearchBar";
+import { StatCard, StatCardProps } from "@/components/ui/StatCard";
+import { StatCardSkeleton } from "@/components/ui/StatCardSkeleton";
 
 const ProductsPage = () => {
   const router = useRouter();
@@ -23,10 +25,28 @@ const ProductsPage = () => {
   });
 
   const totalProducts = data?.pagination?.total ?? 0;
-  const products = data?.data ?? [];
+  const products = useMemo(() => data?.data ?? [], [data?.data]);
   const pagination = data?.pagination;
 
   const sortedProducts = [...products];
+
+  const statCards: StatCardProps[] = useMemo(() => {
+    return [
+      { label: "Total Products", value: totalProducts, hasPreviousData: false },
+      {
+        label: "Popular",
+        value: products.filter((p) => p.isPopular).length,
+      },
+      {
+        label: "Signature",
+        value: products.filter((p) => p.isSignature).length,
+      },
+      {
+        label: "Active Discounts",
+        value: products.filter((p) => p.activeProductDiscount).length,
+      },
+    ];
+  }, [products, totalProducts]);
 
   const handleLimitChange = (newLimit: number) => {
     setLimit(newLimit);
@@ -37,10 +57,6 @@ const ProductsPage = () => {
     setAppliedSearch(searchQuery);
     setPage(1);
   };
-
-  if (isLoading) {
-    return <LoadingPage />;
-  }
 
   if (isError) {
     return (
@@ -74,16 +90,9 @@ const ProductsPage = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl p-4 border border-stone-100">
-          <p className="text-sm text-stone-500 mb-1">Total Products</p>
-          <p className="text-2xl font-bold text-stone-800">{totalProducts}</p>
-        </div>
-        <div className="bg-white rounded-xl p-4 border border-stone-100">
-          <p className="text-sm text-stone-500 mb-1">Popular</p>
-          <p className="text-2xl font-bold text-emerald-600">
-            {products.filter((p) => p.isPopular).length}
-          </p>
-        </div>
+        {isLoading
+          ? Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton />)
+          : statCards.map((card) => <StatCard key={card.label} {...card} />)}
       </div>
 
       {/* Products Table */}

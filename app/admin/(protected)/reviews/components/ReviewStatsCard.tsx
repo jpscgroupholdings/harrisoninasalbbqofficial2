@@ -1,4 +1,4 @@
-import MetricCard, { MetricCardProps } from "@/components/ui/MetricCard";
+import { StatCard, StatCardProps } from "@/components/ui/StatCard";
 import StarRatingDisplay, {
   RatingDistributionBar,
 } from "@/components/ui/StarRating";
@@ -24,43 +24,42 @@ interface ReviewStatsCardProps {
 
 /**
  * Reusable 3-column stats row for review pages.
- * Composes StatCard for the shared card shell + label;
- * each card's unique content (stars, count, distribution) is
- * passed as children so different patterns stay separate.
+ * Uses StatCard for each metric; custom content (stars, distribution)
+ * is passed via children.
  */
 const ReviewStatsCard = ({
   stats,
   averageLabel = "Average Rating",
   totalLabel = "Total Reviews",
 }: ReviewStatsCardProps) => {
-
-  const statsData: MetricCardProps[] = [
+  const reviewStats: StatCardProps[] = [
     {
-      title: averageLabel,
-      value: stats.averageRating.toFixed(1),
-      icon: "Star",
-      iconColor: "bg-amber-500",
-      subtitle: stats.hasRatings ? (
-        <StarRatingDisplay rating={Math.round(stats.averageRating)} />
+      label: averageLabel,
+      value: stats.averageRating,
+      children: stats.hasRatings ? (
+        <div className="mt-2">
+          <StarRatingDisplay rating={Math.round(stats.averageRating)} />
+        </div>
       ) : (
-        <p className="text-xs text-stone-400 italic">No Ratings Yet</p>
+        <p className="text-xs text-stone-400 italic mt-2">No Ratings Yet</p>
       ),
     },
+
     {
-      title: totalLabel,
+      label: totalLabel,
       value: stats.totalCount,
-      icon: "UserStar",
-      iconColor: "bg-emerald-500",
     },
     {
-      title: "Rating Distribution",
-      subtitle: stats.hasRatings ? (
-        <RatingDistributionBar
-          distribution={stats.ratingDistribution}
-          total={stats.totalCount}
-        />
+      label: "Rating Distribution",
+      children: stats.hasRatings ? (
+        <div className="mt-2">
+          <RatingDistributionBar
+            distribution={stats.ratingDistribution}
+            total={stats.totalCount}
+          />
+        </div>
       ) : (
-        <p className="text-xs text-stone-400 italic">
+        <p className="text-xs text-stone-400 italic mt-2">
           No ratings to distribute
         </p>
       ),
@@ -69,17 +68,8 @@ const ReviewStatsCard = ({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      {statsData.map((stats, index) => (
-        <MetricCard
-          key={index}
-          title={stats.title}
-          value={stats.value}
-          icon={stats.icon}
-          iconColor={stats.iconColor}
-          subtitle={stats.subtitle}
-          badge={stats.badge}
-          badgeTone={stats.badgeTone}
-        />
+      {reviewStats?.map((review, i) => (
+        <StatCard key={i} {...review} />
       ))}
     </div>
   );

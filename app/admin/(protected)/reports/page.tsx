@@ -26,74 +26,8 @@ import { buildDashboardQuery as buildReportsQuery } from "../dashboard/helper/bu
 import DashboardFilter from "../dashboard/components/DashboardFilter";
 import { NoDataFound } from "../../components/dashboard/NoDataFound";
 import { formatCurrency } from "@/helper/formatter";
-
-// ============================================
-// HELPERS
-// ============================================
-
-/** Renders the % change badge — green for positive, amber for negative, gray for flat */
-function ChangeBadge({ percent }: { percent: number }) {
-  if (percent === 0) {
-    return (
-      <p className="text-sm text-stone-400 font-semibold mt-2">
-        No change from previous period
-      </p>
-    );
-  }
-
-  const isPositive = percent > 0;
-  const color = isPositive ? "text-emerald-600" : "text-amber-600";
-  const sign = isPositive ? "+" : "";
-
-  return (
-    <p className={`text-sm ${color} font-semibold mt-2`}>
-      {sign}
-      {percent}% from previous period
-    </p>
-  );
-}
-
-// ============================================
-// KEY METRICS CARD
-// ============================================
-
-function MetricCard({
-  label,
-  value,
-  previousValue,
-  percentChange,
-  isCurrency,
-  isPercentage,
-  isLoading,
-}: {
-  label: string;
-  value: number;
-  previousValue: number;
-  percentChange: number;
-  isCurrency: boolean;
-  isPercentage: boolean;
-  isLoading: boolean;
-}) {
-  const displayValue = isLoading
-    ? "—"
-    : isCurrency
-      ? formatCurrency(value)
-      : isPercentage
-        ? `${value}%`
-        : value.toLocaleString();
-
-  return (
-    <div className="bg-white rounded-xl p-6 border border-stone-100">
-      <p className="text-sm text-stone-500 mb-2">{label}</p>
-      <p className="text-3xl font-bold text-stone-800">{displayValue}</p>
-      {isLoading ? (
-        <p className="text-sm text-stone-400 font-semibold mt-2">Loading...</p>
-      ) : (
-        <ChangeBadge percent={percentChange} />
-      )}
-    </div>
-  );
-}
+import { StatCard } from "@/components/ui/StatCard";
+import { StatCardSkeleton } from "@/components/ui/StatCardSkeleton";
 
 // ============================================
 // MAIN PAGE
@@ -143,20 +77,7 @@ const ReportsPage = () => {
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {isLoading ? (
-          <>
-            {[1, 2, 3, 4].map((i) => (
-              <div
-                key={i}
-                className="bg-white rounded-xl p-6 border border-stone-100"
-              >
-                <p className="text-sm text-stone-500 mb-2">Loading...</p>
-                <p className="text-3xl font-bold text-stone-300">—</p>
-                <p className="text-sm text-stone-400 font-semibold mt-2">
-                  Loading...
-                </p>
-              </div>
-            ))}
-          </>
+          Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton />)
         ) : isError ? (
           <div className="col-span-full">
             <NoDataFound
@@ -167,15 +88,14 @@ const ReportsPage = () => {
           </div>
         ) : keyMetrics.length > 0 ? (
           keyMetrics.map((metric) => (
-            <MetricCard
+            <StatCard
               key={metric.label}
               label={metric.label}
               value={metric.value}
-              previousValue={metric.previousValue}
+              changeText={`${metric.percentChange}% from previous period`}
               percentChange={metric.percentChange}
               isCurrency={metric.isCurrency}
               isPercentage={metric.isPercentage}
-              isLoading={false}
             />
           ))
         ) : (
