@@ -1,37 +1,17 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { LINKS } from "@/constant/links";
 import { DynamicIcon } from "@/components/ui/DynamicIcon";
 import { useBranches } from "@/hooks/api/useBranch";
 import { buildEmbedUrl, buildMapLink } from "@/lib/google-maps";
-
+import { IconButton } from "./ui/buttons";
+import { AppImage } from "./AppImage";
 
 const LocationsSection = () => {
   const [current, setCurrent] = useState(0);
   const touchStartX = useRef<number>(0);
 
   const { data: branches = [] } = useBranches();
-  const locations = [
-    {
-      id: 1,
-      name: "King's Court",
-      address: "King’s Court Building",
-      mapLink: "https://maps.app.goo.gl/iKy7TX6hLx6XnooH9",
-      coordinates: { lat: 14.554891044450834, lng: 121.02440521419611 },
-      embedUrl:
-        "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3861.7267539!2d121.0134854!3d14.5576121!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3397c90c5888257f:0xf5a4b1009273b664!2sKings%20Court%20Building%201!5e0!3m2!1sen!2sph!4v1234567890!5m2!1sen!2sph",
-    },
-    {
-      id: 2,
-      name: "Century City Mall",
-      address: "Century City Mall, Kalayaan Ave, Poblacion",
-      mapLink: "https://maps.app.goo.gl/izGJTfTXctnDjc6q9",
-      coordinates: { lat: 14.565799256226898, lng: 121.02779184232841 },
-      embedUrl:
-        "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3861.587323602867!2d121.0278133!3d14.565576!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3397c9006ced35e7%3A0xf8984118b68af276!2sHarrison%20House%20of%20Inasal%20%26%20bbq!5e0!3m2!1sen!2sph!4v1769667586148!5m2!1sen!2sph",
-    },
-  ];
 
   const total = branches?.length ?? 0;
 
@@ -47,37 +27,6 @@ const LocationsSection = () => {
     const dx = e.changedTouches[0].clientX - touchStartX.current;
     if (Math.abs(dx) > 40) goTo(dx < 0 ? current + 1 : current - 1);
   };
-
-  function DeliveryButton({
-    label = "Logo",
-    href = "/",
-    imgSrc = "/images/harrison_logo.png",
-    bgColor = "bg-white",
-    imgSize = "h-12 w-12",
-    hoverTextColor = "group-hover:text-gray-900",
-  }) {
-    return (
-      <button
-        onClick={() => window.open(href, "_blank")}
-        className="group flex flex-col items-center gap-3 transition-all hover:scale-105"
-      >
-        <div
-          className={`h-20 w-20 rounded-full overflow-hidden flex items-center justify-center shadow-sm ${bgColor}`}
-        >
-          <img
-            src={imgSrc}
-            alt={label}
-            className={`object-contain ${imgSize}`}
-          />
-        </div>
-        <span
-          className={`font-semibold text-gray-800 transition ${hoverTextColor}`}
-        >
-          {label}
-        </span>
-      </button>
-    );
-  }
 
   return (
     <section
@@ -147,7 +96,7 @@ const LocationsSection = () => {
 
                             <div className="flex items-center gap-4">
                               <div className="w-14 h-14 bg-linear-to-br from-brand-color-500 to-[#ff4500] rounded-lg flex items-center justify-center shadow-lg p-1">
-                                <img
+                                <AppImage
                                   src="/images/harrison_logo.png"
                                   alt="Harrison's Logo"
                                   className="w-full h-full object-contain"
@@ -210,90 +159,40 @@ const LocationsSection = () => {
           </div>
 
           {/* Prev / Next Arrows */}
-          <button
+          <IconButton
             onClick={() => goTo(current - 1)}
-            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 w-10 h-10 rounded-full bg-white border border-gray-200 shadow-md flex items-center justify-center hover:border-brand-color-500 hover:text-brand-color-500 transition-colors"
             aria-label="Previous location"
-          >
-            <DynamicIcon name="ChevronLeft" size={20} />
-          </button>
-          <button
+            icon={{ name: "ChevronLeft", size: 20 }}
+            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 rounded-full"
+            variant="secondary"
+          />
+
+          <IconButton
             onClick={() => goTo(current + 1)}
-            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 w-10 h-10 rounded-full bg-white border border-gray-200 shadow-md flex items-center justify-center hover:border-brand-color-500 hover:text-brand-color-500 transition-colors"
             aria-label="Next location"
-          >
-            <DynamicIcon name="ChevronRight" size={20} />
-          </button>
+            icon={{ name: "ChevronRight", size: 20 }}
+            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 rounded-full"
+          />
         </div>
 
         {/* Dots + Counter */}
         <div className="flex items-center justify-center gap-4 mt-8">
           <div className="flex gap-2">
             {branches?.map((branch, i) => (
-              <button
+              <IconButton
                 key={i}
                 onClick={() => goTo(i)}
                 aria-label={`Go to ${branch.name}`}
-                className="relative group p-1"
-              >
-                {/* Dot */}
-                <span
-                  className={`block h-2 rounded-full transition-all duration-300 ${
-                    i === current
-                      ? "w-6 bg-brand-color-500"
-                      : "w-2 bg-gray-300 hover:bg-gray-400"
-                  }`}
-                />
-
-                {/* Tooltip */}
-                <span className="absolute -top-9 left-1/2 -translate-x-1/2 whitespace-nowrap bg-gray-900 text-white text-xs font-medium px-2.5 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
-                  {branch.name}
-                  {/* Arrow */}
-                  <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
-                </span>
-              </button>
+                data-tooltip-id="app-tooltip"
+                data-tooltip-content={branch.name}
+                variant={i === current ? "primary" : "secondary"}
+                className={`mx-px h-2 p-1 rounded-full ${i === current ? "w-8" : "w-4 border border-gray-200"}`}
+              />
             ))}
           </div>
           <span className="text-sm text-gray-500">
             {current + 1} / {total}
           </span>
-        </div>
-      </div>
-
-      {/* Bottom CTA */}
-      <div className="mt-16 p-16 text-center w-full border-t border-gray-300">
-        <h3 className="text-3xl font-bold text-gray-900 mb-3">
-          Can't visit us? We deliver to your doorstep!
-        </h3>
-        <p className="text-gray-600 mb-8 text-lg">
-          Order your favorite Harrison's dishes directly or through trusted
-          delivery platforms.
-        </p>
-        <div className="flex flex-wrap justify-center gap-10">
-          <DeliveryButton
-            label="Harrison's Menu"
-            href={LINKS.MENU}
-            imgSrc="/images/harrison_logo.png"
-            bgColor="bg-brand-color-500"
-            imgSize="h-14 w-14"
-            hoverTextColor="group-hover:text-brand-color-500"
-          />
-          <DeliveryButton
-            label="Grab"
-            href={LINKS.GRAB}
-            imgSrc="/images/grab.jpg"
-            bgColor="bg-[#009B3D]"
-            imgSize="h-12 w-12 scale-170"
-            hoverTextColor="group-hover:text-green-600"
-          />
-          <DeliveryButton
-            label="Foodpanda"
-            href={LINKS.FOODPANDA}
-            imgSrc="/images/foodpanda.png"
-            bgColor="bg-[#D6005F]"
-            imgSize="h-12 w-12 scale-150"
-            hoverTextColor="group-hover:text-pink-600"
-          />
         </div>
       </div>
     </section>

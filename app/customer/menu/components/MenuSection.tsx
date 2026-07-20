@@ -2,7 +2,6 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import ProductCard from "./ProductCard";
-import { LINKS } from "@/constant/links";
 import { useScrollToSection } from "@/hooks/utils/useScrollToSection";
 import { Category } from "@/types/category";
 import { useMenuCategories } from "@/app/main/components/CategoryCarousel";
@@ -18,6 +17,8 @@ import { useProductsInfinite } from "@/hooks/api/useInfiniteProducts";
 import { useDiscountedProducts } from "@/hooks/api/useDiscountedProducts";
 import { FetchError } from "@/components/ui/FetchError";
 import { trackSearch } from "@/lib/metaPixel";
+import { IconButton } from "@/components/ui/buttons";
+import { SelectField } from "@/components/ui/FormComponents";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -385,66 +386,14 @@ const MenuSection = () => {
           description="Our menu couldn't be fetched right now. Please try again."
         />
       ) : (
-        <div className="text-center py-20">
-          <DynamicIcon
-            name="Search"
-            size={32}
-            className="mx-auto text-gray-200 mb-4"
-          />
-          <h3 className="text-base font-semibold text-gray-500 mb-1">
-            No products found
-          </h3>
-          <p className="text-sm text-gray-400">Try a different category</p>
-          <button
-            onClick={() => refetch()}
-            className="underline mt-2 text-sm text-brand-color-500 hover:text-brand-color-600 cursor-pointer"
-          >
-            Reload
-          </button>
-        </div>
+        <FetchError
+          onRetry={refetch}
+          error={{ message: "No products found", name: "Product not found" }}
+          title="Try a different category"
+          description="Our menu couldn't be fetched right now. Please try again."
+        />
       )}
     </>
-  );
-
-  const DeliveryCTA = () => (
-    <div className="bg-slate-50 rounded-2xl p-6 mt-12 border border-slate-100">
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="text-center md:text-left">
-          <h3 className="text-base font-bold text-gray-900 mb-1">
-            Order Through Your Favorite Delivery App
-          </h3>
-          <p className="text-sm text-gray-500">
-            Can't order directly? Get our food delivered via Grab or Foodpanda!
-          </p>
-        </div>
-        <div className="flex gap-3">
-          <button
-            onClick={() => window.open(`${LINKS.GRAB}`, "_blank")}
-            className="px-5 py-2.5 rounded-xl font-semibold grab-background-color text-white hover:bg-green-700 flex items-center gap-2 shadow-md cursor-pointer transition-all"
-          >
-            <img
-              src="/images/grab.jpg"
-              alt="grab"
-              className="w-6 h-6 scale-125"
-              loading="lazy"
-            />
-            <span className="text-sm">Grab Food</span>
-          </button>
-          <button
-            onClick={() => window.open(`${LINKS.FOODPANDA}`, "_blank")}
-            className="px-5 py-2.5 rounded-xl font-semibold bg-pink-600 text-white hover:bg-pink-700 flex items-center gap-2 shadow-md cursor-pointer transition-all"
-          >
-            <img
-              src="/images/foodpanda_whiteoutline.png"
-              alt="foodpanda"
-              className="w-6 h-6"
-              loading="lazy"
-            />
-            <span className="text-sm">Foodpanda</span>
-          </button>
-        </div>
-      </div>
-    </div>
   );
 
   // ── Main Render ────────────────────────────────────────────────────────────
@@ -459,41 +408,28 @@ const MenuSection = () => {
         <div className="sticky top-18 z-30 bg-white border-b border-gray-100 pt-8 pb-2">
           {/* Category pills */}
           <div className="flex gap-2 overflow-x-auto scrollbar-thin pb-1">
-            <button
-              onClick={() => handleSelectCategory("All")}
-              className={`text-nowrap px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 shrink-0 cursor-pointer ${
-                activeCategory === "All"
-                  ? "bg-brand-color-500 text-white shadow-md shadow-brand-color-500/30"
-                  : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"
-              }`}
-            >
-              All
-            </button>
+            <SelectField
+              value={activeCategory}
+              onChange={(e) => handleSelectCategory(e.target.value)}
+              disabled={isCategoriesPending || isCategoriesError}
+              options={[
+                {
+                  label: "Choose Category",
+                  value: "__placeholder",
+                  disabled: true,
+                },
+                isCategoriesPending
+                  ? { label: "Loading Categories...", value: "__loading" }
+                  : isCategoriesError
+                    ? { label: "Failed to load categories", value: "__error" }
+                    : { label: "All Categories", value: "All" },
 
-            {isCategoriesPending &&
-              [80, 96, 72, 88].map((w, i) => (
-                <div
-                  key={i}
-                  className="h-9 rounded-full bg-gray-100 animate-pulse shrink-0"
-                  style={{ width: w }}
-                />
-              ))}
-
-            {!isCategoriesPending &&
-              !isCategoriesError &&
-              categories?.map((cat: Category) => (
-                <button
-                  key={cat._id}
-                  onClick={() => handleSelectCategory(cat.name)}
-                  className={`text-nowrap px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 shrink-0 cursor-pointer ${
-                    activeCategory === cat.name
-                      ? "bg-brand-color-500 text-white shadow-md shadow-brand-color-500/30"
-                      : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"
-                  }`}
-                >
-                  {cat.name}
-                </button>
-              ))}
+                ...(categories?.map((cat: Category) => ({
+                  label: cat.name,
+                  value: cat.name,
+                })) ?? []),
+              ]}
+            />
           </div>
 
           {/* Subcategory pills (only when category has subcategories) */}
@@ -503,28 +439,20 @@ const MenuSection = () => {
               if (subs.length === 0) return null;
               return (
                 <div className="flex gap-2 overflow-x-auto scrollbar-thin pt-4">
-                  <button
+                  <IconButton
                     onClick={() => handleSelectSubcategory(null)}
-                    className={`text-nowrap px-3 py-1.5 rounded-full text-xs font-semibold transition-all shrink-0 cursor-pointer ${
-                      activeSubcategory === null
-                        ? "bg-gray-900 text-white"
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                    }`}
-                  >
-                    All
-                  </button>
+                    variant="secondary"
+                    className={`text-black text-nowrap px-3 rounded-full text-xs font-semibold ${activeSubcategory === null ? "bg-gray-900 text-white" : ""}`}
+                    text="All"
+                  />
                   {subs.map((sub) => (
-                    <button
+                    <IconButton
                       key={sub}
                       onClick={() => handleSelectSubcategory(sub)}
-                      className={`text-nowrap px-3 py-1.5 rounded-full text-xs font-semibold transition-all shrink-0 cursor-pointer ${
-                        activeSubcategory === sub
-                          ? "bg-gray-900 text-white"
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                      }`}
-                    >
-                      {sub}
-                    </button>
+                      variant="secondary"
+                      className={`text-black text-nowrap px-3 rounded-full text-xs font-semibold ${activeSubcategory === sub ? "bg-gray-900 text-white" : ""}`}
+                      text={sub}
+                    />
                   ))}
                 </div>
               );
@@ -534,7 +462,6 @@ const MenuSection = () => {
         {/* Mobile product content */}
         <div className="px-4 py-6">
           <GroupedContent />
-          <DeliveryCTA />
         </div>
       </div>
 
@@ -651,10 +578,10 @@ const MenuSection = () => {
         {/* Content */}
         <div ref={contentRef} className="flex-1 min-w-0">
           <GroupedContent />
-          <DeliveryCTA />
         </div>
       </div>
 
+      {/** Used to style the scroll bar on mobile */}
       <style jsx>{`
         .scrollbar-thin::-webkit-scrollbar {
           width: 4px;
