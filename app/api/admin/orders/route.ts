@@ -200,6 +200,10 @@ export async function GET(request: NextRequest) {
         status: ORDER_STATUSES.PENDING,
         $or: confirmedPaymentOr,
       },
+      [ORDER_STATUSES.CONFIRMED]: {
+        ...branchFilter,
+        status: ORDER_STATUSES.CONFIRMED,
+      },
       [ORDER_STATUSES.PREPARING]: {
         ...branchFilter,
         status: ORDER_STATUSES.PREPARING,

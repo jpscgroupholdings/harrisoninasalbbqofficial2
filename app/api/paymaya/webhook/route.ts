@@ -1,5 +1,6 @@
 import OrderMessageEmail from "@/app/emails/OrderMessageEmail";
 import OrderSummaryEmail from "@/app/emails/OrderSummaryEmail";
+import ReservationConfirmedEmail from "@/app/emails/ReservationConfirmedEmail";
 import { getMayaClientIP, isMayaAllowedIP } from "@/lib/mayaGuard";
 import { connectDB } from "@/lib/mongodb";
 import { EMAIL_FROM, resend } from "@/lib/resend";
@@ -11,9 +12,10 @@ import {
   refundCustomerVoucher,
 } from "@/services/promoCardBenefits";
 import { logPaymentEvent } from "@/services/activityLog.service";
-import { ORDER_STATUSES, OrderStatus } from "@/types/orderConstants";
+import { FULFILLMENT_TYPE, ORDER_STATUSES, OrderStatus } from "@/types/orderConstants";
 import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
+import { PAYMENT_STATUSES } from "@/types/paymentConstants";
 
 // Maya's current webhook events (use these, NOT the deprecated CHECKOUT_* events)
 // Deprecated: CHECKOUT_SUCCESS, CHECKOUT_FAILURE, CHECKOUT_DROPOUT, CHECKOUT_CANCELLED
@@ -40,11 +42,11 @@ export function getStatusSubject(
   const ref = referenceNumber ? ` — ${referenceNumber.toUpperCase()}` : "";
 
   switch (paymentStatus) {
-    case "PAYMENT_SUCCESS":
+    case PAYMENT_STATUSES.PAYMENT_SUCCESS:
       return `Order Confirmed${ref}`;
-    case "PAYMENT_FAILED":
+    case PAYMENT_STATUSES.PAYMENT_FAILED:
       return `Your Order Could Not Be Completed${ref}`;
-    case "PAYMENT_EXPIRED":
+    case PAYMENT_STATUSES.PAYMENT_EXPIRED:
       return `Your Order Has Expired${ref}`;
     default:
       return `Order Update${ref}`;
@@ -98,11 +100,11 @@ export async function POST(request: NextRequest) {
     const orderStatus = PAYMENT_STATUS_MAP[paymentStatus];
 
     const knownStatuses = [
-      "PAYMENT_SUCCESS",
-      "PAYMENT_FAILED",
-      "PAYMENT_EXPIRED",
-      "PAYMENT_CANCELLED",
-      "AUTHORIZED",
+      PAYMENT_STATUSES.PAYMENT_SUCCESS,
+      PAYMENT_STATUSES.PAYMENT_FAILED,
+      PAYMENT_STATUSES.PAYMENT_EXPIRED,
+      PAYMENT_STATUSES.PAYMENT_CANCELLED,
+      PAYMENT_STATUSES.PAYMENT_AUTHORIZED,
     ];
     if (!knownStatuses.includes(paymentStatus)) {
       console.warn(`[Maya Webhook] Unhandled paymentStatus: ${paymentStatus}`);
@@ -146,12 +148,12 @@ export async function POST(request: NextRequest) {
             status: promoStatus,
             paymentId: paymentId ?? null,
             paymentStatus,
-            ...(paymentStatus === "PAYMENT_SUCCESS" && { paidAt: new Date() }),
-            ...(paymentStatus === "PAYMENT_FAILED" && { failedAt: new Date() }),
-            ...(paymentStatus === "PAYMENT_EXPIRED" && {
+            ...(paymentStatus === PAYMENT_STATUSES.PAYMENT_SUCCESS && { paidAt: new Date() }),
+            ...(paymentStatus === PAYMENT_STATUSES.PAYMENT_FAILED && { failedAt: new Date() }),
+            ...(paymentStatus === PAYMENT_STATUSES.PAYMENT_EXPIRED && {
               expiredAt: new Date(),
             }),
-            ...(paymentStatus === "PAYMENT_CANCELLED" && {
+            ...(paymentStatus === PAYMENT_STATUSES.PAYMENT_CANCELLED && {
               cancelledAt: new Date(),
             }),
           },
@@ -183,7 +185,7 @@ export async function POST(request: NextRequest) {
 
     // Skip if already paid or already in final state
     if (
-      existingOrder.paymentInfo?.paymentStatus === "PAYMENT_SUCCESS" ||
+      existingOrder.paymentInfo?.paymentStatus === PAYMENT_STATUSES.PAYMENT_SUCCESS ||
       finalStatuses.includes(existingOrder.status)
     ) {
       console.log(
@@ -195,24 +197,35 @@ export async function POST(request: NextRequest) {
     }
 
     // ✅ Step 5: Update the order
+    // For dine-in orders, PAYMENT_SUCCESS → confirmed (not pending)
+    const resolvedStatus =
+      paymentStatus === PAYMENT_STATUSES.PAYMENT_SUCCESS &&
+      existingOrder.fulfillmentType === FULFILLMENT_TYPE.DINE_IN
+        ? ORDER_STATUSES.CONFIRMED
+        : orderStatus;
+
     const order = await Order.findOneAndUpdate(
       { "paymentInfo.referenceNumber": requestReferenceNumber },
       {
         $set: {
-          status: orderStatus,
+          status: resolvedStatus,
           "paymentInfo.paymentId": paymentId ?? null,
           "paymentInfo.paymentStatus": paymentStatus,
           // Timeline tracking per status
-          ...(paymentStatus === "PAYMENT_SUCCESS" && {
+          ...(paymentStatus === PAYMENT_STATUSES.PAYMENT_SUCCESS && {
             "timeline.paidAt": new Date(),
+            // Dine-in: also set confirmedAt when payment succeeds
+            ...(existingOrder.fulfillmentType === FULFILLMENT_TYPE.DINE_IN && {
+              "timeline.confirmedAt": new Date(),
+            }),
           }),
-          ...(paymentStatus === "PAYMENT_FAILED" && {
+          ...(paymentStatus === PAYMENT_STATUSES.PAYMENT_FAILED && {
             "timeline.failedAt": new Date(),
           }),
-          ...(paymentStatus === "PAYMENT_EXPIRED" && {
+          ...(paymentStatus === PAYMENT_STATUSES.PAYMENT_EXPIRED && {
             "timeline.expiredAt": new Date(),
           }),
-          ...(paymentStatus === "PAYMENT_CANCELLED" && {
+          ...(paymentStatus === PAYMENT_STATUSES.PAYMENT_CANCELLED && {
             "timeline.cancelledAt": new Date(),
           }),
           "paymentInfo.method": fundSource
@@ -244,7 +257,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Step 6- Inventory - PAYMENT_SUCCESS: deduct stock + remove reservation
-    if (paymentStatus === "PAYMENT_SUCCESS") {
+    if (paymentStatus === PAYMENT_STATUSES.PAYMENT_SUCCESS) {
       for (const item of existingOrder.items) {
         await Inventory.findOneAndUpdate(
           { productId: item.productId, branchId: existingOrder.branchId },
@@ -284,14 +297,18 @@ export async function POST(request: NextRequest) {
     const { error: emailError } = await resend.emails.send({
       from: EMAIL_FROM,
       to: order.paymentInfo.customerEmail,
-      subject: getStatusSubject(
-        paymentStatus,
-        order.paymentInfo.referenceNumber,
-      ),
+      subject:
+        order.fulfillmentType === FULFILLMENT_TYPE.DINE_IN &&
+        order.paymentInfo.paymentStatus === PAYMENT_STATUSES.PAYMENT_SUCCESS
+          ? `Reservation Confirmed — ${order.branchSnapshot?.name ?? "Harrison's"}`
+          : getStatusSubject(paymentStatus, order.paymentInfo.referenceNumber),
       react:
-        order.paymentInfo.paymentStatus !== "PAYMENT_SUCCESS"
-          ? OrderMessageEmail({ order: order })
-          : OrderSummaryEmail({ order: order }),
+        order.fulfillmentType === FULFILLMENT_TYPE.DINE_IN &&
+        order.paymentInfo.paymentStatus === PAYMENT_STATUSES.PAYMENT_SUCCESS
+          ? ReservationConfirmedEmail({ order: order })
+          : order.paymentInfo.paymentStatus !== PAYMENT_STATUSES.PAYMENT_SUCCESS
+            ? OrderMessageEmail({ order: order })
+            : OrderSummaryEmail({ order: order }),
     });
 
     if (emailError) {
