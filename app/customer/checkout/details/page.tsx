@@ -8,6 +8,7 @@ import { FULFILLMENT_TYPE } from "@/types/orderConstants";
 import { DetailsFormSkeleton } from "../CheckoutFormSkeleton";
 import { trackInitiateCheckout } from "@/lib/metaPixel";
 import { ReservationPicker } from "../ReservationPicker";
+import { useSettings } from "@/hooks/api/useSettings";
 
 const page = () => {
   const {
@@ -24,6 +25,7 @@ const page = () => {
   } = useCheckoutContext();
 
   const { cartItems, totalItems, totalPrice } = useCart();
+  const { data: settings } = useSettings();
   const hasTrackedRef = useRef(false);
   const isDineIn = orderDetails.fulfillmentType === FULFILLMENT_TYPE.DINE_IN;
 
@@ -70,6 +72,7 @@ const page = () => {
           value={orderDetails.reservation}
           onChange={handleReservationChange}
           errors={reservationErrors}
+          operatingHours={settings?.operatingHours}
         />
       )}
     </>
