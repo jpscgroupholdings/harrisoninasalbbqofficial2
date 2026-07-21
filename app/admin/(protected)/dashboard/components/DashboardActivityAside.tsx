@@ -17,6 +17,7 @@ import { useState } from "react";
 import { formatCurrency, formatDate, formatTimeAgo } from "@/helper/formatter";
 import { IconButton } from "@/components/ui/buttons";
 import { AppImage } from "@/components/AppImage";
+import { STOCK_STATUSES } from "@/types/inventory_types";
 
 type SectionKey = "pendingOrders" | "upcomingReservations" | "lowStock" | "newCustomers";
 
@@ -165,7 +166,7 @@ function ReservationRow({
 
 /* ── Low stock item row ── */
 function LowStockRow({ item }: { item: LowStockItem }) {
-  const isOutOfStock = item.status === "OUT_OF_STOCK";
+  const isOutOfStock = item.status === STOCK_STATUSES.OUT_OF_STOCK;
 
   return (
     <Link

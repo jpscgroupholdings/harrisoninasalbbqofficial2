@@ -8,11 +8,22 @@ import { DynamicIcon } from "@/components/ui/DynamicIcon";
 import { formatCurrency, formatDate } from "@/helper/formatter";
 import Link from "next/link";
 import { useBranchName } from "../../hooks/useBranchName";
+import { IconButton } from "@/components/ui/buttons";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 
 type ViewMode = "calendar" | "list";
@@ -42,7 +53,9 @@ const ReservationsPage = () => {
   const { branchName } = useBranchName();
   const [viewMode, setViewMode] = useState<ViewMode>("calendar");
   const [currentMonth, setCurrentMonth] = useState(() => new Date().getMonth());
-  const [currentYear, setCurrentYear] = useState(() => new Date().getFullYear());
+  const [currentYear, setCurrentYear] = useState(() =>
+    new Date().getFullYear(),
+  );
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
 
   const { data, isLoading } = useAdminOrders({
@@ -78,8 +91,22 @@ const ReservationsPage = () => {
 
   // Filtered reservations for list view
   const displayReservations = selectedDay
-    ? reservationsByDate[selectedDay] ?? []
+    ? (reservationsByDate[selectedDay] ?? [])
     : orders;
+
+  // Reservations in months OTHER than the currently displayed month
+  const otherMonthCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const order of orders) {
+      const dt = new Date(order.reservation?.scheduledAt ?? "");
+      if (isNaN(dt.getTime())) continue;
+      if (dt.getFullYear() === currentYear && dt.getMonth() === currentMonth)
+        continue;
+      const label = `${MONTHS[dt.getMonth()]} ${dt.getFullYear()}`;
+      counts[label] = (counts[label] ?? 0) + 1;
+    }
+    return Object.entries(counts).sort(([, a], [, b]) => b - a);
+  }, [orders, currentMonth, currentYear]);
 
   const goToPrevMonth = () => {
     if (currentMonth === 0) {
@@ -186,7 +213,12 @@ const ReservationsPage = () => {
           <div className="grid grid-cols-7">
             {calendarGrid.map((day, idx) => {
               if (day === null) {
-                return <div key={idx} className="h-20 border-b border-r border-stone-50" />;
+                return (
+                  <div
+                    key={idx}
+                    className="h-20 border-b border-r border-stone-50"
+                  />
+                );
               }
 
               const dateKey = toDateKey(currentYear, currentMonth, day);
@@ -217,7 +249,8 @@ const ReservationsPage = () => {
                         {dayReservations.length}
                       </span>
                       <span className="text-[10px] text-indigo-600 truncate hidden sm:inline">
-                        {dayReservations.length} {dayReservations.length === 1 ? "res" : "reservations"}
+                        {dayReservations.length}{" "}
+                        {dayReservations.length === 1 ? "res" : "reservations"}
                       </span>
                     </div>
                   )}
@@ -225,6 +258,30 @@ const ReservationsPage = () => {
               );
             })}
           </div>
+
+          {/* Other month hints */}
+          {otherMonthCounts.length > 0 && (
+            <div className="px-6 py-3 border-t border-stone-100 flex items-center gap-3 flex-wrap">
+              {otherMonthCounts.map(([label, count]) => (
+                <IconButton
+                  key={label}
+                  onClick={() => {
+                    const [monthName, yearStr] = label.split(" ");
+                    const monthIndex = MONTHS.indexOf(monthName);
+                    if (monthIndex >= 0) {
+                      setCurrentMonth(monthIndex);
+                      setCurrentYear(Number(yearStr));
+                      setSelectedDay(null);
+                    }
+                  }}
+                  variant="primary"
+                  icon={{ name: "CalendarDays", size: 12 }}
+                  text={`${count} ${count === 1 ? "reservation" : "reservations"} in ${label}`}
+                  className="px-4 bg-indigo-500 hover:bg-indigo-600"
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -238,12 +295,15 @@ const ReservationsPage = () => {
                 : "All Upcoming Reservations"}
             </h3>
             <span className="text-xs text-stone-400">
-              {displayReservations.length} reservation{displayReservations.length !== 1 ? "s" : ""}
+              {displayReservations.length} reservation
+              {displayReservations.length !== 1 ? "s" : ""}
             </span>
           </div>
 
           {isLoading ? (
-            <div className="p-8 text-center text-sm text-stone-400">Loading...</div>
+            <div className="p-8 text-center text-sm text-stone-400">
+              Loading...
+            </div>
           ) : displayReservations.length > 0 ? (
             <div className="divide-y divide-stone-50">
               {displayReservations.map((order) => (
@@ -253,16 +313,22 @@ const ReservationsPage = () => {
                   className="flex items-center gap-4 px-6 py-4 hover:bg-stone-50 transition-colors group"
                 >
                   <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0">
-                    <DynamicIcon name="CalendarDays" size={18} className="text-indigo-600" />
+                    <DynamicIcon
+                      name="CalendarDays"
+                      size={18}
+                      className="text-indigo-600"
+                    />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-stone-800 group-hover:text-brand-color-500 truncate">
-                      {order.paymentInfo?.firstName} {order.paymentInfo?.lastName}
+                      {order.paymentInfo?.firstName}{" "}
+                      {order.paymentInfo?.lastName}
                     </p>
                     <p className="text-xs text-stone-400">
                       {formatDate(order.reservation?.scheduledAt ?? "", "TBD")}
                       {" · "}
-                      {order.reservation?.partySize ?? "?"} guest{(order.reservation?.partySize ?? 1) !== 1 ? "s" : ""}
+                      {order.reservation?.partySize ?? "?"} guest
+                      {(order.reservation?.partySize ?? 1) !== 1 ? "s" : ""}
                       {" · "}
                       {order.branchSnapshot?.name}
                     </p>
@@ -285,7 +351,11 @@ const ReservationsPage = () => {
             </div>
           ) : (
             <div className="p-8 text-center">
-              <DynamicIcon name="CalendarDays" size={32} className="mx-auto text-stone-200 mb-2" />
+              <DynamicIcon
+                name="CalendarDays"
+                size={32}
+                className="mx-auto text-stone-200 mb-2"
+              />
               <p className="text-sm text-stone-400">
                 {selectedDay
                   ? "No reservations on this day"

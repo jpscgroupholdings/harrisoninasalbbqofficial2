@@ -367,7 +367,7 @@ const Orders = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
-      <div className="max-w-3xl mx-auto px-4 py-8 space-y-8">
+      <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-[22px] font-medium text-gray-900 tracking-tight">
