@@ -232,6 +232,53 @@ export async function PATCH(
     );
   }
 
+  // Guard: Maya confirmed (reservation) orders must have verified payment before preparing
+  if (
+    paymentMethod === "maya" &&
+    currentStatus === ORDER_STATUSES.CONFIRMED &&
+    newStatus === ORDER_STATUSES.PREPARING &&
+    (paymentStatus !== PAYMENT_STATUSES.PAYMENT_SUCCESS ||
+      !order.paymentInfo?.paymentId)
+  ) {
+    return getAPIError(
+      "This reservation cannot be started — payment has not been verified. Check the payment status before proceeding.",
+      400,
+      {
+        extra: {
+          currentStatus,
+          paymentMethod,
+          paymentStatus,
+          hasPaymentId: !!order.paymentInfo?.paymentId,
+        },
+      },
+    );
+  }
+
+  // Guard: confirmed reservations can only start preparing within 1 hour of scheduled time
+  if (
+    currentStatus === ORDER_STATUSES.CONFIRMED &&
+    newStatus === ORDER_STATUSES.PREPARING &&
+    order.fulfillmentType === FULFILLMENT_TYPE.DINE_IN &&
+    order.reservation?.scheduledAt
+  ) {
+    const scheduledTime = new Date(order.reservation.scheduledAt).getTime();
+    const oneHourBefore = scheduledTime - 60 * 60 * 1000;
+
+    if (Date.now() < oneHourBefore) {
+      const scheduledDate = new Date(order.reservation.scheduledAt);
+      return getAPIError(
+        `This reservation is scheduled for ${scheduledDate.toLocaleString("en-PH", { dateStyle: "medium", timeStyle: "short" })}. You can start preparing 1 hour before the scheduled time.`,
+        400,
+        {
+          extra: {
+            scheduledAt: order.reservation.scheduledAt,
+            earliestStart: new Date(oneHourBefore).toISOString(),
+          },
+        },
+      );
+    }
+  }
+
   if (!canTransitionTo(currentStatus, newStatus, "admin")) {
     return getAPIError(
       `Cannot transition from "${currentStatus}" to "${newStatus}"`,
