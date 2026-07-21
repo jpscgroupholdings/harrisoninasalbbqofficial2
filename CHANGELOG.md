@@ -1,6 +1,49 @@
 # Changelog
 
 
+## 1.13.0 - Confirmed Status, Reservation Management & Payment Guards - 2026-07-21
+**Release Focus:** New `confirmed` order status for paid reservations, dedicated reservations page with calendar view, defense-in-depth payment verification across all reservation touchpoints, and time-based guard preventing early preparation.
+
+### Added
+- `confirmed` order status — represents a paid and booked reservation, separate from `pending` (needs immediate action)
+- `confirmedAt` timeline field — tracks when a reservation was confirmed (COD at order time, Maya at payment success)
+- Status transitions: `confirmed` → `preparing` → `ready_for_pickup` → `completed` (dine-in follows pickup flow, no dispatch)
+- Reservations page (`/reservations`) with calendar view (month grid with day highlighting) and list view toggle
+- Calendar "other month" hints — clickable pills showing reservation counts in months outside the current view, click to navigate
+- `ReservationConfirmedEmail` template — shows date/time, party size, branch, order total, and 15-minute arrival note
+- Sidebar "Reservations" nav item (CalendarDays icon) with indigo badge showing confirmed reservation count
+- Dashboard aside "Upcoming Reservations" section — next 5 confirmed reservations sorted by scheduled date
+- Admin orders page "Confirmed" tab with tab count
+- Customer orders page "Confirmed" tab with indigo styling
+- Customer StatusBadge "Reservation Confirmed" with CalendarCheck icon and indigo theme
+- Admin StatusBadge indigo color for `confirmed` status
+- OrderDetailsModal timeline label "Reservation Confirmed" for `confirmedAt`
+
+### Improved
+- **Payment guard (3 layers):** UI hides "Start Preparing" button for unpaid Maya reservations, API blocks `confirmed → preparing` without `PAYMENT_SUCCESS` + `paymentId`, webhook only transitions to `confirmed` on verified payment
+- **Time guard (2 layers):** UI disables "Start Preparing" within 1 hour of scheduled time (shows tooltip with available date), API rejects the transition with descriptive error message
+- Maya dine-in orders now start as `pending_payment` (not `confirmed`) — only move to `confirmed` after webhook confirms payment
+- COD dine-in orders go directly to `confirmed` (no payment verification needed)
+- `OrderActionButton` refactored to accept `order` object instead of 7 individual props — eliminates prop-drilling bugs
+- "Other month" reservation hints are clickable — clicking navigates the calendar to that month
+- `OrderActionButton` time guard uses `fulfillmentType` (always present) as primary check instead of optional `reservationScheduledAt` — deterministic behavior
+- `OrderActionButton` shows "Invalid reservation" (red) if confirmed dine-in is missing `scheduledAt` — catches data integrity issues
+
+### Changed
+- Display labels updated: "Dine In" → "Reserve a Table" (fulfillment selector), "Reservation" (badges/cards), "Confirm Reservation" (CTA button)
+- `queryOrders` formatter now includes `reservation` field — was previously excluded, causing `reservationScheduledAt` to be undefined in UI
+- Admin orders API `confirmed` tab filter now includes payment verification (`confirmedPaymentOr`) — defense-in-depth against DB tampering
+- Dashboard activity API upcoming reservations query uses proper MongoDB `$or` operators for payment verification (COD passes, Maya needs `PAYMENT_SUCCESS` + `paymentId`)
+- Maya webhook sends `ReservationConfirmedEmail` for dine-in `PAYMENT_SUCCESS` instead of `OrderSummaryEmail`
+- Email subject for dine-in: "Reservation Confirmed — {branch name}" instead of "Order Confirmed"
+- `OrderMessageEmail` accent color for `confirmed` status set to indigo (#4f46e5)
+
+### Fixed
+- Expiry job (`expire-pending-order`) now skips dine-in reservations with future `scheduledAt` — prevents COD reservations from being killed by the 4-hour COD expiry window
+- `queryOrders` formatter was missing `reservation` field — caused `order.reservation` to always be `undefined` in admin/customer UI, breaking the time guard and reservation display
+- `ReservationConfirmedEmail` Preview component — fixed `undefined` branch name by adding fallback to "Harrison's"
+
+
 ## 1.12.0 - Dine-In Reservations - 2026-07-21
 **Release Focus:** New `dine_in` fulfillment type allowing customers to place advance orders with a reservation (date, time, party size), aligned to store operating hours with server-side enforcement.
 
