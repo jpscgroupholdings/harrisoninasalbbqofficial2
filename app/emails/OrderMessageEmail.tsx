@@ -29,6 +29,8 @@ function getAccentColor(status: OrderStatus): string {
     case "pending_payment":
     case "pending":
       return "#ef4501";
+    case "confirmed":
+      return "#4f46e5";
     case "failed":
     case "cancelled":
       return "#dc2626";
