@@ -7,7 +7,6 @@ import { FULFILLMENT_TYPE, FulfillmentType, ORDER_STATUSES } from "@/types/order
 import { inngest } from "@/inngest/client";
 import { EMAIL_FROM, resend } from "@/lib/resend";
 import OrderMessageEmail from "@/app/emails/OrderMessageEmail";
-import ReservationConfirmedEmail from "@/app/emails/ReservationConfirmedEmail";
 import { fetchBranch } from "../branch/branch.service";
 
 export async function persistOrder(
@@ -68,12 +67,12 @@ export async function persistOrder(
           contactNumber: branch.contactNumber,
           location: branch.location,
         },
+        // Maya orders start as pending_payment (awaiting webhook).
+        // All other orders start as pending — admin must "Accept" to confirm.
         status:
           paymentMethod === "maya"
             ? ORDER_STATUSES.PENDING_PAYMENT
-            : fulfillmentType === FULFILLMENT_TYPE.DINE_IN
-              ? ORDER_STATUSES.CONFIRMED
-              : ORDER_STATUSES.PENDING,
+            : ORDER_STATUSES.PENDING,
         fulfillmentType,
         items: orderItems,
         // Include reservation details for dine-in orders
@@ -82,8 +81,6 @@ export async function persistOrder(
             scheduledAt: new Date(reservation.scheduledAt),
             partySize: reservation.partySize,
           },
-          // Only set confirmedAt for COD dine-in (Maya gets it on payment webhook)
-          ...(paymentMethod !== "maya" && { "timeline.confirmedAt": new Date() }),
         }),
         paymentInfo: {
           checkoutId,
@@ -145,21 +142,17 @@ export async function dispatchOrderCreatedEvent(
 export async function sendOrderConfirmationEmail(
   order: Awaited<ReturnType<typeof persistOrder>>,
 ): Promise<void> {
-  // Only COD dine-in gets the reservation confirmed email.
-  // Maya dine-in starts as pending_payment and gets the standard payment email.
-  const isCodDineIn =
-    order.fulfillmentType === FULFILLMENT_TYPE.DINE_IN &&
-    order.paymentInfo.paymentMethod !== "maya";
+  // All orders at creation are either:
+  // - COD → pending (awaiting admin acceptance)
+  // - Maya → pending_payment (awaiting payment)
+  // Reservation confirmed emails are sent when admin accepts (PATCH route).
+  const isMaya = order.paymentInfo.paymentMethod === "maya";
 
   const { error: emailError } = await resend.emails.send({
     from: EMAIL_FROM,
     to: order.paymentInfo.customerEmail,
-    subject: isCodDineIn
-      ? `Reservation Confirmed — ${order.branchSnapshot?.name ?? "Harrison's"}`
-      : "Payment Needed!",
-    react: isCodDineIn
-      ? ReservationConfirmedEmail({ order })
-      : OrderMessageEmail({ order }),
+    subject: isMaya ? "Payment Needed!" : "Order Received!",
+    react: OrderMessageEmail({ order }),
   });
 
   if (emailError) {

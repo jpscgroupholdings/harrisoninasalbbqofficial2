@@ -23,6 +23,7 @@ import { STAFF_ROLES } from "@/types/staff";
 import { EMAIL_FROM, resend } from "@/lib/resend";
 import { getStatusSubject } from "@/app/api/paymaya/webhook/route";
 import OrderSummaryEmail from "@/app/emails/OrderSummaryEmail";
+import ReservationConfirmedEmail from "@/app/emails/ReservationConfirmedEmail";
 import { PAYMENT_STATUSES, PaymentStatus } from "@/types/paymentConstants";
 import { Inventory } from "@/models/Inventory";
 import mongoose, { ClientSession } from "mongoose";
@@ -162,7 +163,7 @@ export async function PATCH(
   }
 
   const body = await request.json();
-  const { status: newStatus } = body;
+  let { status: newStatus } = body;
 
   if (!newStatus) {
     return getAPIError("Status is required", 400, {
@@ -212,6 +213,42 @@ export async function PATCH(
     );
   }
 
+  // Dine-in reservations must be accepted (→ confirmed) before preparing.
+  // If admin tries to go straight to preparing, redirect to confirmed first
+  const isDineInReservation =
+    order.fulfillmentType === FULFILLMENT_TYPE.DINE_IN &&
+    order.reservation?.scheduledAt;
+
+  if (
+    currentStatus === ORDER_STATUSES.PENDING &&
+    newStatus === ORDER_STATUSES.PREPARING &&
+    isDineInReservation
+  ) {
+    newStatus = ORDER_STATUSES.CONFIRMED;
+  }
+
+  // Guard: Maya pending → confirmed (reservation acceptance) requires verified payment
+  if (
+    paymentMethod === "maya" &&
+    currentStatus === ORDER_STATUSES.PENDING &&
+    newStatus === ORDER_STATUSES.CONFIRMED &&
+    (paymentStatus !== PAYMENT_STATUSES.PAYMENT_SUCCESS ||
+      !order.paymentInfo?.paymentId)
+  ) {
+    return getAPIError(
+      "Maya orders cannot be accepted while payment is still pending. Wait for payment confirmation first.",
+      400,
+      {
+        extra: {
+          currentStatus,
+          paymentMethod,
+          requiredStatus: PAYMENT_STATUSES.PAYMENT_SUCCESS,
+        },
+      },
+    );
+  }
+
+  // Guard: Maya pending → preparing (non-reservation) requires verified payment
   if (
     paymentMethod === "maya" &&
     currentStatus === ORDER_STATUSES.PENDING &&
@@ -326,6 +363,15 @@ export async function PATCH(
         updateData[`timeline.${timelineField}`] = new Date();
       }
 
+      // When admin accepts a dine-in reservation, record confirmedAt
+      if (
+        currentStatus === ORDER_STATUSES.PENDING &&
+        newStatus === ORDER_STATUSES.CONFIRMED &&
+        isDineInReservation
+      ) {
+        updateData["timeline.confirmedAt"] = new Date();
+      }
+
       await Order.updateOne({ _id: id }, { $set: updateData }, { session });
 
       // Record who changed the status
@@ -358,6 +404,24 @@ export async function PATCH(
     // ============================================
 
     const updatedOrder = await Order.findById(id);
+
+    // Send reservation confirmed email when admin accepts a dine-in reservation
+    if (
+      currentStatus === ORDER_STATUSES.PENDING &&
+      newStatus === ORDER_STATUSES.CONFIRMED &&
+      isDineInReservation
+    ) {
+      const { error: emailError } = await resend.emails.send({
+        from: EMAIL_FROM,
+        to: order.paymentInfo.customerEmail,
+        subject: `Reservation Confirmed — ${order.branchSnapshot?.name ?? "Harrison's"}`,
+        react: ReservationConfirmedEmail({ order: updatedOrder }),
+      });
+
+      if (emailError) {
+        console.error("[PATCH order] Reservation email failed:", emailError);
+      }
+    }
 
     if (newStatus === ORDER_STATUSES.COMPLETED) {
       const { error: emailError } = await resend.emails.send({

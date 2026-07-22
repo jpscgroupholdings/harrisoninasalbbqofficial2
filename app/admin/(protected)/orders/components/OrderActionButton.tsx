@@ -39,6 +39,9 @@ export function OrderActionButton({ order, role }: Props) {
     mutate({ id: order._id, data: { status: nextStatus } });
   };
 
+  const isDineInReservation =
+    fulfillmentType === FULFILLMENT_TYPE.DINE_IN && !!reservation?.scheduledAt;
+
   const allowedStatuses = nextStatuses.filter((nextStatus) => {
     if (!canTransitionTo(status, nextStatus, role)) return false;
     // Pickup and dine-in orders cannot be dispatched — they go to ready_for_pickup
@@ -46,10 +49,18 @@ export function OrderActionButton({ order, role }: Props) {
       fulfillmentType === FULFILLMENT_TYPE.PICKUP ||
       fulfillmentType === FULFILLMENT_TYPE.DINE_IN
     ) {
-      return nextStatus !== ORDER_STATUSES.DISPATCH;
+      if (nextStatus === ORDER_STATUSES.DISPATCH) return false;
     }
     // Delivery orders cannot be marked ready_for_pickup — they go to dispatch
-    return nextStatus !== ORDER_STATUSES.READY_FOR_PICKUP;
+    if (nextStatus === ORDER_STATUSES.READY_FOR_PICKUP && fulfillmentType === FULFILLMENT_TYPE.DELIVERY) {
+      return false;
+    }
+    // Dine-in reservations: pending → confirmed (accept), then confirmed → preparing (1hr guard)
+    if (status === ORDER_STATUSES.PENDING) {
+      if (isDineInReservation && nextStatus === ORDER_STATUSES.PREPARING) return false;
+      if (!isDineInReservation && nextStatus === ORDER_STATUSES.CONFIRMED) return false;
+    }
+    return true;
   });
 
   return (
@@ -104,13 +115,14 @@ export function OrderActionButton({ order, role }: Props) {
 
           if (isTooEarly) {
             const scheduled = new Date(reservation.scheduledAt);
+            const earliest = new Date(oneHourBefore);
             return (
               <IconButton
                 key={nextStatus}
                 variant="underline"
                 disabled={true}
                 className="text-xs"
-                title={`Available on ${formatDate(scheduled)}`}
+                title={`Reservation: ${formatDate(scheduled)} — You can start preparing at ${formatDate(earliest)}`}
                 text={actionConfig.label}
               />
             );

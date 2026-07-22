@@ -1,6 +1,5 @@
 import OrderMessageEmail from "@/app/emails/OrderMessageEmail";
 import OrderSummaryEmail from "@/app/emails/OrderSummaryEmail";
-import ReservationConfirmedEmail from "@/app/emails/ReservationConfirmedEmail";
 import { getMayaClientIP, isMayaAllowedIP } from "@/lib/mayaGuard";
 import { connectDB } from "@/lib/mongodb";
 import { EMAIL_FROM, resend } from "@/lib/resend";
@@ -197,12 +196,9 @@ export async function POST(request: NextRequest) {
     }
 
     // ✅ Step 5: Update the order
-    // For dine-in orders, PAYMENT_SUCCESS → confirmed (not pending)
-    const resolvedStatus =
-      paymentStatus === PAYMENT_STATUSES.PAYMENT_SUCCESS &&
-      existingOrder.fulfillmentType === FULFILLMENT_TYPE.DINE_IN
-        ? ORDER_STATUSES.CONFIRMED
-        : orderStatus;
+    // All paid orders go to pending — admin must "Accept" to confirm.
+    // Dine-in reservations stay pending until admin acknowledges them.
+    const resolvedStatus = orderStatus;
 
     const order = await Order.findOneAndUpdate(
       { "paymentInfo.referenceNumber": requestReferenceNumber },
@@ -214,10 +210,6 @@ export async function POST(request: NextRequest) {
           // Timeline tracking per status
           ...(paymentStatus === PAYMENT_STATUSES.PAYMENT_SUCCESS && {
             "timeline.paidAt": new Date(),
-            // Dine-in: also set confirmedAt when payment succeeds
-            ...(existingOrder.fulfillmentType === FULFILLMENT_TYPE.DINE_IN && {
-              "timeline.confirmedAt": new Date(),
-            }),
           }),
           ...(paymentStatus === PAYMENT_STATUSES.PAYMENT_FAILED && {
             "timeline.failedAt": new Date(),
@@ -294,21 +286,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Reservation confirmed email is sent when admin accepts (PATCH route).
+    // At webhook time, the order is still pending — awaiting admin acknowledgment.
+    const isDineInPaid =
+      order.fulfillmentType === FULFILLMENT_TYPE.DINE_IN &&
+      order.paymentInfo.paymentStatus === PAYMENT_STATUSES.PAYMENT_SUCCESS;
+
     const { error: emailError } = await resend.emails.send({
       from: EMAIL_FROM,
       to: order.paymentInfo.customerEmail,
-      subject:
-        order.fulfillmentType === FULFILLMENT_TYPE.DINE_IN &&
-        order.paymentInfo.paymentStatus === PAYMENT_STATUSES.PAYMENT_SUCCESS
-          ? `Reservation Confirmed — ${order.branchSnapshot?.name ?? "Harrison's"}`
-          : getStatusSubject(paymentStatus, order.paymentInfo.referenceNumber),
+      subject: isDineInPaid
+        ? `Payment Received — ${order.branchSnapshot?.name ?? "Harrison's"}`
+        : getStatusSubject(paymentStatus, order.paymentInfo.referenceNumber),
       react:
-        order.fulfillmentType === FULFILLMENT_TYPE.DINE_IN &&
-        order.paymentInfo.paymentStatus === PAYMENT_STATUSES.PAYMENT_SUCCESS
-          ? ReservationConfirmedEmail({ order: order })
-          : order.paymentInfo.paymentStatus !== PAYMENT_STATUSES.PAYMENT_SUCCESS
-            ? OrderMessageEmail({ order: order })
-            : OrderSummaryEmail({ order: order }),
+        order.paymentInfo.paymentStatus !== PAYMENT_STATUSES.PAYMENT_SUCCESS
+          ? OrderMessageEmail({ order: order })
+          : OrderSummaryEmail({ order: order }),
     });
 
     if (emailError) {

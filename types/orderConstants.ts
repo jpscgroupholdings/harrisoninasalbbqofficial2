@@ -98,13 +98,14 @@ export const STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[] | null> = {
     ORDER_STATUSES.EXPIRED,
   ],
   [ORDER_STATUSES.PENDING]: [
+    ORDER_STATUSES.CONFIRMED,
     ORDER_STATUSES.PREPARING,
     ORDER_STATUSES.CANCELLED,
-  ], // Accept order for cod
+  ], // Accept: confirmed for reservations, preparing for non-reservations
   [ORDER_STATUSES.CONFIRMED]: [
     ORDER_STATUSES.PREPARING,
     ORDER_STATUSES.CANCELLED,
-  ], // Reservation confirmed → start preparing on day-of
+  ], // Reservation confirmed → start preparing on day-of (1hr guard)
   [ORDER_STATUSES.PREPARING]: [
     ORDER_STATUSES.DISPATCH,
     ORDER_STATUSES.READY_FOR_PICKUP,
@@ -151,6 +152,12 @@ export const ORDER_ACTION_CONFIG: Record<
   },
 
   [ORDER_STATUSES.PENDING]: {
+    [ORDER_STATUSES.CONFIRMED]: {
+      label: "Accept Reservation",
+      variant: "text-[#ef4501] hover:text-[#c13500]",
+      roles: ["admin"],
+      paymentMethods: ["cod", "maya"],
+    },
     [ORDER_STATUSES.PREPARING]: {
       label: "Accept",
       variant: "text-[#ef4501] hover:text-[#c13500]",
