@@ -45,8 +45,9 @@ import { getCheckoutActionMode } from "./checkoutAction";
 import { useBranchCapacity } from "@/hooks/api/useBranchCapacity";
 import { AppImage } from "@/components/AppImage";
 import { formatCurrency } from "@/helper/formatter/";
-import { InputField } from "@/components/ui/FormComponents";
+import { Checkbox, InputField } from "@/components/ui/FormComponents";
 import { ReservationSchema } from "./FormSchema";
+import { SummaryRow } from "@/components/ui/SummaryRow";
 
 const createCodOrder = async (payload: CreateOrderPayload) => {
   const response = await apiClient.post<{
@@ -577,10 +578,6 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
         window.location.href = data.redirectUrl;
       }
     } catch (error) {
-      toast.error("Order Failed", {
-        description:
-          error instanceof Error ? error.message : "Failed to place order.",
-      });
       console.log(error instanceof Error ? error.message : error);
     }
   };
@@ -652,51 +649,48 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
         {/* Order Totals */}
         <div className="px-5 py-4 bg-slate-50 border-t border-slate-100 space-y-2">
           {isPromoCardEnabled && (
-            <label className="flex items-start gap-3 rounded-xl border border-brand-color-500/20 bg-white p-3 text-sm">
-              <input
-                type="checkbox"
+            <div className="bg-white border border-brand-color-500/20 rounded-lg">
+              <Checkbox
+                label={`Apply ${promoCardConfig.name}`}
+                subLabel={
+                  canUsePromoCardDiscount
+                    ? `Enjoy ${(activeDiscountRate * 100).toFixed(0)}% off this order today.`
+                    : "Purchase a promo card to unlock this discount."
+                }
                 checked={applyPromoCardDiscount}
                 onChange={(event) =>
                   setApplyPromoCardDiscount(event.target.checked)
                 }
                 disabled={!canUsePromoCardDiscount}
-                className="mt-1 h-4 w-4 accent-brand-color-500"
+                wrapperClassName="py-6"
               />
-              <span className="flex-1">
-                <span className="block font-semibold text-slate-800">
-                  Apply {promoCardConfig.name}
-                </span>
-                <span className="block text-xs text-slate-500">
-                  {canUsePromoCardDiscount
-                    ? `Enjoy ${(activeDiscountRate * 100).toFixed(0)}% off this order today.`
-                    : "Purchase and pay for a promo card to unlock this discount."}
-                </span>
-              </span>
-            </label>
-          )}
-          <div className="flex justify-between text-sm text-slate-500">
-            <span>Subtotal</span>
-            <span>{formatCurrency(subtotalPrice)}</span>
-          </div>
-          {productDiscountAmount > 0 && (
-            <div className="flex justify-between text-sm font-semibold text-green-600">
-              <span>Product discounts</span>
-              <span>-{formatCurrency(productDiscountAmount)}</span>
             </div>
+          )}
+
+          <SummaryRow
+            title="Subtotal"
+            subTitle={formatCurrency(subtotalPrice)}
+          />
+          {productDiscountAmount > 0 && (
+            <SummaryRow
+              title="Product discounts"
+              subTitle={`- ${formatCurrency(productDiscountAmount)}`}
+              className={{ title: "text-green-600" }}
+            />
           )}
           {promoCardDiscount > 0 && (
-            <div className="flex justify-between text-sm font-semibold text-green-600">
-              <span>Promo card discount</span>
-              <span>-{formatCurrency(promoCardDiscount)}</span>
-            </div>
+            <SummaryRow
+              title="Promo card discount"
+              subTitle={`- ${formatCurrency(promoCardDiscount)}`}
+              className={{ title: "text-green-600" }}
+            />
           )}
           {orderDiscountAmount > 0 && (
-            <div className="flex justify-between gap-3 text-sm font-semibold text-green-600">
-              <span className="min-w-0 truncate">
-                {orderDiscountPromotion?.name}
-              </span>
-              <span>-{formatCurrency(orderDiscountAmount)}</span>
-            </div>
+            <SummaryRow
+              title={orderDiscountPromotion?.name || "Order Discount"}
+              subTitle={`- ${formatCurrency(orderDiscountAmount)}`}
+              className={{ title: "text-green-600 min-w-0 truncate" }}
+            />
           )}
           {orderDiscountAmount === 0 && nextOrderDiscountHint && (
             <p className="block font-extralight text-brand-color-500 text-sm">
@@ -721,10 +715,11 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
             />
           )}
           {parsedVoucherAmount > 0 && (
-            <div className="flex justify-between text-sm font-semibold text-green-600">
-              <span>Voucher discount</span>
-              <span>-{formatCurrency(parsedVoucherAmount)}</span>
-            </div>
+            <SummaryRow
+              title="Voucher discount"
+              subTitle={`- ${formatCurrency(parsedVoucherAmount)}`}
+              className={{ title: "text-green-600" }}
+            />
           )}
           {isDelivery && (deliveryFeeAmount > 0 || isDeliveryFeeLoading) && (
             <div className="flex justify-between gap-3 text-sm">
@@ -772,22 +767,23 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
               try again.
             </p>
           )}
-          <div className="flex justify-between text-sm text-slate-500">
-            <span>VATable Sales</span>
-            <span>{formatCurrency(displayVatableSales)}</span>
-          </div>
-          <div className="flex justify-between text-sm text-slate-500">
-            <span>VAT (12%)</span>
-            <span>{formatCurrency(displayVatAmount)} </span>
-          </div>
-          <div className="  flex justify-between items-baseline pt-2 border-t border-slate-200">
-            <span className="text-sm font-semibold text-slate-900">
-              Total (VAT Inc)
-            </span>
-            <span className="text-lg font-bold text-brand-color-500">
-              {formatCurrency(displayTotalPrice)}
-            </span>
-          </div>
+          <SummaryRow
+            title="VATable Sales"
+            subTitle={formatCurrency(displayVatableSales)}
+          />
+          <SummaryRow
+            title="VAT (12%)"
+            subTitle={formatCurrency(displayVatAmount)}
+          />
+
+          <SummaryRow
+            title="Total (VAT Inc)"
+            subTitle={formatCurrency(displayTotalPrice)}
+            className={{
+              title: "font-bold text-slate-900",
+              subTitle: "text-lg font-bold text-brand-color-500",
+            }}
+          />
         </div>
       </div>
 
@@ -832,7 +828,12 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
             </span>
           ) : (
             <span className="flex items-center gap-2 justify-center">
-              Next — {isDelivery ? "Shipping details" : isDineIn ? "Reservation details" : "Pickup details"}
+              Next —{" "}
+              {isDelivery
+                ? "Shipping details"
+                : isDineIn
+                  ? "Reservation details"
+                  : "Pickup details"}
               <DynamicIcon name="ArrowRight" size={14} />
             </span>
           )}
@@ -918,11 +919,23 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
               />
               <PaymentButton
                 id="cod"
-                label={isDelivery ? "Cash on Delivery" : isDineIn ? "Pay at Branch" : "Cash on Pickup"}
+                label={
+                  isDelivery
+                    ? "Cash on Delivery"
+                    : isDineIn
+                      ? "Pay at Branch"
+                      : "Cash on Pickup"
+                }
                 description="Pay when your order arrives"
                 badge="No fee"
                 imageSrc="/images/cod-icon.png"
-                imageAlt={isDelivery ? "Cash on Delivery" : isDineIn ? "Pay at Branch" : "Cash on Pickup"}
+                imageAlt={
+                  isDelivery
+                    ? "Cash on Delivery"
+                    : isDineIn
+                      ? "Pay at Branch"
+                      : "Cash on Pickup"
+                }
                 selectedPayment={selectedPayment}
                 setSelectedPayment={setSelectedPayment}
               />
