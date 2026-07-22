@@ -1,7 +1,7 @@
 import { OrderType } from "@/types/OrderTypes";
 import { DynamicIcon } from "../ui/DynamicIcon";
 import { FULFILLMENT_TYPE } from "@/types/orderConstants";
-import { formatDateWithDay } from "@/helper/formatter";
+import { formatDate } from "@/helper/formatter";
 
 // ─── Style Maps ───────────────────────────────────────────────────────────────
 
@@ -23,12 +23,12 @@ const fulfillmentTheme = {
     badge: "bg-orange-500 text-white",
   },
   dine_in: {
-    card: "border-emerald-200 bg-emerald-50/40",
-    iconWrapper: "bg-emerald-100",
-    icon: "text-emerald-600",
+    card: "border-indigo-200 bg-indigo-50/40",
+    iconWrapper: "bg-indigo-100",
+    icon: "text-indigo-600",
     iconName: "UtensilsCrossed",
-    label: "text-emerald-500",
-    badge: "bg-emerald-500 text-white",
+    label: "text-indigo-500",
+    badge: "bg-indigo-500 text-white",
   },
 } as const;
 
@@ -77,23 +77,35 @@ export const FulfillmentCard = ({
         </span>
       </div>
 
-      {/* Pickup: show branch address with directions link for all roles */}
-      {isPickup && (branchSnapshot?.address || branchSnapshot?.location) && (
-        <div className="flex flex-col gap-1 text-sm text-gray-600 mb-1">
-          <span className="font-medium text-gray-700">
-            {branchSnapshot?.address}
-          </span>
-          {branchSnapshot?.location?.coordinates && !isAdmin && (
-            <a
-              href={`https://www.google.com/maps?q=${branchSnapshot.location.coordinates[1]},${branchSnapshot.location.coordinates[0]}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 mt-1 transition-colors w-fit"
-            >
-              <DynamicIcon name="MapPin" size={12} />
-              Get directions
-              <DynamicIcon name="ExternalLink" size={10} />
-            </a>
+      {/* Pickup: show declared pickup time and branch address with directions link */}
+      {isPickup && (
+        <div className="flex flex-col gap-1.5 text-sm text-gray-600 mb-1">
+          {order.pickupTime && (
+            <div className="flex items-center gap-2">
+              <DynamicIcon name="Clock" size={14} className="text-blue-500" />
+              <span className="font-medium text-gray-700">
+                {formatDate(order.pickupTime, { weekday: true })}
+              </span>
+            </div>
+          )}
+          {(branchSnapshot?.address || branchSnapshot?.location) && (
+            <div className="flex flex-col gap-1">
+              <span className="font-medium text-gray-700">
+                {branchSnapshot?.address}
+              </span>
+              {branchSnapshot?.location?.coordinates && !isAdmin && (
+                <a
+                  href={`https://www.google.com/maps?q=${branchSnapshot.location.coordinates[1]},${branchSnapshot.location.coordinates[0]}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 mt-1 transition-colors w-fit"
+                >
+                  <DynamicIcon name="MapPin" size={12} />
+                  Get directions
+                  <DynamicIcon name="ExternalLink" size={10} />
+                </a>
+              )}
+            </div>
           )}
         </div>
       )}
@@ -103,17 +115,26 @@ export const FulfillmentCard = ({
         <div className="flex flex-col gap-1.5 text-sm text-gray-600 mb-1">
           {reservation.scheduledAt && (
             <div className="flex items-center gap-2">
-              <DynamicIcon name="CalendarClock" size={14} className="text-emerald-500" />
+              <DynamicIcon
+                name="CalendarClock"
+                size={14}
+                className="text-indigo-500"
+              />
               <span className="font-medium text-gray-700">
-                {formatDateWithDay(reservation.scheduledAt)}
+                {formatDate(reservation.scheduledAt, {weekday: true})}
               </span>
             </div>
           )}
           {reservation.partySize && (
             <div className="flex items-center gap-2">
-              <DynamicIcon name="Users" size={14} className="text-emerald-500" />
+              <DynamicIcon
+                name="Users"
+                size={14}
+                className="text-indigo-500"
+              />
               <span className="font-medium text-gray-700">
-                {reservation.partySize} {reservation.partySize === 1 ? "guest" : "guests"}
+                {reservation.partySize}{" "}
+                {reservation.partySize === 1 ? "guest" : "guests"}
               </span>
             </div>
           )}

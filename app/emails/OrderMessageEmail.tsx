@@ -14,6 +14,7 @@ import {
 import React from "react";
 import { OrderType } from "@/types/OrderTypes";
 import { FULFILLMENT_TYPE, OrderStatus } from "@/types/orderConstants";
+import { formatDateWithDay } from "@/helper/formatter";
 
 interface OrderMessageEmailProps {
   order: OrderType;
@@ -226,6 +227,18 @@ const OrderMessageEmail = ({ order = mockOrder }: OrderMessageEmailProps) => {
                 </Column>
               </Row>
             </Section>
+
+            {/* ── Pickup time (pickup orders only) ── */}
+            {order.fulfillmentType === FULFILLMENT_TYPE.PICKUP && order.pickupTime && (
+              <Section className="px-8 py-4 border-b border-gray-100">
+                <Text className="text-[11px] uppercase tracking-[0.04em] text-gray-600 mb-1">
+                  Scheduled pickup time
+                </Text>
+                <Text className="text-sm font-medium text-black m-0">
+                  {formatDateWithDay(order.pickupTime)}
+                </Text>
+              </Section>
+            )}
 
             {/* ── CTA ── */}
             {ctaLabel && ctaHref ? (

@@ -119,7 +119,7 @@ export default function OrdersTable({
                     : "Delivery";
 
                 const fulfillmentStyle = isDineIn
-                  ? "text-emerald-500"
+                  ? "text-indigo-500"
                   : isPickup
                     ? "text-blue-500"
                     : "text-brand-color-500";
@@ -188,6 +188,11 @@ export default function OrdersTable({
                       <p className="text-nowrap">
                         {order.branchSnapshot?.name}
                       </p>
+                      {isPickup && order.pickupTime && (
+                        <p className="text-xs text-blue-400 font-normal">
+                          {formatDate(order.pickupTime)}
+                        </p>
+                      )}
                     </TableCell>
                     <TableCell className="px-6 py-4">
                       <div className="flex items-end justify-end gap-1.5">
@@ -223,10 +228,7 @@ export default function OrdersTable({
                           className="text-blue-500 hover:text-blue-600 text-xs"
                         />
                         <PermissionGuard permission="orders.update">
-                          <OrderActionButton
-                            order={order}
-                            role="admin"
-                          />
+                          <OrderActionButton order={order} role="admin" />
                         </PermissionGuard>
                       </div>
                     </TableCell>
