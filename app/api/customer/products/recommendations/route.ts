@@ -7,8 +7,9 @@ import { STOCK_STATUSES } from "@/types/inventory_types";
 import "@/lib/registerModels";
 import { getActiveProductDiscountPreviews } from "@/lib/product-promotions/product-promotion.application";
 import { getAPIError } from "@/lib/getApiError";
-import mongoose from "mongoose";
+import mongoose, { PipelineStage } from "mongoose";
 import { fetchBranch } from "@/services/branch/branch.service";
+import { getValidObjectIds, getValidObjectId } from "@/helper/getValidObjectIds";
 
 const DEFAULT_LIMIT = 6;
 const MAX_LIMIT = 12;
@@ -17,7 +18,7 @@ const MAX_LIMIT = 12;
  * GET /api/customer/products/recommendations
  *
  * Returns popular products for the recommendation section.
- * Popularity is computed from completed orders (quantity sold).
+ * Popularity is computed from completed orders in the last 90 days (quantity sold).
  * Results are filtered by branch inventory and exclude provided product IDs.
  *
  * Query Parameters:
@@ -46,22 +47,29 @@ export async function GET(req: NextRequest) {
     // Verify branch exists and is active
     try {
       await fetchBranch(branchId);
-    } catch (err: any) {
-      const status = err.message.includes("not found") ? 404 : 403;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "";
+      const status = message.includes("not found") ? 404 : 403;
       return getAPIError(err, status);
     }
 
     // Parse exclude IDs into valid ObjectIds
-    const excludeObjectIds = excludeIdsRaw
-      .split(",")
-      .filter(Boolean)
-      .map((id) => id.trim())
-      .filter((id) => mongoose.Types.ObjectId.isValid(id))
+    const excludeObjectIds = getValidObjectIds(excludeIdsRaw.split(","))
       .map((id) => new mongoose.Types.ObjectId(id));
 
     // ── Step 1: Compute product popularity from completed orders ─────────
-    const popularityPipeline: any[] = [
-      { $match: { status: ORDER_STATUSES.COMPLETED } },
+    // Look back 90 days to keep the aggregation bounded as orders grow
+    const POPULARITY_WINDOW_DAYS = 90;
+    const windowStart = new Date();
+    windowStart.setDate(windowStart.getDate() - POPULARITY_WINDOW_DAYS);
+
+    const popularityPipeline: PipelineStage[] = [
+      {
+        $match: {
+          status: ORDER_STATUSES.COMPLETED,
+          createdAt: { $gte: windowStart },
+        },
+      },
       { $unwind: "$items" },
       {
         $group: {
@@ -70,6 +78,7 @@ export async function GET(req: NextRequest) {
         },
       },
       { $sort: { totalSold: -1 } },
+      { $limit: MAX_LIMIT * 5 },
     ];
 
     const popularProducts = await Order.aggregate(popularityPipeline);
@@ -84,20 +93,15 @@ export async function GET(req: NextRequest) {
       .filter((id): id is mongoose.Types.ObjectId => id != null);
 
     // ── Step 2: Fetch products with branch inventory ─────────────────────
-    const matchConditions: Record<string, unknown> = {
-      _id: { $in: rankedProductIds },
-    };
-
+    const idMatch: Record<string, unknown> = { $in: rankedProductIds };
     if (excludeObjectIds.length > 0) {
-      matchConditions._id = {
-        $in: rankedProductIds,
-        $nin: excludeObjectIds,
-      };
+      idMatch.$nin = excludeObjectIds;
     }
 
-    if (categoryId && mongoose.Types.ObjectId.isValid(categoryId)) {
-      matchConditions.category = new mongoose.Types.ObjectId(categoryId);
-    }
+    const matchConditions: Record<string, unknown> = { _id: idMatch };
+
+    const categoryOid = getValidObjectId(categoryId);
+    if (categoryOid) matchConditions.category = categoryOid;
 
     const products = await Product.aggregate([
       { $match: matchConditions },
@@ -247,7 +251,7 @@ export async function GET(req: NextRequest) {
     }));
 
     return NextResponse.json({ success: true, data: result });
-  } catch (error: any) {
+  } catch (error) {
     console.error("[RECOMMENDATIONS] Error:", error);
     return getAPIError(error, 500, {
       fallbackMessage: "Failed to fetch product recommendations",
