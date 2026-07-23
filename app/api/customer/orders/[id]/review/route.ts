@@ -8,6 +8,7 @@ import { Review } from "@/models/Review";
 import { ReviewBody } from "@/types/ReviewTypes";
 import { getAPIError } from "@/lib/getApiError";
 import { ORDER_STATUSES } from "@/types/orderConstants";
+import { notifyNewReview } from "@/services/notification.service";
 
 // Lean shapes returned by Mongoose .lean() — ObjectIds stay as ObjectId objects
 
@@ -175,6 +176,15 @@ export async function POST(
         reviewedAt: new Date(),
       }),
     ]);
+
+    // Notify admins about the new review (fire-and-forget)
+    notifyNewReview({
+      orderId: order._id.toString(),
+      branchId: order.branchId.toString(),
+      referenceNumber: order.paymentInfo?.referenceNumber ?? "",
+      rating,
+      comment: comment?.trim() || null,
+    });
 
     return NextResponse.json(
       { message: "Review submitted successfully", reviewId: review._id },

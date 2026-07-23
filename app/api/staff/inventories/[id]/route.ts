@@ -1,11 +1,13 @@
 import { connectDB } from "@/lib/mongodb";
 import { NextRequest, NextResponse } from "next/server";
 import { Inventory } from "@/models/Inventory";
+import { Product } from "@/models/Product";
 import z from "zod";
 import { requireAdmin } from "@/lib/getAuth";
 import { Types } from "mongoose";
 import { canAccess } from "@/lib/roleBasedAccessCtrl";
 import { STAFF_ROLES } from "@/types/staff";
+import { notifyLowStock } from "@/services/notification.service";
 
 const updateInventorySchema = z
   .object({
@@ -95,6 +97,19 @@ export async function PUT(
         upsert: true,
       },
     );
+
+    // 5. Notify admins if stock dropped to or below reorder level
+    const effectiveReorderLevel = inventory.reorderLevel ?? 10;
+    if (inventory.quantity <= effectiveReorderLevel) {
+      const product = await Product.findById(productId).lean();
+      notifyLowStock({
+        productId,
+        productName: product?.name ?? "Unknown Product",
+        branchId: branchId.toString(),
+        quantity: inventory.quantity,
+        reorderLevel: effectiveReorderLevel,
+      });
+    }
 
     return NextResponse.json({
       message: "Inventory updated successfully",

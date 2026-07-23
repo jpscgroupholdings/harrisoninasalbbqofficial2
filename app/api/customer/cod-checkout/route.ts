@@ -37,6 +37,7 @@ import {
 } from "@/services/checkout/checkoutOrder.service";
 import { fetchBranch } from "@/services/branch/branch.service";
 import { logOrderCreated } from "@/services/activityLog.service";
+import { notifyNewOrder } from "@/services/notification.service";
 import { getAPIError } from "@/lib/getApiError";
 import { FULFILLMENT_TYPE } from "@/types/orderConstants";
 
@@ -203,6 +204,15 @@ export async function POST(request: NextRequest) {
         paymentMethod,
       ),
       sendOrderConfirmationEmail(order),
+      notifyNewOrder({
+        orderId: order._id.toString(),
+        branchId: body.branchId,
+        referenceNumber,
+        customerName: `${body.firstName} ${body.lastName}`,
+        totalAmount: tax.totalAmount,
+        fulfillmentType: fulfillment.fulfillmentType,
+        paymentMethod: "cod",
+      }),
     ]);
 
     return NextResponse.json(

@@ -11,6 +11,7 @@ import {
   refundCustomerVoucher,
 } from "@/services/promoCardBenefits";
 import { logPaymentEvent } from "@/services/activityLog.service";
+import { notifyPaymentConfirmed } from "@/services/notification.service";
 import { FULFILLMENT_TYPE, ORDER_STATUSES, OrderStatus } from "@/types/orderConstants";
 import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
@@ -310,6 +311,16 @@ export async function POST(request: NextRequest) {
 
     await session.commitTransaction();
     session.endSession();
+
+    // Notify admins about payment confirmation (fire-and-forget)
+    if (paymentStatus === PAYMENT_STATUSES.PAYMENT_SUCCESS) {
+      notifyPaymentConfirmed({
+        orderId: existingOrder._id.toString(),
+        branchId: existingOrder.branchId.toString(),
+        referenceNumber: requestReferenceNumber,
+        amount: order.total?.totalAmount ?? 0,
+      });
+    }
 
     return ack; // always return ack at the end
 

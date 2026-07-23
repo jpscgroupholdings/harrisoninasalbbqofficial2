@@ -9,6 +9,7 @@ import { useLogoutAdmin } from "@/hooks/api/useLogout";
 import LogoutModal from "@/components/ui/LogoutModal";
 import { IconButton } from "@/components/ui/buttons";
 import { canAccess } from "@/lib/roleBasedAccessCtrl";
+import NotificationBell from "./NotificationBell";
 
 const AdminHeader = ({ onMenuClick }: { onMenuClick: () => void }) => {
   const { staff, staffRole } = useStaffData();
@@ -78,14 +79,7 @@ const AdminHeader = ({ onMenuClick }: { onMenuClick: () => void }) => {
 
         <div className="flex items-center gap-2 lg:gap-4">
           {/** Notifications */}
-          <div className="relative p-2">
-            <IconButton
-              icon={{ name: "Bell", size: 20 }}
-              variant="secondary"
-              className="rounded-xl"
-            />
-            <div className="absolute top-1 lg:top-2 right-1 lg:right-2 rounded-full h-2 w-2 bg-red-500" />
-          </div>
+          <NotificationBell />
 
           {/** Profile */}
           <div className="relative" ref={menuRef}>
