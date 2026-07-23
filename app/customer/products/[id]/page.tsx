@@ -20,6 +20,7 @@ import { QuantityStepper } from "../../menu/components/QuantityStepper";
 import { useQuery } from "@tanstack/react-query";
 import { AppImage } from "@/components/AppImage";
 import { IconButton } from "@/components/ui/buttons";
+import ProductRecommendations from "@/app/customer/components/ProductRecommendations";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -129,10 +130,7 @@ const ProductDetailPage: React.FC = () => {
     const mainGroupId = mainGroup?._id ?? "";
     const mainQtyMap = modifierQuantities.get(mainGroupId);
     const mainTotalQty = mainQtyMap
-      ? [...mainQtyMap.values()].reduce(
-          (sum, q) => sum + Math.max(0, q),
-          0,
-        )
+      ? [...mainQtyMap.values()].reduce((sum, q) => sum + Math.max(0, q), 0)
       : 0;
 
     for (const group of populatedGroups) {
@@ -177,10 +175,12 @@ const ProductDetailPage: React.FC = () => {
       const groupQtyMap = modifierQuantities.get(group._id ?? "");
       if (!groupQtyMap) continue;
       for (const modItem of group.items) {
-        const productId = typeof modItem.product === "object" ? modItem.product._id : "";
+        const productId =
+          typeof modItem.product === "object" ? modItem.product._id : "";
         const qty = groupQtyMap.get(productId) ?? 0;
         if (qty > 0) {
-          const itemPrice = typeof modItem.product === "object" ? modItem.product.price : null;
+          const itemPrice =
+            typeof modItem.product === "object" ? modItem.product.price : null;
           const upgradePrice = Number(modItem.price ?? itemPrice ?? 0) || 0;
           sum += upgradePrice * qty;
         }
@@ -231,7 +231,12 @@ const ProductDetailPage: React.FC = () => {
       }
     }
     return errors;
-  }, [hasModifierGroups, populatedGroups, modifierQuantities, effectiveGroupSettings]);
+  }, [
+    hasModifierGroups,
+    populatedGroups,
+    modifierQuantities,
+    effectiveGroupSettings,
+  ]);
 
   const canAddToCart = modifierValidationErrors.length === 0;
 
@@ -296,8 +301,7 @@ const ProductDetailPage: React.FC = () => {
           0,
         );
         const currentQtyForThisItem = groupMap.get(productId) ?? 0;
-        const newTotalQty =
-          currentTotalQty - currentQtyForThisItem + newQty;
+        const newTotalQty = currentTotalQty - currentQtyForThisItem + newQty;
         if (newTotalQty > settings.maxQty) {
           return prev; // block — total qty limit reached
         }
@@ -422,13 +426,13 @@ const ProductDetailPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="flex flex-col md:flex-row gap-6">
+      <div className="max-w-360 mx-auto px-4 py-8">
+        <div className="flex flex-col lg:flex-row gap-8">
           {/* ── Left: Image ─────────────────────────────────────────────── */}
-          <div className="w-full max-w-md md:w-1/2 md:sticky md:top-40 md:self-start">
+          <div className="w-full max-w-md lg:w-2/5 lg:shrink-0 lg:sticky lg:top-40 lg:self-start">
             <div className="relative aspect-square max-h-96 w-full place-self-center rounded-xl overflow-hidden bg-white">
               <AppImage src={product.image.url} alt={product.name} />
-              {!product.isPopular && (
+              {product.isPopular && (
                 <div className="absolute top-3 left-3 bg-brand-color-500 text-white text-[10px] font-bold px-3 py-1 rounded-full">
                   Best Seller
                 </div>
@@ -465,296 +469,327 @@ const ProductDetailPage: React.FC = () => {
           </div>
 
           {/* ── Right: Details & Modifier Groups ────────────────────────── */}
-          <div className="w-full md:w-1/2 flex flex-col gap-5">
-            {/* Header */}
+          <div className="w-full lg:flex-1 flex flex-col gap-5">
             <div>
-              <p className="text-[10px] uppercase tracking-widest text-gray-400 mb-1">
-                {product.category?.name}
-              </p>
-              <h1 className="text-2xl font-bold text-gray-900">
-                {product.name}
-              </h1>
-
-              <IconButton
-                type="button"
-                onClick={() => router.push(`/products/${product._id}/reviews`)}
-                variant={"ghost"}
-                title={
-                  averageRating <= 0 || totalReviews <= 0
-                    ? "No reviews yet"
-                    : "View reviews of this product"
-                }
-                disabled={averageRating <= 0 || totalReviews <= 0}
-                className="disabled:bg-transparent disabled:hover:bg-transparent py-2 px-0"
-                children={
-                  <>
-                    <StarRatingDisplay rating={averageRating} />
-                    <span className="font-semibold text-gray-600">
-                      {Number(averageRating).toFixed(1)}
-                    </span>
-                    <span>· {Number(totalReviews)} reviews</span>
-                  </>
-                }
-              />
-              {/* Price */}
-              <div className="flex items-baseline gap-2 mt-3">
-                <span className="text-2xl font-bold text-brand-color-500">
-                  {formatCurrency(displayUnitPrice)}
-                </span>
-                {hasModifierGroups && upgradeTotal > 0 && (
-                  <span className="text-xs text-gray-400">
-                    ({formatCurrency(basePrice)} base +{" "}
-                    {formatCurrency(upgradeTotal)} upgrades)
+              {/* Header */}
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-gray-400 mb-1">
+                  {product.category?.name}
+                </p>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  {product.name}
+                </h1>
+                <IconButton
+                  type="button"
+                  onClick={() =>
+                    router.push(`/products/${product._id}/reviews`)
+                  }
+                  variant={"ghost"}
+                  title={
+                    averageRating <= 0 || totalReviews <= 0
+                      ? "No reviews yet"
+                      : "View reviews of this product"
+                  }
+                  disabled={averageRating <= 0 || totalReviews <= 0}
+                  className="disabled:bg-transparent disabled:hover:bg-transparent py-2 px-0"
+                  children={
+                    <>
+                      <StarRatingDisplay rating={averageRating} />
+                      <span className="font-semibold text-gray-600">
+                        {Number(averageRating).toFixed(1)}
+                      </span>
+                      <span>· {Number(totalReviews)} reviews</span>
+                    </>
+                  }
+                />
+                {/* Price */}
+                <div className="flex items-baseline gap-2 mt-3">
+                  <span className="text-2xl font-bold text-brand-color-500">
+                    {formatCurrency(displayUnitPrice)}
                   </span>
-                )}
-                {!hasModifierGroups && hasProductDiscount && (
-                  <>
-                    <span className="text-sm text-gray-400 line-through">
-                      {formatCurrency(basePrice)}
+                  {hasModifierGroups && upgradeTotal > 0 && (
+                    <span className="text-xs text-gray-400">
+                      ({formatCurrency(basePrice)} base +{" "}
+                      {formatCurrency(upgradeTotal)} upgrades)
                     </span>
-                    <span className="rounded-full bg-green-50 px-2 py-0.5 text-xs font-bold text-green-700">
-                      {activeProductDiscount!.label}
-                    </span>
-                  </>
+                  )}
+                  {!hasModifierGroups && hasProductDiscount && (
+                    <>
+                      <span className="text-sm text-gray-400 line-through">
+                        {formatCurrency(basePrice)}
+                      </span>
+                      <span className="rounded-full bg-green-50 px-2 py-0.5 text-xs font-bold text-green-700">
+                        {activeProductDiscount!.label}
+                      </span>
+                    </>
+                  )}
+                </div>
+                {isSet && product.paxCount && (
+                  <p className="text-xs font-semibold text-emerald-600 mt-1">
+                    Good for {product.paxCount} pax
+                  </p>
                 )}
               </div>
-
-              {isSet && product.paxCount && (
-                <p className="text-xs font-semibold text-emerald-600 mt-1">
-                  Good for {product.paxCount} pax
-                </p>
-              )}
-            </div>
-
-            {/* ── Modifier Groups ─────────────────────────────────────────── */}
-            {hasModifierGroups &&
-              populatedGroups.map((group) => {
-                const groupId = group._id ?? "";
-                const eff = effectiveGroupSettings.get(groupId) ?? {
-                  required: group.required,
-                  minSelect: group.minSelect,
-                  maxSelect: group.maxSelect,
-                  maxQty: group.maxQty,
-                  isLinked: false,
-                };
-                const groupQtyMap = modifierQuantities.get(groupId);
-                const currentTotalQty = groupQtyMap
-                  ? [...groupQtyMap.values()].reduce((s, q) => s + q, 0)
-                  : 0;
-                const isRadio = eff.maxSelect === 1;
-
-                return (
-                  <div
-                    key={groupId}
-                    className={`border rounded-lg p-4 ${
-                      eff.isLinked
-                        ? "border-purple-200 bg-purple-50/30"
-                        : "border-gray-200"
-                    }`}
-                  >
-                    {/* Group header */}
-                    <div className="mb-3">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="text-sm font-bold text-gray-900">
-                          {group.name}
-                        </h3>
-                        {group.isMain && (
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
-                            Main
-                          </span>
-                        )}
-                        {eff.isLinked && (
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 bg-purple-50 px-1.5 py-0.5 rounded">
-                            Side
-                          </span>
-                        )}
-                        {eff.required && (
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-brand-color-500">
-                            Required
-                          </span>
-                        )}
+              {/* ── Modifier Groups ─────────────────────────────────────────── */}
+              {hasModifierGroups &&
+                populatedGroups.map((group) => {
+                  const groupId = group._id ?? "";
+                  const eff = effectiveGroupSettings.get(groupId) ?? {
+                    required: group.required,
+                    minSelect: group.minSelect,
+                    maxSelect: group.maxSelect,
+                    maxQty: group.maxQty,
+                    isLinked: false,
+                  };
+                  const groupQtyMap = modifierQuantities.get(groupId);
+                  const currentTotalQty = groupQtyMap
+                    ? [...groupQtyMap.values()].reduce((s, q) => s + q, 0)
+                    : 0;
+                  const isRadio = eff.maxSelect === 1;
+                  return (
+                    <div
+                      key={groupId}
+                      className={`border rounded-lg p-4 ${
+                        eff.isLinked
+                          ? "border-purple-200 bg-purple-50/30"
+                          : "border-gray-200"
+                      }`}
+                    >
+                      {/* Group header */}
+                      <div className="mb-3">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="text-sm font-bold text-gray-900">
+                            {group.name}
+                          </h3>
+                          {group.isMain && (
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
+                              Main
+                            </span>
+                          )}
+                          {eff.isLinked && (
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 bg-purple-50 px-1.5 py-0.5 rounded">
+                              Side
+                            </span>
+                          )}
+                          {eff.required && (
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-brand-color-500">
+                              Required
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          {isRadio
+                            ? "Choose 1"
+                            : `Choose up to ${eff.maxSelect} item${eff.maxSelect > 1 ? "s" : ""}`}
+                          {eff.required &&
+                            eff.minSelect > 1 &&
+                            ` (at least ${eff.minSelect})`}
+                        </p>
+                        {/* Total quantity indicator */}
+                        <p className="text-[10px] text-gray-400 mt-0.5">
+                          Qty: {currentTotalQty} / {eff.maxQty}
+                        </p>
                       </div>
-                      <p className="text-xs text-gray-400 mt-0.5">
-                        {isRadio
-                          ? "Choose 1"
-                          : `Choose up to ${eff.maxSelect} item${eff.maxSelect > 1 ? "s" : ""}`}
-                        {eff.required &&
-                          eff.minSelect > 1 &&
-                          ` (at least ${eff.minSelect})`}
-                      </p>
-                      {/* Total quantity indicator */}
-                      <p className="text-[10px] text-gray-400 mt-0.5">
-                        Qty: {currentTotalQty} / {eff.maxQty}
-                      </p>
-                    </div>
-
-                    {/* Items list */}
-                    <div className="space-y-2">
-                      {group.items.map((modItem) => {
-                        const isPopulated = typeof modItem.product === "object" && modItem.product !== null;
-                        const modProductId = isPopulated ? modItem.product._id : "";
-                        const itemQty = groupQtyMap?.get(modProductId) ?? 0;
-                        const isSelected = itemQty > 0;
-                        const productPrice = isPopulated ? (modItem.product.price ?? 0) : 0;
-                        const upgradePrice = Number(modItem.price ?? productPrice) || 0;
-                        const soloPrice = productPrice;
-                        const hasDiscount =
-                          modItem.price !== null &&
-                          modItem.price !== undefined &&
-                          modItem.price < soloPrice;
-                        const savings = hasDiscount
-                          ? roundMoney(soloPrice - modItem.price!)
-                          : 0;
-
-                        return (
-                          <div
-                            key={modProductId}
-                            role="button"
-                            tabIndex={isOutOfStock ? -1 : 0}
-                            aria-disabled={isOutOfStock}
-                            onClick={() =>
-                              setModifierItemQty(
-                                groupId,
-                                modProductId,
-                                { maxSelect: eff.maxSelect, maxQty: eff.maxQty },
-                                isSelected ? 0 : 1,
-                              )
-                            }
-                            onKeyDown={(e) => {
-                              if (isOutOfStock) return;
-                              if (e.key === "Enter" || e.key === " ") {
-                                e.preventDefault();
+                      {/* Items list */}
+                      <div className="space-y-2">
+                        {group.items.map((modItem) => {
+                          const isPopulated =
+                            typeof modItem.product === "object" &&
+                            modItem.product !== null;
+                          const modProductId = isPopulated
+                            ? modItem.product._id
+                            : "";
+                          const itemQty = groupQtyMap?.get(modProductId) ?? 0;
+                          const isSelected = itemQty > 0;
+                          const productPrice = isPopulated
+                            ? (modItem.product.price ?? 0)
+                            : 0;
+                          const upgradePrice =
+                            Number(modItem.price ?? productPrice) || 0;
+                          const soloPrice = productPrice;
+                          const hasDiscount =
+                            modItem.price !== null &&
+                            modItem.price !== undefined &&
+                            modItem.price < soloPrice;
+                          const savings = hasDiscount
+                            ? roundMoney(soloPrice - modItem.price!)
+                            : 0;
+                          return (
+                            <div
+                              key={modProductId}
+                              role="button"
+                              tabIndex={isOutOfStock ? -1 : 0}
+                              aria-disabled={isOutOfStock}
+                              onClick={() =>
                                 setModifierItemQty(
                                   groupId,
                                   modProductId,
-                                  { maxSelect: eff.maxSelect, maxQty: eff.maxQty },
+                                  {
+                                    maxSelect: eff.maxSelect,
+                                    maxQty: eff.maxQty,
+                                  },
                                   isSelected ? 0 : 1,
-                                );
+                                )
                               }
-                            }}
-                            className={`flex w-full items-center cursor-pointer  gap-3 p-3 rounded-lg border transition-all ${
-                              isSelected
-                                ? "border-brand-color-500 bg-brand-color-50"
-                                : "border-gray-200 bg-white hover:border-gray-300"
-                            }`}
-                          >
-                            {/* Selection indicator + click to toggle */}
-                            <div
-                              className={`w-5 h-5 flex items-center justify-center rounded-${isRadio ? "full" : "md"} border-2 transition-colors cursor-pointer disabled:cursor-not-allowed ${
+                              onKeyDown={(e) => {
+                                if (isOutOfStock) return;
+                                if (e.key === "Enter" || e.key === " ") {
+                                  e.preventDefault();
+                                  setModifierItemQty(
+                                    groupId,
+                                    modProductId,
+                                    {
+                                      maxSelect: eff.maxSelect,
+                                      maxQty: eff.maxQty,
+                                    },
+                                    isSelected ? 0 : 1,
+                                  );
+                                }
+                              }}
+                              className={`flex w-full items-center cursor-pointer  gap-3 p-3 rounded-lg border transition-all ${
                                 isSelected
-                                  ? "border-brand-color-500 bg-brand-color-500"
-                                  : "border-gray-300"
+                                  ? "border-brand-color-500 bg-brand-color-50"
+                                  : "border-gray-200 bg-white hover:border-gray-300"
                               }`}
                             >
-                              {isSelected && (
-                                <DynamicIcon
-                                  name="Check"
-                                  size={12}
-                                  className="text-white"
-                                />
-                              )}
-                            </div>
-                            {/* Item info */}
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-start text-gray-900 truncate">
-                                {modItem.label ?? (isPopulated ? modItem.product.name : "Unavailable")}
-                              </p>
-                              {modItem.label &&
-                                isPopulated &&
-                                modItem.label !== modItem.product.name && (
-                                  <p className="text-[10px] text-gray-400 truncate">
-                                    {modItem.product.name}
-                                  </p>
+                              {/* Selection indicator + click to toggle */}
+                              <div
+                                className={`w-5 h-5 flex items-center justify-center rounded-${isRadio ? "full" : "md"} border-2 transition-colors cursor-pointer disabled:cursor-not-allowed ${
+                                  isSelected
+                                    ? "border-brand-color-500 bg-brand-color-500"
+                                    : "border-gray-300"
+                                }`}
+                              >
+                                {isSelected && (
+                                  <DynamicIcon
+                                    name="Check"
+                                    size={12}
+                                    className="text-white"
+                                  />
                                 )}
-                            </div>
-                            {/* Upgrade price */}
-                            <div className="text-right shrink-0">
-                              <span className="text-sm font-bold text-brand-color-500">
-                                {upgradePrice === 0
-                                  ? "0"
-                                  : `+ ${formatCurrency(upgradePrice)}`}
-                              </span>
-                              {hasDiscount && savings > 0 && (
-                                <span className="block text-[10px] font-semibold text-green-600">
-                                  saves {formatCurrency(savings)}
+                              </div>
+                              {/* Item info */}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-start text-gray-900 truncate">
+                                  {modItem.label ??
+                                    (isPopulated
+                                      ? modItem.product.name
+                                      : "Unavailable")}
+                                </p>
+                                {modItem.label &&
+                                  isPopulated &&
+                                  modItem.label !== modItem.product.name && (
+                                    <p className="text-[10px] text-gray-400 truncate">
+                                      {modItem.product.name}
+                                    </p>
+                                  )}
+                              </div>
+                              {/* Upgrade price */}
+                              <div className="text-right shrink-0">
+                                <span className="text-sm font-bold text-brand-color-500">
+                                  {upgradePrice === 0
+                                    ? "0"
+                                    : `+ ${formatCurrency(upgradePrice)}`}
                                 </span>
+                                {hasDiscount && savings > 0 && (
+                                  <span className="block text-[10px] font-semibold text-green-600">
+                                    saves {formatCurrency(savings)}
+                                  </span>
+                                )}
+                              </div>
+                              {/* Quantity stepper — visible only when selected */}
+                              {isSelected && (
+                                <div
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="max-w-28"
+                                >
+                                  <QuantityStepper
+                                    value={itemQty}
+                                    min={1}
+                                    max={Math.max(
+                                      1,
+                                      (Number(eff.maxQty) || 1) -
+                                        currentTotalQty +
+                                        itemQty,
+                                    )}
+                                    onChange={(val) =>
+                                      setModifierItemQty(
+                                        groupId,
+                                        modProductId,
+                                        {
+                                          maxSelect: eff.maxSelect,
+                                          maxQty: Number(eff.maxQty) || 1,
+                                        },
+                                        val,
+                                      )
+                                    }
+                                  />
+                                </div>
                               )}
                             </div>
-                            {/* Quantity stepper — visible only when selected */}
-                            {isSelected && (
-                              <div onClick={(e) => e.stopPropagation()} className="max-w-28">
-                                <QuantityStepper
-                                  value={itemQty}
-                                  min={1}
-                                  max={Math.max(
-                                    1,
-                                    (Number(eff.maxQty) || 1) - currentTotalQty + itemQty,
-                                  )}
-                                  onChange={(val) =>
-                                    setModifierItemQty(
-                                      groupId,
-                                      modProductId,
-                                      { maxSelect: eff.maxSelect, maxQty: Number(eff.maxQty) || 1 },
-                                      val,
-                                    )
-                                  }
-                                />
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
+                      </div>
                     </div>
+                  );
+                })}
+              {/* ── Validation errors ────────────────────────────────────────── */}
+              {modifierValidationErrors.length > 0 && (
+                <div className="flex items-start gap-2 text-xs text-red-500 bg-red-50 rounded-lg p-3">
+                  <DynamicIcon
+                    name="AlertCircle"
+                    size={14}
+                    className="shrink-0 mt-0.5"
+                  />
+                  <div>
+                    {modifierValidationErrors.map((err, i) => (
+                      <p key={i}>{err}</p>
+                    ))}
                   </div>
-                );
-              })}
-
-            {/* ── Validation errors ────────────────────────────────────────── */}
-            {modifierValidationErrors.length > 0 && (
-              <div className="flex items-start gap-2 text-xs text-red-500 bg-red-50 rounded-lg p-3">
-                <DynamicIcon
-                  name="AlertCircle"
-                  size={14}
-                  className="shrink-0 mt-0.5"
-                />
-                <div>
-                  {modifierValidationErrors.map((err, i) => (
-                    <p key={i}>{err}</p>
-                  ))}
                 </div>
-              </div>
-            )}
-
-            {/* ── Add to cart footer ────────────────────────────────────────── */}
-            <div className="sticky bottom-0 bg-gray-50 border-t border-gray-100 py-4 -mx-4 px-4 md:mx-0 md:px-0 md:border-t-0 md:pt-0">
-              <div className="flex items-center gap-3 mt-4">
-                <div className="place-self-stretch">
-                  <QuantityStepper
-                    value={mainQty}
-                    min={1}
-                    onChange={setMainQty}
+              )}
+              {/* ── Add to cart footer ────────────────────────────────────────── */}
+              <div className="sticky bottom-0 bg-gray-50 border-t border-gray-100 py-4 -mx-4 px-4 md:mx-0 md:px-0 md:border-t-0 md:pt-0">
+                <div className="flex items-center gap-3 mt-4">
+                  <div className="place-self-stretch">
+                    <QuantityStepper
+                      value={mainQty}
+                      min={1}
+                      onChange={setMainQty}
+                    />
+                  </div>
+                  <IconButton
+                    text={
+                      isAdded
+                        ? "Added!"
+                        : `Add to cart · ${formatCurrency(total)}`
+                    }
+                    variant={
+                      isAdded
+                        ? "success"
+                        : canAddToCart && !isOutOfStock
+                          ? "primary"
+                          : "disabled"
+                    }
+                    className="p-3 rounded-lg w-full"
+                    icon={{ name: isAdded ? "Check" : "ShoppingBag" }}
+                    onClick={handleAddToCart}
+                    disabled={isAdded || !canAddToCart || isOutOfStock}
                   />
                 </div>
-                <IconButton
-                  text={
-                    isAdded
-                      ? "Added!"
-                      : `Add to cart · ${formatCurrency(total)}`
-                  }
-                  variant={
-                    isAdded
-                      ? "success"
-                      : canAddToCart && !isOutOfStock
-                        ? "primary"
-                        : "disabled"
-                  }
-                  className="p-3 rounded-lg w-full"
-                  icon={{ name: isAdded ? "Check" : "ShoppingBag" }}
-                  onClick={handleAddToCart}
-                  disabled={isAdded || !canAddToCart || isOutOfStock}
-                />
               </div>
             </div>
+
+          </div>
+
+          {/* ── Recommendations sidebar ────────────────────────────────── */}
+          <div className="lg:w-64 lg:shrink-0">
+            <ProductRecommendations
+              branchId={branchId ?? null}
+              excludeIds={[product._id]}
+              categoryId={product.category?._id}
+              layout="column"
+            />
           </div>
         </div>
       </div>

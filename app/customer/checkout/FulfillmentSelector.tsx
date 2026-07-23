@@ -35,7 +35,7 @@ export function FulfillmentSelector({
   onChange,
 }: FulfillmentSelectorProps) {
   return (
-    <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+    <div className="mt-5 grid grid-cols-1 gap-3 lg:grid-cols-3">
       {options.map((option) => {
         const isSelected = value === option.value;
 
@@ -50,23 +50,28 @@ export function FulfillmentSelector({
                 : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
             }`}
           >
-            <span
-              className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
-                isSelected
-                  ? "bg-brand-color-500 text-white"
-                  : "bg-slate-100 text-slate-500"
-              }`}
-            >
-              <DynamicIcon name={option.icon} size={17} />
-            </span>
-            <span className="min-w-0">
-              <span className="block text-sm font-semibold">
-                {option.label}
-              </span>
-              <span className="mt-0.5 block text-xs leading-5 text-slate-500">
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-4">
+                <span
+                  className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
+                    isSelected
+                      ? "bg-brand-color-500 text-white"
+                      : "bg-slate-100 text-slate-500"
+                  }`}
+                >
+                  <DynamicIcon name={option.icon} size={17} />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-sm font-semibold">
+                    {option.label}
+                  </span>
+                </span>
+              </div>
+
+              <p className="mt-0.5 block text-xs leading-5 text-slate-500">
                 {option.description}
-              </span>
-            </span>
+              </p>
+            </div>
           </button>
         );
       })}

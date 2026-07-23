@@ -1,6 +1,5 @@
 import OrderNowButton from "@/components/ui/OrderNowButton";
-import { useCart } from "@/contexts/CartContext";
-import { getCartKey } from "@/contexts/CartContext";
+import { useCart,getCartKey } from "@/contexts/CartContext";
 import { useCreateOrder } from "@/hooks/api/customers/useCustomerOrders";
 import { DynamicIcon } from "@/components/ui/DynamicIcon";
 import { useSettings } from "@/hooks/api/useSettings";
@@ -8,7 +7,7 @@ import { getStoreStatus } from "@/lib/storeStatus";
 import { Branch } from "@/types/branch";
 import Link from "next/link";
 import { toast } from "sonner";
-import { CustomerSchema, OrderFormState, ShippingSchema } from "./FormSchema";
+import { CustomerSchema, OrderFormState, ShippingSchema,ReservationSchema } from "./FormSchema";
 import useFormErrors from "./useFormErrors";
 import { usePathname, useRouter } from "next/navigation";
 import { CheckoutStep } from "@/contexts/CheckoutContext";
@@ -46,9 +45,11 @@ import { useBranchCapacity } from "@/hooks/api/useBranchCapacity";
 import { AppImage } from "@/components/AppImage";
 import { formatCurrency } from "@/helper/formatter/";
 import { Checkbox, InputField } from "@/components/ui/FormComponents";
-import { ReservationSchema } from "./FormSchema";
 import { validatePickupTime } from "@/lib/operatingHours";
 import { SummaryRow } from "@/components/ui/SummaryRow";
+import ProductRecommendations from "../components/ProductRecommendations";
+import { QuantityStepper } from "../menu/components/QuantityStepper";
+import { IconButton } from "@/components/ui/buttons";
 
 const createCodOrder = async (payload: CreateOrderPayload) => {
   const response = await apiClient.post<{
@@ -103,34 +104,22 @@ const CartRow = ({
               </p>
             )}
           </div>
-          <button
+          <IconButton
             onClick={() => onRemove(cartKey)}
             aria-label="Remove item"
-            className="p-1 text-slate-300 hover:text-red-400 transition-colors shrink-0 rounded-full"
-          >
-            <DynamicIcon name="Trash2" size={13} />
-          </button>
+            icon={{name: "Trash2", size: 13}}
+            variant="ghost"
+          />
         </div>
 
         <div className="flex items-center justify-between mt-2.5">
-          {/* Quantity stepper */}
-          <div className="flex items-center gap-0.5 border border-slate-200 rounded-full overflow-hidden">
-            <button
-              onClick={() => onUpdate(cartKey, item.quantity - 1)}
-              className="w-7 h-7 flex items-center justify-center hover:bg-slate-100 transition-colors text-slate-600"
-            >
-              <DynamicIcon name="Minus" size={11} />
-            </button>
-            <span className="w-6 text-center text-xs font-semibold text-slate-800">
-              {item.quantity}
-            </span>
-            <button
-              onClick={() => onUpdate(cartKey, item.quantity + 1)}
-              className="w-7 h-7 flex items-center justify-center hover:bg-slate-100 transition-colors text-slate-600"
-            >
-              <DynamicIcon name="Plus" size={11} />
-            </button>
-          </div>
+          {/* Quantity stepper — min=1 keeps the item in the cart */}
+          <QuantityStepper
+            value={item.quantity}
+            min={1}
+            onChange={(value) => onUpdate(cartKey, value)}
+            className="max-w-30"
+          />
 
           <div className="flex flex-col items-end">
             <span className="text-sm font-bold text-brand-color-500">
@@ -446,15 +435,19 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
     !ShippingSchema.safeParse(orderDetails.shippingAddress).success;
   const isReservationIncomplete =
     isDineIn && !ReservationSchema.safeParse(orderDetails.reservation).success;
-  const pickupTimeValidationError =
-    isPickup ? validatePickupTime(orderDetails.pickupTime, settings?.operatingHours) : null;
+  const pickupTimeValidationError = isPickup
+    ? validatePickupTime(orderDetails.pickupTime, settings?.operatingHours)
+    : null;
   const isPickupTimeIncomplete = isPickup && !!pickupTimeValidationError;
 
   const isNextDisabled =
     isStoreClosed ||
     !selectedBranch ||
     isAtCapacity ||
-    (isDetails && (isDetailsIncomplete || isReservationIncomplete || isPickupTimeIncomplete)) ||
+    (isDetails &&
+      (isDetailsIncomplete ||
+        isReservationIncomplete ||
+        isPickupTimeIncomplete)) ||
     (isShipping &&
       (isShippingIncomplete ||
         (isDelivery && (isDeliveryFeeLoading || isDeliveryFeeError))));
@@ -514,6 +507,18 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
       return;
     }
 
+    // Guard: prevent submitting items with empty or invalid quantities
+    const validCartItems = cartItems.filter((item) => item.quantity >= 1);
+    if (validCartItems.length === 0) {
+      toast.error("Your cart has no valid items. Please update quantities.");
+      return;
+    }
+    if (validCartItems.length !== cartItems.length) {
+      toast.warning(
+        "Some items with invalid quantities were removed from your order.",
+      );
+    }
+
     const orderPayload: CreateOrderPayload = {
       branchId: selectedBranch!._id,
       fulfillmentType: orderDetails.fulfillmentType,
@@ -525,16 +530,14 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
       notes,
       applyPromoCardDiscount,
       voucherAmount: parsedVoucherAmount,
-      items: cartItems
-        .filter((item) => item.quantity > 0)
-        .map((item) => ({
-          _id: item._id,
-          quantity: item.quantity,
-          // Include modifier selections for combo/set products so they persist on the order
-          ...(item.modifierSelections && item.modifierSelections.length > 0
-            ? { modifierSelections: item.modifierSelections }
-            : {}),
-        })),
+      items: validCartItems.map((item) => ({
+        _id: item._id,
+        quantity: item.quantity,
+        // Include modifier selections for combo/set products so they persist on the order
+        ...(item.modifierSelections && item.modifierSelections.length > 0
+          ? { modifierSelections: item.modifierSelections }
+          : {}),
+      })),
       ...(isDelivery && {
         shippingAddress: {
           line1,
@@ -618,369 +621,351 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
     );
   }
   return (
-    <div className="space-y-3">
-      {/* High demand banner */}
-      {isAtCapacity && (
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4 text-center">
-          <div className="flex items-center justify-center gap-2 mb-1">
-            <DynamicIcon name="Clock" size={16} className="text-amber-500" />
-            <p className="text-sm font-bold text-amber-700">
-              We&apos;re Experiencing High Demand
-            </p>
-          </div>
-          <p className="text-xs text-amber-600">
-            We&apos;re currently at capacity and can&apos;t accept new orders at
-            this moment. We&apos;ll be ready shortly — please check back soon!
-          </p>
-        </div>
-      )}
-
-      {/* Cart Items */}
-      <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-        {/* Header */}
-        <div className="px-5 pt-5 pb-3 border-b border-slate-100">
-          <div className="flex items-baseline justify-between">
-            <h2 className="text-base font-semibold text-slate-900">
-              Order summary
-            </h2>
-            <span className="text-xs text-slate-400">
-              {cartItems.length} item{cartItems.length !== 1 ? "s" : ""}
-            </span>
-          </div>
-        </div>
-
-        {/* Cart items list */}
-        <div className="px-5 py-4 divide-y divide-slate-100 max-h-72 overflow-y-auto hide-scrollbar">
-          {cartItems.map((item, index) => (
-            <CartRow
-              key={index}
-              item={item}
-              onRemove={removeFromCart}
-              onUpdate={updateQuantity}
-            />
-          ))}
-        </div>
-
-        {/* Order Totals */}
-        <div className="px-5 py-4 bg-slate-50 border-t border-slate-100 space-y-2">
-          {isPromoCardEnabled && (
-            <div className="bg-white border border-brand-color-500/20 rounded-lg">
-              <Checkbox
-                label={`Apply ${promoCardConfig.name}`}
-                subLabel={
-                  canUsePromoCardDiscount
-                    ? `Enjoy ${(activeDiscountRate * 100).toFixed(0)}% off this order today.`
-                    : "Purchase a promo card to unlock this discount."
-                }
-                checked={applyPromoCardDiscount}
-                onChange={(event) =>
-                  setApplyPromoCardDiscount(event.target.checked)
-                }
-                disabled={!canUsePromoCardDiscount}
-                wrapperClassName="py-6"
-              />
+    <div className="flex flex-col 2xl:flex-row gap-4 min-w-auto 2xl:min-w-3xl relative">
+      <div className="space-y-3">
+        {/* High demand banner */}
+        {isAtCapacity && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4 text-center">
+            <div className="flex items-center justify-center gap-2 mb-1">
+              <DynamicIcon name="Clock" size={16} className="text-amber-500" />
+              <p className="text-sm font-bold text-amber-700">
+                We&apos;re Experiencing High Demand
+              </p>
             </div>
-          )}
-
-          <SummaryRow
-            title="Subtotal"
-            subTitle={formatCurrency(subtotalPrice)}
-          />
-          {productDiscountAmount > 0 && (
-            <SummaryRow
-              title="Product discounts"
-              subTitle={`- ${formatCurrency(productDiscountAmount)}`}
-              className={{ title: "text-green-600" }}
-            />
-          )}
-          {promoCardDiscount > 0 && (
-            <SummaryRow
-              title="Promo card discount"
-              subTitle={`- ${formatCurrency(promoCardDiscount)}`}
-              className={{ title: "text-green-600" }}
-            />
-          )}
-          {orderDiscountAmount > 0 && (
-            <SummaryRow
-              title={orderDiscountPromotion?.name || "Order Discount"}
-              subTitle={`- ${formatCurrency(orderDiscountAmount)}`}
-              className={{ title: "text-green-600 min-w-0 truncate" }}
-            />
-          )}
-          {orderDiscountAmount === 0 && nextOrderDiscountHint && (
-            <p className="block font-extralight text-brand-color-500 text-sm">
-              Spend{" "}
-              <span className="font-bold">
-                {formatCurrency(nextOrderDiscountHint.amountUntilEligible)}
-              </span>{" "}
-              more to use {nextOrderDiscountHint.name}.
+            <p className="text-xs text-amber-600">
+              We&apos;re currently at capacity and can&apos;t accept new orders
+              at this moment. We&apos;ll be ready shortly — please check back
+              soon!
             </p>
-          )}
-          {availableVoucherBalance > 0 && (
-            <InputField
-              label="Use voucher balance"
-              subLabel={`Available ${formatCurrency(availableVoucherBalance)}`}
-              type="number"
-              min={0}
-              max={Math.min(availableVoucherBalance, discountAdjustedTotal)}
-              step={0.01}
-              value={voucherAmount}
-              onChange={(event) => setVoucherAmount(event.target.value)}
-              placeholder="Enter voucher amount"
-            />
-          )}
-          {parsedVoucherAmount > 0 && (
+          </div>
+        )}
+        {/* Cart Items */}
+        <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+          {/* Header */}
+          <div className="px-5 pt-5 pb-3 border-b border-slate-100">
             <SummaryRow
-              title="Voucher discount"
-              subTitle={`- ${formatCurrency(parsedVoucherAmount)}`}
-              className={{ title: "text-green-600" }}
+              title="Order summary"
+              subTitle={`${cartItems.length} item${cartItems.length !== 1 ? "s" : ""}`}
+              className={{ title: "text-base font-semibold text-black" }}
             />
-          )}
-          {isDelivery && (deliveryFeeAmount > 0 || isDeliveryFeeLoading) && (
-            <div className="flex justify-between gap-3 text-sm">
-              <span
-                className={
-                  freeDeliveryEligible
-                    ? "text-green-600 font-semibold"
-                    : "text-green-500"
-                }
-              >
-                Delivery fee
-                {deliveryFeeEstimate?.data.distanceKm != null && (
-                  <span className="ml-1 text-xs">
-                    ({deliveryFeeEstimate.data.distanceKm.toFixed(2)} km)
+          </div>
+          {/* Cart items list */}
+          <div className="px-5 py-4 divide-y divide-slate-100 max-h-72 overflow-y-auto hide-scrollbar">
+            {cartItems.map((item, index) => (
+              <CartRow
+                key={index}
+                item={item}
+                onRemove={removeFromCart}
+                onUpdate={updateQuantity}
+              />
+            ))}
+          </div>
+          {/* Order Totals */}
+          <div className="px-5 py-4 bg-slate-50 border-t border-slate-100 space-y-2">
+            {isPromoCardEnabled && (
+              <div className="bg-white border border-brand-color-500/20 rounded-lg">
+                <Checkbox
+                  label={`Apply ${promoCardConfig.name}`}
+                  subLabel={
+                    canUsePromoCardDiscount
+                      ? `Enjoy ${(activeDiscountRate * 100).toFixed(0)}% off this order today.`
+                      : "Purchase a promo card to unlock this discount."
+                  }
+                  checked={applyPromoCardDiscount}
+                  onChange={(event) =>
+                    setApplyPromoCardDiscount(event.target.checked)
+                  }
+                  disabled={!canUsePromoCardDiscount}
+                  wrapperClassName="py-6"
+                />
+              </div>
+            )}
+            <SummaryRow
+              title="Subtotal"
+              subTitle={formatCurrency(subtotalPrice)}
+            />
+            {productDiscountAmount > 0 && (
+              <SummaryRow
+                title="Product discounts"
+                subTitle={`- ${formatCurrency(productDiscountAmount)}`}
+                className={{ title: "text-green-600" }}
+              />
+            )}
+            {promoCardDiscount > 0 && (
+              <SummaryRow
+                title="Promo card discount"
+                subTitle={`- ${formatCurrency(promoCardDiscount)}`}
+                className={{ title: "text-green-600" }}
+              />
+            )}
+            {orderDiscountAmount > 0 && (
+              <SummaryRow
+                title={orderDiscountPromotion?.name || "Order Discount"}
+                subTitle={`- ${formatCurrency(orderDiscountAmount)}`}
+                className={{ title: "text-green-600 min-w-0 truncate" }}
+              />
+            )}
+            {orderDiscountAmount === 0 && nextOrderDiscountHint && (
+              <p className="block font-extralight text-brand-color-500 text-sm">
+                Spend{" "}
+                <span className="font-bold">
+                  {formatCurrency(nextOrderDiscountHint.amountUntilEligible)}
+                </span>{" "}
+                more to use {nextOrderDiscountHint.name}.
+              </p>
+            )}
+            {availableVoucherBalance > 0 && (
+              <InputField
+                label="Use voucher balance"
+                subLabel={`Available ${formatCurrency(availableVoucherBalance)}`}
+                type="number"
+                min={0}
+                max={Math.min(availableVoucherBalance, discountAdjustedTotal)}
+                step={0.01}
+                value={voucherAmount}
+                onChange={(event) => setVoucherAmount(event.target.value)}
+                placeholder="Enter voucher amount"
+              />
+            )}
+            {parsedVoucherAmount > 0 && (
+              <SummaryRow
+                title="Voucher discount"
+                subTitle={`- ${formatCurrency(parsedVoucherAmount)}`}
+                className={{ title: "text-green-600" }}
+              />
+            )}
+            {isDelivery && (deliveryFeeAmount > 0 || isDeliveryFeeLoading) && (
+              <div className="flex justify-between gap-3 text-sm">
+                <span
+                  className={
+                    freeDeliveryEligible
+                      ? "text-green-600 font-semibold"
+                      : "text-green-500"
+                  }
+                >
+                  Delivery fee
+                  {deliveryFeeEstimate?.data.distanceKm != null && (
+                    <span className="ml-1 text-xs">
+                      ({deliveryFeeEstimate.data.distanceKm.toFixed(2)} km)
+                    </span>
+                  )}
+                </span>
+                {freeDeliveryEligible ? (
+                  <span className="flex items-center gap-1.5">
+                    <span className="line-through text-slate-400">
+                      {formatCurrency(deliveryFeeAmount)}
+                    </span>
+                    <span className="text-green-600 font-bold">FREE</span>
+                  </span>
+                ) : (
+                  <span className="text-slate-500">
+                    {isDeliveryFeeLoading
+                      ? "Calculating..."
+                      : formatCurrency(deliveryFeeAmount)}
                   </span>
                 )}
-              </span>
-              {freeDeliveryEligible ? (
-                <span className="flex items-center gap-1.5">
-                  <span className="line-through text-slate-400">
-                    {formatCurrency(deliveryFeeAmount)}
-                  </span>
-                  <span className="text-green-600 font-bold">FREE</span>
-                </span>
-              ) : (
-                <span className="text-slate-500">
-                  {isDeliveryFeeLoading
-                    ? "Calculating..."
-                    : formatCurrency(deliveryFeeAmount)}
-                </span>
+              </div>
+            )}
+            {isDelivery &&
+              !freeDeliveryEligible &&
+              freeDeliveryReason &&
+              !isDeliveryFeeLoading && (
+                <p className="text-xs font-medium text-red-600">
+                  {freeDeliveryReason}
+                </p>
+              )}
+            {isDelivery && isDeliveryFeeError && (
+              <p className="rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-medium text-red-500">
+                Delivery fee could not be calculated. Please adjust your pin or
+                try again.
+              </p>
+            )}
+            <SummaryRow
+              title="VATable Sales"
+              subTitle={formatCurrency(displayVatableSales)}
+            />
+            <SummaryRow
+              title="VAT (12%)"
+              subTitle={formatCurrency(displayVatAmount)}
+            />
+            <SummaryRow
+              title="Total (VAT Inc)"
+              subTitle={formatCurrency(displayTotalPrice)}
+              className={{
+                title: "font-bold text-slate-900",
+                subTitle: "text-lg font-bold text-brand-color-500",
+              }}
+            />
+          </div>
+        </div>
+        {/* Estimated time hint */}
+        <div className="flex items-center gap-2 px-1">
+          <DynamicIcon name="Clock" size={13} className=" text-slate-400" />
+          <p className="text-xs text-gray-400">
+            Estimated prep time: 30 - 45 minutes
+          </p>
+        </div>
+        {/* CTA */}
+        <>
+          <IconButton
+            onClick={isSubmitStep ? handlePlaceOrder : handleNext}
+            disabled={isActionPending || isNextDisabled}
+            text={
+              isActionPending
+                ? "Placing Order..."
+                : isSubmitStep && isDineIn
+                  ? "Confirm Reservation"
+                  : isSubmitStep && !isDelivery
+                    ? "Place Pickup Order"
+                    : isSubmitStep
+                      ? "Place Order"
+                      : `Next —${isDelivery ? "Shipping Details" : isDineIn ? "Reservaton Details" : "Pickup Details"}`
+            }
+            icon={{
+              name: isActionPending
+                ? "Loader2"
+                : isSubmitStep && isDineIn
+                  ? "CalendarCheck"
+                  : (isSubmitStep && !isDelivery) || isSubmitStep
+                    ? "ShoppingBag"
+                    : "ArrowRight",
+              className: isActionPending ? "animate-spin" : "",
+            }}
+            className="py-3.5 rounded-2xl w-full"
+          />
+          {/* show which fields are still missing */}
+          {isNextDisabled && !selectedBranch && !isStoreClosed && (
+            <p className="text-xs text-center text-red-400">
+              Select a branch to continue
+            </p>
+          )}
+          {isNextDisabled && selectedBranch && isAtCapacity && (
+            <p className="text-xs text-center text-amber-500">
+              Currently at capacity — please check back shortly
+            </p>
+          )}
+          {isStoreClosed && storeClosedInfo && (
+            <div className="bg-red-50 border border-red-200/60 rounded-2xl px-4 py-3 text-center">
+              <div className="flex items-center justify-center gap-1.5 mb-1">
+                <DynamicIcon name="Store" size={14} className="text-red-500" />
+                <p className="text-xs font-bold text-red-700">
+                  {storeClosedInfo.title}
+                </p>
+              </div>
+              <p className="text-xs text-red-600">{storeClosedInfo.body}</p>
+              <p className="text-xs text-red-500 mt-1">
+                {storeClosedInfo.suggestion}
+              </p>
+            </div>
+          )}
+          {isNextDisabled &&
+            selectedBranch &&
+            !isAtCapacity &&
+            !isStoreClosed && (
+              <p className="text-xs text-center text-red-400">
+                Complete all required fields to continue
+              </p>
+            )}
+        </>
+        <Link
+          href="/"
+          className="block text-center text-xs text-gray-400 hover:text-gray-600 transition-colors underline underline-offset-2 pt-1"
+        >
+          Need to add more items?
+        </Link>
+        {!isStoreClosed && (
+          <p className="mt-1 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs leading-5 text-slate-500">
+            By placing an order, you agree to our{" "}
+            <span className="font-semibold text-slate-600">
+              Terms of Service
+            </span>
+            ,{" "}
+            <Link
+              href="/policies/privacy-policy"
+              className="font-semibold text-brand-color-600 hover:underline"
+            >
+              Privacy Policy
+            </Link>
+            , and delivery service guidelines, including use of your provided
+            contact details and delivery location to process the order.
+          </p>
+        )}
+        {showPaymentOptions && (
+          <Modal
+            title="Choose Payment Method"
+            onClose={() => setShowPaymentOptions(false)}
+          >
+            <div className="flex flex-col gap-3">
+              <div className="flex gap-3">
+                {/* Maya */}
+                <PaymentButton
+                  id="maya"
+                  label="Maya"
+                  description="Pay via Maya e-wallet or card"
+                  badge="Instant"
+                  imageSrc="/images/maya-white.png"
+                  imageAlt="Maya"
+                  selectedPayment={selectedPayment}
+                  setSelectedPayment={setSelectedPayment}
+                />
+                <PaymentButton
+                  id="cod"
+                  label={
+                    isDelivery
+                      ? "Cash on Delivery"
+                      : isDineIn
+                        ? "Pay at Branch"
+                        : "Cash on Pickup"
+                  }
+                  description="Pay when your order arrives"
+                  badge="No fee"
+                  imageSrc="/images/cod-icon.png"
+                  imageAlt={
+                    isDelivery
+                      ? "Cash on Delivery"
+                      : isDineIn
+                        ? "Pay at Branch"
+                        : "Cash on Pickup"
+                  }
+                  selectedPayment={selectedPayment}
+                  setSelectedPayment={setSelectedPayment}
+                />
+              </div>
+              {/* Confirm */}
+              <IconButton
+                disabled={isStoreClosed || !selectedPayment}
+                onClick={() => {
+                  trackAddPaymentInfo({
+                    content_category:
+                      selectedPayment === "maya" ? "Maya" : "Cash on Delivery",
+                    currency: "PHP",
+                    value: totalPrice,
+                  });
+                  handlePlaceOrder();
+                  setShowPaymentOptions(false);
+                }}
+                text="Confirm Payment"
+                variant="primary"
+                className="bg-green-500 hover:bg-green-600 rounded-lg py-3"
+              />
+              {isStoreClosed && storeClosedInfo && (
+                <p className="text-xs text-center text-red-500 mt-2">
+                  {storeClosedInfo.body} — {storeClosedInfo.suggestion}
+                </p>
               )}
             </div>
-          )}
-          {isDelivery &&
-            !freeDeliveryEligible &&
-            freeDeliveryReason &&
-            !isDeliveryFeeLoading && (
-              <p className="text-xs font-medium text-red-600">
-                {freeDeliveryReason}
-              </p>
-            )}
-          {isDelivery && isDeliveryFeeError && (
-            <p className="rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-medium text-red-500">
-              Delivery fee could not be calculated. Please adjust your pin or
-              try again.
-            </p>
-          )}
-          <SummaryRow
-            title="VATable Sales"
-            subTitle={formatCurrency(displayVatableSales)}
-          />
-          <SummaryRow
-            title="VAT (12%)"
-            subTitle={formatCurrency(displayVatAmount)}
-          />
-
-          <SummaryRow
-            title="Total (VAT Inc)"
-            subTitle={formatCurrency(displayTotalPrice)}
-            className={{
-              title: "font-bold text-slate-900",
-              subTitle: "text-lg font-bold text-brand-color-500",
-            }}
-          />
-        </div>
+          </Modal>
+        )}
       </div>
 
-      {/* Estimated time hint */}
-      <div className="flex items-center gap-2 px-1">
-        <DynamicIcon name="Clock" size={13} className=" text-slate-400" />
-        <p className="text-xs text-gray-400">
-          Estimated prep time: 30 - 45 minutes
-        </p>
+      <div className="sticky top-24 w-full">
+        <ProductRecommendations
+          branchId={selectedBranch?._id ?? null}
+          excludeIds={cartItems.map((item) => item._id)}
+          title="You may also like"
+          layout="column"
+        />
       </div>
-
-      {/* CTA */}
-      <>
-        <button
-          onClick={isSubmitStep ? handlePlaceOrder : handleNext}
-          disabled={isActionPending || isNextDisabled}
-          className={`w-full py-3.5 rounded-2xl text-sm font-bold transition-all ${
-            isPending || isNextDisabled || isCodPending
-              ? "cursor-not-allowed bg-gray-200 text-gray-400"
-              : "cursor-pointer bg-brand-color-500 hover:bg-[#c13500] active:scale-[0.98] text-white shadow-sm shadow-brand-color-500/20"
-          }`}
-        >
-          {isActionPending ? (
-            <span className="flex items-center gap-2 justify-center">
-              Placing order…
-              <DynamicIcon name="Loader" size={14} className="animate-spin" />
-            </span>
-          ) : isSubmitStep && isDineIn ? (
-            <span className="flex items-center gap-2 justify-center">
-              Confirm Reservation
-              <DynamicIcon name="CalendarCheck" size={14} />
-            </span>
-          ) : isSubmitStep && !isDelivery ? (
-            <span className="flex items-center gap-2 justify-center">
-              Place Pickup Order
-              <DynamicIcon name="ShoppingBag" size={14} />
-            </span>
-          ) : isSubmitStep ? (
-            <span className="flex items-center gap-2 justify-center">
-              Place Order
-              <DynamicIcon name="ShoppingBag" size={14} />
-            </span>
-          ) : (
-            <span className="flex items-center gap-2 justify-center">
-              Next —{" "}
-              {isDelivery
-                ? "Shipping details"
-                : isDineIn
-                  ? "Reservation details"
-                  : "Pickup details"}
-              <DynamicIcon name="ArrowRight" size={14} />
-            </span>
-          )}
-        </button>
-
-        {/* show which fields are still missing */}
-        {isNextDisabled && !selectedBranch && !isStoreClosed && (
-          <p className="text-xs text-center text-red-400">
-            Select a branch to continue
-          </p>
-        )}
-
-        {isNextDisabled && selectedBranch && isAtCapacity && (
-          <p className="text-xs text-center text-amber-500">
-            Currently at capacity — please check back shortly
-          </p>
-        )}
-
-        {isStoreClosed && storeClosedInfo && (
-          <div className="bg-red-50 border border-red-200/60 rounded-2xl px-4 py-3 text-center">
-            <div className="flex items-center justify-center gap-1.5 mb-1">
-              <DynamicIcon name="Store" size={14} className="text-red-500" />
-              <p className="text-xs font-bold text-red-700">
-                {storeClosedInfo.title}
-              </p>
-            </div>
-            <p className="text-xs text-red-600">{storeClosedInfo.body}</p>
-            <p className="text-xs text-red-500 mt-1">
-              {storeClosedInfo.suggestion}
-            </p>
-          </div>
-        )}
-
-        {isNextDisabled &&
-          selectedBranch &&
-          !isAtCapacity &&
-          !isStoreClosed && (
-            <p className="text-xs text-center text-red-400">
-              Complete all required fields to continue
-            </p>
-          )}
-      </>
-
-      <Link
-        href="/"
-        className="block text-center text-xs text-gray-400 hover:text-gray-600 transition-colors underline underline-offset-2 pt-1"
-      >
-        Need to add more items?
-      </Link>
-      {!isStoreClosed && (
-        <p className="mt-1 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs leading-5 text-slate-500">
-          By placing an order, you agree to our{" "}
-          <span className="font-semibold text-slate-600">Terms of Service</span>
-          ,{" "}
-          <Link
-            href="/policies/privacy-policy"
-            className="font-semibold text-brand-color-600 hover:underline"
-          >
-            Privacy Policy
-          </Link>
-          , and delivery service guidelines, including use of your provided
-          contact details and delivery location to process the order.
-        </p>
-      )}
-
-      {showPaymentOptions && (
-        <Modal
-          title="Choose Payment Method"
-          onClose={() => setShowPaymentOptions(false)}
-        >
-          <div className="flex flex-col gap-3">
-            <div className="flex gap-3">
-              {/* Maya */}
-              <PaymentButton
-                id="maya"
-                label="Maya"
-                description="Pay via Maya e-wallet or card"
-                badge="Instant"
-                imageSrc="/images/maya-white.png"
-                imageAlt="Maya"
-                selectedPayment={selectedPayment}
-                setSelectedPayment={setSelectedPayment}
-              />
-              <PaymentButton
-                id="cod"
-                label={
-                  isDelivery
-                    ? "Cash on Delivery"
-                    : isDineIn
-                      ? "Pay at Branch"
-                      : "Cash on Pickup"
-                }
-                description="Pay when your order arrives"
-                badge="No fee"
-                imageSrc="/images/cod-icon.png"
-                imageAlt={
-                  isDelivery
-                    ? "Cash on Delivery"
-                    : isDineIn
-                      ? "Pay at Branch"
-                      : "Cash on Pickup"
-                }
-                selectedPayment={selectedPayment}
-                setSelectedPayment={setSelectedPayment}
-              />
-            </div>
-            {/* Confirm */}
-            <button
-              disabled={isStoreClosed || !selectedPayment}
-              onClick={() => {
-                trackAddPaymentInfo({
-                  content_category:
-                    selectedPayment === "maya" ? "Maya" : "Cash on Delivery",
-                  currency: "PHP",
-                  value: totalPrice,
-                });
-                handlePlaceOrder();
-                setShowPaymentOptions(false);
-              }}
-              className="w-full py-3 mt-1 rounded-xl font-semibold text-white bg-green-500 hover:bg-green-600
-    disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-            >
-              Confirm Payment
-            </button>
-            {isStoreClosed && storeClosedInfo && (
-              <p className="text-xs text-center text-red-500 mt-2">
-                {storeClosedInfo.body} — {storeClosedInfo.suggestion}
-              </p>
-            )}
-          </div>
-        </Modal>
-      )}
     </div>
   );
 };
