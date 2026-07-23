@@ -1,5 +1,5 @@
 import OrderNowButton from "@/components/ui/OrderNowButton";
-import { useCart,getCartKey } from "@/contexts/CartContext";
+import { useCart, getCartKey } from "@/contexts/CartContext";
 import { useCreateOrder } from "@/hooks/api/customers/useCustomerOrders";
 import { DynamicIcon } from "@/components/ui/DynamicIcon";
 import { useSettings } from "@/hooks/api/useSettings";
@@ -30,11 +30,9 @@ import {
 import {
   addMoney,
   clampMoneyMin,
-  minMoney,
   multiplyMoney,
   subtractMoney,
 } from "@/lib/money";
-import { CartItem } from "@/types/MenuTypes";
 import type { ActivePromotionsResponse } from "@/types/promotions.type";
 import { useQuery } from "@tanstack/react-query";
 import { PromotionDiscountDay } from "@/types/promotions/promotion-constant";
@@ -48,8 +46,8 @@ import { Checkbox, InputField } from "@/components/ui/FormComponents";
 import { validatePickupTime } from "@/lib/operatingHours";
 import { SummaryRow } from "@/components/ui/SummaryRow";
 import ProductRecommendations from "../components/ProductRecommendations";
-import { QuantityStepper } from "../menu/components/QuantityStepper";
 import { IconButton } from "@/components/ui/buttons";
+import CartItemRow from "@/components/customer/CartItemRow";
 
 const createCodOrder = async (payload: CreateOrderPayload) => {
   const response = await apiClient.post<{
@@ -58,86 +56,6 @@ const createCodOrder = async (payload: CreateOrderPayload) => {
   }>("/customer/cod-checkout", payload);
 
   return response;
-};
-
-/** Single cart row */
-const CartRow = ({
-  item,
-  onRemove,
-  onUpdate,
-}: {
-  item: CartItem;
-  onRemove: (cartKey: string) => void;
-  onUpdate: (cartKey: string, qty: number) => void;
-}) => {
-  const cartKey = getCartKey(item);
-  const unitDiscount = item.activeProductDiscount?.discountAmount ?? 0;
-  const lineSubtotal = multiplyMoney(item.price, item.quantity);
-  const lineDiscount = minMoney(
-    multiplyMoney(unitDiscount, item.quantity),
-    lineSubtotal,
-  );
-  const discountedLineTotal = clampMoneyMin(
-    subtractMoney(lineSubtotal, lineDiscount),
-  );
-  const hasProductDiscount = lineDiscount > 0;
-
-  return (
-    <div className="flex gap-3 py-3 first:pt-0">
-      <div className="w-14 h-14 rounded-xl object-cover shrink-0">
-        <AppImage src={item.image} alt={item.name} />
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex justify-between items-start gap-1">
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-slate-900 truncate leading-tight">
-              {item.name}
-            </p>
-            {item.category?.name && (
-              <p className="text-xs text-slate-400 mt-0.5">
-                {item.category.name}
-              </p>
-            )}
-            {hasProductDiscount && (
-              <p className="mt-1 text-[11px] font-semibold text-green-600">
-                {item.activeProductDiscount?.label}
-              </p>
-            )}
-          </div>
-          <IconButton
-            onClick={() => onRemove(cartKey)}
-            aria-label="Remove item"
-            icon={{name: "Trash2", size: 13}}
-            variant="ghost"
-          />
-        </div>
-
-        <div className="flex items-center justify-between mt-2.5">
-          {/* Quantity stepper — min=1 keeps the item in the cart */}
-          <QuantityStepper
-            value={item.quantity}
-            min={1}
-            onChange={(value) => onUpdate(cartKey, value)}
-            className="max-w-30"
-          />
-
-          <div className="flex flex-col items-end">
-            <span className="text-sm font-bold text-brand-color-500">
-              {formatCurrency(discountedLineTotal)}
-            </span>
-            {hasProductDiscount && (
-              <span className="text-[11px] text-slate-400 line-through">
-                {formatCurrency(lineSubtotal)}
-              </span>
-            )}
-          </div>
-          <span className="hidden">
-            {formatCurrency(multiplyMoney(item.price, item.quantity))}
-          </span>
-        </div>
-      </div>
-    </div>
-  );
 };
 
 type CartListProps = {
@@ -650,10 +568,10 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
             />
           </div>
           {/* Cart items list */}
-          <div className="px-5 py-4 divide-y divide-slate-100 max-h-72 overflow-y-auto hide-scrollbar">
-            {cartItems.map((item, index) => (
-              <CartRow
-                key={index}
+          <div className="px-5 py-4 divide-y divide-slate-100 max-h-96 overflow-y-auto hide-scrollbar">
+            {cartItems.map((item) => (
+              <CartItemRow
+                key={getCartKey(item)}
                 item={item}
                 onRemove={removeFromCart}
                 onUpdate={updateQuantity}
