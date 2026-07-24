@@ -9,8 +9,16 @@ export const useCancelOrder = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (orderId: string) =>
-      apiClient.patch(`/customer/orders/${orderId}/cancel`),
+    mutationFn: ({
+      orderId,
+      reason,
+      notes,
+    }: {
+      orderId: string;
+      reason?: string;
+      notes?: string;
+    }) =>
+      apiClient.patch(`/customer/orders/${orderId}/cancel`, { reason, notes }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
       toast.success("Order cancelled successfully");
@@ -43,8 +51,8 @@ export function useOrderActions() {
     }
   };
 
-  const handleCancelOrder = (orderId: string) => {
-    cancelOrder(orderId);
+  const handleCancelOrder = (orderId: string, reason?: string, notes?: string) => {
+    cancelOrder({ orderId, reason, notes });
   };
 
   const handleBuyAgain = (orderItems: any[]) => {

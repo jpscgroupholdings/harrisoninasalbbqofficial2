@@ -2,10 +2,16 @@
 
 import { useState } from "react";
 import { OrderActions } from "@/app/customer/orders/components/OrderActions";
+import ConfirmationWithReasonModal from "@/components/ConfirmationWithReasonModal";
 import LoadingPage from "@/components/ui/LoadingPage";
 import StatusBadge from "@/components/ui/StatusBadge";
+import { useAdminRefundOrder } from "@/hooks/api/admin/useAdminOrders";
 import { useOrderBase } from "@/hooks/api/shared/useOrdersBase";
-import { FULFILLMENT_TYPE, ORDER_STATUSES } from "@/types/orderConstants";
+import {
+  FULFILLMENT_TYPE,
+  ORDER_STATUSES,
+  REFUND_REASONS,
+} from "@/types/orderConstants";
 
 import { buildEmbedUrl } from "@/lib/google-maps";
 import { formatCurrency, formatDate } from "@/helper/formatter";
@@ -18,6 +24,8 @@ import {
   FulfillmentCard,
   PaymentStatusPill,
 } from "./order-details";
+import { IconButton } from "./ui/buttons";
+import { SummaryRow } from "./ui/SummaryRow";
 
 interface OrderDetailsProps {
   orderId: string;
@@ -54,28 +62,6 @@ const TimelineEntry = ({ label, date }: { label: string; date: string }) => (
   </div>
 );
 
-/** Simple label-value row for details */
-const InfoRow = ({
-  label,
-  value,
-  labelClassName,
-  valueClassName,
-  className,
-}: {
-  label: React.ReactNode | string;
-  value: React.ReactNode | string;
-  labelClassName?: string;
-  valueClassName?: string;
-  className?: string;
-}) => (
-  <div className={cn("flex justify-between items-start py-1.5", className)}>
-    <span className={cn("text-xs text-gray-400", labelClassName)}>{label}</span>
-    <span className={cn("text-sm text-gray-700 text-right", valueClassName)}>
-      {value}
-    </span>
-  </div>
-);
-
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 const OrderDetailsModal = ({ orderId, role, variant }: OrderDetailsProps) => {
@@ -95,9 +81,21 @@ const OrderDetailsModal = ({ orderId, role, variant }: OrderDetailsProps) => {
     timeline: false,
   });
 
+  const [showRefundModal, setShowRefundModal] = useState(false);
+  const { mutate: processRefund, isPending: isRefunding } =
+    useAdminRefundOrder();
+
   const toggleSection = (section: string) => {
     setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));
   };
+
+  // Refund eligibility: completed or cancelled, not already refunded, admin only
+  const canRefund =
+    role === "admin" &&
+    orderToView &&
+    (orderToView.status === ORDER_STATUSES.COMPLETED ||
+      orderToView.status === ORDER_STATUSES.CANCELLED) &&
+    orderToView.refund?.status !== "processed";
 
   // ─── Destructure orderToView ──────────────────────────────────────────────
 
@@ -190,6 +188,16 @@ const OrderDetailsModal = ({ orderId, role, variant }: OrderDetailsProps) => {
             <OrderActions order={orderToView} />
           )}
 
+          {/* ── Admin Refund Button ── */}
+          {canRefund && (
+            <IconButton
+              onClick={() => setShowRefundModal(true)}
+              text="Process Refund"
+              icon={{ name: "HandCoins" }}
+              className="rounded-lg bg-blue-500 hover:bg-blue-600"
+            />
+          )}
+
           {/* Map iframe: branch location for pickup/dine-in (customer only), shipping address for delivery (admin only) */}
           {(() => {
             const isAdmin = role === "admin";
@@ -263,46 +271,46 @@ const OrderDetailsModal = ({ orderId, role, variant }: OrderDetailsProps) => {
             <div className="flex flex-col gap-1">
               {/* Itemized line totals — shows where the subtotal comes from */}
               {items.map((item, i) => (
-                <InfoRow
+                <SummaryRow
                   key={i}
-                  label={`${item.name}${item.quantity > 1 ? ` ×${item.quantity}` : ""}`}
-                  value={formatCurrency(
+                  title={`${item.name}${item.quantity > 1 ? ` ×${item.quantity}` : ""}`}
+                  subTitle={formatCurrency(
                     multiplyMoney(item.price, item.quantity),
                   )}
-                  className="py-1"
+                  className={{ parent: "py-1" }}
                 />
               ))}
 
               {/* Subtotal */}
-              <InfoRow
-                label="Subtotal"
-                value={formatCurrency(vatableSales)}
-                labelClassName="font-medium text-gray-600"
-                valueClassName="font-medium text-gray-700"
-                className="border-t border-gray-100 mt-1 pt-2"
+              <SummaryRow
+                title="Subtotal"
+                subTitle={formatCurrency(vatableSales)}
+                className={{ parent: "border-t border-gray-100 mt-1 pt-2" }}
               />
 
               {/* Delivery fee */}
               {!isNonDelivery && deliveryFeeAmount > 0 && (
-                <InfoRow
-                  label={`Delivery Fee${deliveryDistanceKm != null ? ` (${deliveryDistanceKm.toFixed(1)} km)` : ""}`}
-                  value={formatCurrency(deliveryFeeAmount)}
+                <SummaryRow
+                  title={`Delivery Fee${deliveryDistanceKm != null ? ` (${deliveryDistanceKm.toFixed(1)} km)` : ""}`}
+                  subTitle={formatCurrency(deliveryFeeAmount)}
                 />
               )}
-              {!isNonDelivery && deliveryFeeAmount === 0 && freeDeliveryApplied && (
-                <InfoRow
-                  label={`Delivery Fee${deliveryDistanceKm != null ? ` (${deliveryDistanceKm.toFixed(1)} km)` : ""}`}
-                  value="FREE"
-                  valueClassName="text-green-600 font-bold"
-                />
-              )}
+              {!isNonDelivery &&
+                deliveryFeeAmount === 0 &&
+                freeDeliveryApplied && (
+                  <SummaryRow
+                    title={`Delivery Fee${deliveryDistanceKm != null ? ` (${deliveryDistanceKm.toFixed(1)} km)` : ""}`}
+                    subTitle="FREE"
+                    className={{ subTitle: "text-green-600 font-bold" }}
+                  />
+                )}
 
               {/* Discounts */}
               {discountAmount > 0 && (
-                <InfoRow
-                  label="Discount"
-                  value={`-${formatCurrency(discountAmount)}`}
-                  valueClassName="text-green-600 font-medium"
+                <SummaryRow
+                  title="Discount"
+                  subTitle={`-${formatCurrency(discountAmount)}`}
+                  className={{ subTitle: "text-green-600 font-medium" }}
                 />
               )}
 
@@ -310,10 +318,10 @@ const OrderDetailsModal = ({ orderId, role, variant }: OrderDetailsProps) => {
               {expandedSections.totals && (
                 <>
                   {voucherDiscountAmount > 0 && (
-                    <InfoRow
-                      label="Voucher Discount"
-                      value={`-${formatCurrency(voucherDiscountAmount)}`}
-                      valueClassName="text-green-600 text-xs"
+                    <SummaryRow
+                      title="Voucher Discount"
+                      subTitle={`-${formatCurrency(voucherDiscountAmount)}`}
+                      className={{ subTitle: "text-green-600 text-xs" }}
                     />
                   )}
                   {productDiscountPromotions.length > 0 && (
@@ -322,29 +330,35 @@ const OrderDetailsModal = ({ orderId, role, variant }: OrderDetailsProps) => {
                         Item Promos
                       </p>
                       {productDiscountPromotions.map((p, i) => (
-                        <InfoRow
+                        <SummaryRow
                           key={i}
-                          label={`${p.productName} (${p.name})`}
-                          value={`-${formatCurrency(p.discountAmount)}`}
-                          labelClassName="text-xs"
-                          valueClassName="text-green-600 text-xs"
+                          title={`${p.productName} (${p.name})`}
+                          subTitle={`-${formatCurrency(p.discountAmount)}`}
+                          className={{
+                            title: "text-xs",
+                            subTitle: "text-xs text-green-600",
+                          }}
                         />
                       ))}
                     </>
                   )}
                   {orderDiscountPromotionName && (
-                    <InfoRow
-                      label={`Promo: ${orderDiscountPromotionName}`}
-                      value={`-${formatCurrency(orderDiscountAmount)}`}
-                      labelClassName="text-xs"
-                      valueClassName="text-green-600 text-xs"
+                    <SummaryRow
+                      title={`Promo: ${orderDiscountPromotionName}`}
+                      subTitle={`-${formatCurrency(orderDiscountAmount)}`}
+                      className={{
+                        title: "text-xs",
+                        subTitle: "text-xs text-green-600",
+                      }}
                     />
                   )}
                   {discountCode && (
-                    <InfoRow
-                      label="Discount Code"
-                      value={discountCode}
-                      valueClassName="font-mono text-xs text-gray-400"
+                    <SummaryRow
+                      title="Discount Code"
+                      subTitle={discountCode}
+                      className={{
+                        subTitle: "font-mono text-xs",
+                      }}
                     />
                   )}
                 </>
@@ -352,21 +366,25 @@ const OrderDetailsModal = ({ orderId, role, variant }: OrderDetailsProps) => {
 
               {/* VAT */}
               {vatAmount > 0 && (
-                <InfoRow
-                  label="VAT (12%)"
-                  value={formatCurrency(vatAmount)}
-                  valueClassName="text-xs text-gray-500"
-                  className="border-t border-gray-100 mt-1 pt-2"
+                <SummaryRow
+                  title="VAT (12%)"
+                  subTitle={formatCurrency(vatAmount)}
+                  className={{
+                    parent: "border-t border-gray-100 mt-1 pt-2",
+                    subTitle: "text-xs",
+                  }}
                 />
               )}
 
               {/* Grand total */}
-              <InfoRow
-                label="Total"
-                value={formatCurrency(totalAmount)}
-                labelClassName="text-sm font-semibold text-gray-800"
-                valueClassName="text-lg font-bold text-gray-900"
-                className="border-t border-gray-200 mt-1 pt-2"
+              <SummaryRow
+                title="Total"
+                subTitle={formatCurrency(totalAmount)}
+                className={{
+                  parent: "border-t border-gray-200 mt-1 pt-2",
+                  title: "text-sm font-semibold text-gray-800",
+                  subTitle: "text-lg font-bold text-gray-900",
+                }}
               />
             </div>
           </SectionCard>
@@ -379,9 +397,9 @@ const OrderDetailsModal = ({ orderId, role, variant }: OrderDetailsProps) => {
             onToggle={toggleSection}
           >
             <div className="flex flex-col gap-0">
-              <InfoRow
-                label="Method"
-                value={
+              <SummaryRow
+                title="Method"
+                subTitle={
                   isMaya
                     ? "Maya"
                     : isPickup
@@ -390,39 +408,44 @@ const OrderDetailsModal = ({ orderId, role, variant }: OrderDetailsProps) => {
                         ? "Pay at Branch"
                         : "Cash on Delivery"
                 }
-                valueClassName={cn(
-                  "text-xs font-semibold px-2 py-0.5 rounded-full",
-                  isMaya ? paymentMethodBadge.maya : paymentMethodBadge.cash,
-                )}
+                className={{
+                  subTitle: cn(
+                    "text-xs font-semibold px-2 py-0.5 rounded-full",
+                    isMaya ? paymentMethodBadge.maya : paymentMethodBadge.cash,
+                  ),
+                }}
               />
               {paymentMethod && (
-                <InfoRow
-                  label="Card"
-                  value={`${paymentMethod.scheme}${paymentMethod.last4 ? ` ••••${paymentMethod.last4}` : ""}`}
-                  valueClassName="font-medium capitalize"
+                <SummaryRow
+                  title="Card"
+                  subTitle={`${paymentMethod.scheme}${paymentMethod.last4 ? ` ••••${paymentMethod.last4}` : ""}`}
+                  className={{ subTitle: "font-medium capitalize" }}
                 />
               )}
-              <InfoRow
-                label="Reference"
-                value={referenceNumber}
-                valueClassName="font-mono text-xs text-gray-500"
+              <SummaryRow
+                title="Reference"
+                subTitle={referenceNumber}
+                className={{ subTitle: "font-mono text-xs" }}
               />
               {paymentId && role === "admin" && (
-                <InfoRow
-                  label="Payment ID"
-                  value={paymentId}
-                  valueClassName="font-mono text-xs text-gray-500 truncate max-w-45 block"
+                <SummaryRow
+                  title="Payment ID"
+                  subTitle={paymentId}
+                  className={{
+                    subTitle:
+                      "font-mono text-xs text-gray-500 truncate max-w-45 block",
+                  }}
                 />
               )}
-              <InfoRow
-                label="Status"
-                value={paymentStatus}
-                valueClassName="font-mono text-xs text-gray-500"
+              <SummaryRow
+                title="Status"
+                subTitle={paymentStatus}
+                className={{ subTitle: "font-mono text-xs" }}
               />
-              <InfoRow
-                label="Paid At"
-                value={formatDate(paidAt)}
-                valueClassName="text-xs text-gray-500"
+              <SummaryRow
+                title="Paid At"
+                subTitle={formatDate(paidAt)}
+                className={{ subTitle: "text-xs" }}
               />
             </div>
           </SectionCard>
@@ -476,7 +499,105 @@ const OrderDetailsModal = ({ orderId, role, variant }: OrderDetailsProps) => {
               </div>
             </div>
           )}
+
+          {/* ── Termination Details (cancel/expire reason) ── */}
+          {orderToView?.terminationDetails?.reason && (
+            <div className="rounded-xl border border-red-200 bg-red-50/50 p-4">
+              <div className="flex items-start gap-2.5">
+                <span className="text-base mt-px">⚠️</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-red-700 uppercase tracking-wide mb-1">
+                    {status === ORDER_STATUSES.EXPIRED
+                      ? "Expired"
+                      : "Cancelled"}{" "}
+                    — Reason
+                  </p>
+                  <p className="text-sm text-red-800/80 font-medium">
+                    {orderToView.terminationDetails.reason}
+                  </p>
+                  {orderToView.terminationDetails.notes && (
+                    <p className="text-sm text-red-800/60 mt-1 leading-relaxed">
+                      {orderToView.terminationDetails.notes}
+                    </p>
+                  )}
+                  <p className="text-[11px] text-red-400 mt-2">
+                    {orderToView.terminationDetails.changedByRole === "admin"
+                      ? "Admin"
+                      : orderToView.terminationDetails.changedByRole ===
+                          "system"
+                        ? "System (automatic)"
+                        : "Customer"}
+                    {orderToView.terminationDetails.changedAt
+                      ? ` · ${formatDate(orderToView.terminationDetails.changedAt)}`
+                      : ""}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── Refund Details ── */}
+          {orderToView?.refund?.status === "processed" && (
+            <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-4">
+              <div className="flex items-start gap-2.5">
+                <span className="text-base mt-px">💰</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">
+                    Refund Processed
+                  </p>
+                  <SummaryRow
+                    title="Amount"
+                    subTitle={formatCurrency(orderToView.refund.amount)}
+                    className={{ subTitle: "font-semibold text-blue-800" }}
+                  />
+                  <SummaryRow
+                    title="Reason"
+                    subTitle={orderToView.refund.reason ?? "—"}
+                  />
+                  {orderToView.refund.notes && (
+                    <p className="text-sm text-blue-800/60 mt-1 leading-relaxed">
+                      {orderToView.refund.notes}
+                    </p>
+                  )}
+                  {orderToView.refund.processedAt && (
+                    <p className="text-[11px] text-blue-400 mt-2">
+                      Processed {formatDate(orderToView.refund.processedAt)}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
+      )}
+
+      {/* ── Refund Confirmation Modal ── */}
+      {showRefundModal && orderToView && (
+        <ConfirmationWithReasonModal
+          title="Process Refund"
+          subTitle="This will record a refund against this order."
+          referenceLabel={
+            orderToView.paymentInfo?.referenceNumber ?? orderToView._id
+          }
+          reasons={REFUND_REASONS}
+          confirmLabel="Process Refund"
+          confirmVariant="bg-blue-600 hover:bg-blue-700"
+          showAmountInput
+          defaultAmount={orderToView.total?.totalAmount}
+          isLoading={isRefunding}
+          onClose={() => setShowRefundModal(false)}
+          onConfirm={(data) => {
+            processRefund(
+              {
+                orderId: orderToView._id,
+                reason: data.reason,
+                notes: data.notes || undefined,
+                amount: data.amount,
+              },
+              { onSuccess: () => setShowRefundModal(false) },
+            );
+          }}
+        />
       )}
     </>
   );
