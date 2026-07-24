@@ -17,10 +17,15 @@ export const getLocalDate = (date: Date): string => {
   return `${y}-${m}-${d}`;
 };
 
-/** Parses "HH:MM" to total minutes since midnight */
+/**
+ * Parses "HH:MM" to total minutes since midnight.
+ * Treats "00:00" as end-of-day (1440 min) so that overnight schedules
+ * where the store closes at midnight compare correctly.
+ */
 export const toMinutes = (time: string): number => {
   const [h, m] = time.split(":").map(Number);
-  return h * 60 + m;
+  const total = h * 60 + m;
+  return total === 0 ? 1440 : total;
 };
 
 /** Formats total minutes back to "HH:MM" */
@@ -101,8 +106,8 @@ export const PICKUP_MIN_ADVANCE_MINUTES = 10;
 /**
  * Validates a pickup time against all business rules.
  * Returns an error message string when invalid, or null when valid.
- * Use this on both the frontend (to block submission) and as a reference
- * for the server-side validation in checkoutFulfillment.service.ts.
+ * Handles overnight schedules (e.g. 10 AM – 2 AM) where times after midnight
+ * belong to the previous day's operating window.
  */
 export function validatePickupTime(
   value: string,
@@ -125,24 +130,42 @@ export function validatePickupTime(
     return "Store is currently closed and not accepting pickup orders.";
   }
 
-  const dateStr = getLocalDate(dt);
-  if (!isOperatingDay(dateStr, operatingHours)) {
-    const dayLabel = getDayLabel(dt);
-    return `Store is closed on ${dayLabel}. Please select an operating day.`;
-  }
-
   const openTime = operatingHours?.openTime ?? "08:00";
   const closeTime = operatingHours?.closeTime ?? "22:00";
   const pickupMin = dt.getHours() * 60 + dt.getMinutes();
   const openMin = toMinutes(openTime);
   const closeMin = toMinutes(closeTime);
+  const crossesMidnight = closeMin <= openMin;
 
-  if (pickupMin < openMin) {
-    return `Pickup time must be at or after ${openTime}.`;
-  }
+  if (crossesMidnight) {
+    // Overnight schedule: valid if time >= open (today is operating day)
+    // OR time < close (yesterday is the operating day)
+    const todayLabel = getDayLabel(dt);
+    const yesterdayIndex = ((dt.getDay() + 6) % 7 + 6) % 7;
+    const yesterdayLabel = DAY_LABELS[yesterdayIndex];
 
-  if (pickupMin > closeMin) {
-    return `Pickup time must be at or before ${closeTime}.`;
+    const isAfterOpenToday =
+      pickupMin >= openMin && (operatingHours?.days ?? []).includes(todayLabel);
+    const isBeforeCloseFromYesterday =
+      pickupMin < closeMin && (operatingHours?.days ?? []).includes(yesterdayLabel);
+
+    if (!isAfterOpenToday && !isBeforeCloseFromYesterday) {
+      return `Pickup time must be within operating hours (${openTime} – ${closeTime}).`;
+    }
+  } else {
+    const dateStr = getLocalDate(dt);
+    if (!isOperatingDay(dateStr, operatingHours)) {
+      const dayLabel = getDayLabel(dt);
+      return `Store is closed on ${dayLabel}. Please select an operating day.`;
+    }
+
+    if (pickupMin < openMin) {
+      return `Pickup time must be at or after ${openTime}.`;
+    }
+
+    if (pickupMin > closeMin) {
+      return `Pickup time must be at or before ${closeTime}.`;
+    }
   }
 
   return null;

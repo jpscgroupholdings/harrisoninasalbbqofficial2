@@ -11,6 +11,7 @@ import { isBranchCoordinates } from "../branch/branch.service";
 import { Settings } from "@/models/Setting";
 import type { ClientSession } from "mongoose";
 import { getDayLabel, toMinutes } from "@/lib/operatingHours";
+import { toPHDate } from "@/utils/toPHDate";
 
 type FulfillmentPayload = {
   fulfillmentType?: FulfillmentType;
@@ -93,26 +94,58 @@ async function validateReservationPayload(
     throw new Error("Store operating hours are not properly configured.");
   }
 
-  // Check that the reservation day is an operating day
-  const dayLabel = getDayLabel(scheduledDate);
-  if (!operatingHours.days.includes(dayLabel)) {
-    throw new Error(`Store is closed on ${dayLabel}. Please select an operating day.`);
-  }
+  // Convert to PH-local time so hours/day are correct regardless of server timezone (Vercel runs in UTC)
+  const phScheduled = toPHDate(scheduledDate);
 
-  // Check that the reservation time is within operating hours (with 1hr buffer before close)
-  const reservationMinutes = scheduledDate.getHours() * 60 + scheduledDate.getMinutes();
+  const reservationMinutes = phScheduled.getHours() * 60 + phScheduled.getMinutes();
   const openMinutes = toMinutes(operatingHours.openTime);
   const closeMinutes = toMinutes(operatingHours.closeTime);
-  const lastReservationMinutes = closeMinutes - 60; // 1hr before closing
+  const crossesMidnight = closeMinutes <= openMinutes;
 
-  if (reservationMinutes < openMinutes) {
-    throw new Error(`Reservation time must be at or after ${operatingHours.openTime}.`);
-  }
+  if (crossesMidnight) {
+    // Overnight schedule (e.g. 10:00 AM – 2:00 AM):
+    // Valid if time >= open OR time < close (after-midnight spillover).
+    const todayLabel = getDayLabel(phScheduled);
+    const yesterdayIndex = ((phScheduled.getDay() + 6) % 7 + 6) % 7;
+    const DAYS: ("Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun")[] = [
+      "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun",
+    ];
+    const yesterdayLabel = DAYS[yesterdayIndex];
 
-  if (reservationMinutes > lastReservationMinutes) {
-    throw new Error(
-      `Last reservation must be at least 1 hour before closing (${operatingHours.closeTime}).`,
-    );
+    const isAfterOpenToday =
+      reservationMinutes >= openMinutes && operatingHours.days.includes(todayLabel);
+    const isBeforeCloseFromYesterday =
+      reservationMinutes < closeMinutes && operatingHours.days.includes(yesterdayLabel);
+
+    if (!isAfterOpenToday && !isBeforeCloseFromYesterday) {
+      throw new Error(
+        `Reservation time must be within operating hours (${operatingHours.openTime} – ${operatingHours.closeTime}).`,
+      );
+    }
+
+    // 1-hour buffer before close only applies in the after-midnight spillover window
+    if (isBeforeCloseFromYesterday && reservationMinutes > closeMinutes - 60) {
+      throw new Error(
+        `Last reservation must be at least 1 hour before closing (${operatingHours.closeTime}).`,
+      );
+    }
+  } else {
+    // Same-day schedule (e.g. 10:00 AM – 10:00 PM)
+    const dayLabel = getDayLabel(phScheduled);
+    if (!operatingHours.days.includes(dayLabel)) {
+      throw new Error(`Store is closed on ${dayLabel}. Please select an operating day.`);
+    }
+
+    if (reservationMinutes < openMinutes) {
+      throw new Error(`Reservation time must be at or after ${operatingHours.openTime}.`);
+    }
+
+    const lastReservationMinutes = closeMinutes - 60; // 1hr before closing
+    if (reservationMinutes > lastReservationMinutes) {
+      throw new Error(
+        `Last reservation must be at least 1 hour before closing (${operatingHours.closeTime}).`,
+      );
+    }
   }
 }
 
@@ -153,21 +186,49 @@ async function validatePickupTimePayload(
     throw new Error("Store operating hours are not properly configured.");
   }
 
-  const dayLabel = getDayLabel(pickupDate);
-  if (!operatingHours.days.includes(dayLabel)) {
-    throw new Error(`Store is closed on ${dayLabel}. Please select an operating day.`);
-  }
+  // Convert to PH-local time so hours/day are correct regardless of server timezone (Vercel runs in UTC)
+  const phPickup = toPHDate(pickupDate);
 
-  const pickupMinutes = pickupDate.getHours() * 60 + pickupDate.getMinutes();
+  const pickupMinutes = phPickup.getHours() * 60 + phPickup.getMinutes();
   const openMinutes = toMinutes(operatingHours.openTime);
   const closeMinutes = toMinutes(operatingHours.closeTime);
+  const crossesMidnight = closeMinutes <= openMinutes;
 
-  if (pickupMinutes < openMinutes) {
-    throw new Error(`Pickup time must be at or after ${operatingHours.openTime}.`);
-  }
+  if (crossesMidnight) {
+    // Overnight schedule (e.g. 10:00 AM – 2:00 AM):
+    // Valid if time >= open OR time < close (after-midnight spillover).
+    // The day label should match either today (post-open) or yesterday (pre-close).
+    const todayLabel = getDayLabel(phPickup);
+    const yesterdayIndex = ((phPickup.getDay() + 6) % 7 + 6) % 7;
+    const DAYS: ("Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun")[] = [
+      "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun",
+    ];
+    const yesterdayLabel = DAYS[yesterdayIndex];
 
-  if (pickupMinutes > closeMinutes) {
-    throw new Error(`Pickup time must be at or before ${operatingHours.closeTime}.`);
+    const isAfterOpenToday =
+      pickupMinutes >= openMinutes && operatingHours.days.includes(todayLabel);
+    const isBeforeCloseFromYesterday =
+      pickupMinutes < closeMinutes && operatingHours.days.includes(yesterdayLabel);
+
+    if (!isAfterOpenToday && !isBeforeCloseFromYesterday) {
+      throw new Error(
+        `Pickup time must be within operating hours (${operatingHours.openTime} – ${operatingHours.closeTime}).`,
+      );
+    }
+  } else {
+    // Same-day schedule (e.g. 10:00 AM – 10:00 PM)
+    const dayLabel = getDayLabel(phPickup);
+    if (!operatingHours.days.includes(dayLabel)) {
+      throw new Error(`Store is closed on ${dayLabel}. Please select an operating day.`);
+    }
+
+    if (pickupMinutes < openMinutes) {
+      throw new Error(`Pickup time must be at or after ${operatingHours.openTime}.`);
+    }
+
+    if (pickupMinutes > closeMinutes) {
+      throw new Error(`Pickup time must be at or before ${operatingHours.closeTime}.`);
+    }
   }
 }
 
