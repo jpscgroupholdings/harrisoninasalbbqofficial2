@@ -77,6 +77,11 @@ export const expireOrder = inngest.createFunction(
       await Order.findByIdAndUpdate(order._id, {
         status: ORDER_STATUSES.EXPIRED,
         "timeline.expiredAt": new Date(),
+        terminationDetails: {
+          reason: expirationReason,
+          changedByRole: "system",
+          changedAt: new Date(),
+        },
       });
 
       // Log the expiration

@@ -141,6 +141,8 @@ export function logOrderStatusChange(params: {
   referenceNumber?: string;
   fromStatus: string;
   toStatus: string;
+  reason?: string;
+  notes?: string;
   session?: ClientSession;
 }) {
   return logActivity({
@@ -153,10 +155,12 @@ export function logOrderStatusChange(params: {
     },
     category: "order",
     action: "order.status_changed",
-    summary: `Order status changed from "${params.fromStatus}" to "${params.toStatus}"`,
+    summary: `Order status changed from "${params.fromStatus}" to "${params.toStatus}"${params.reason ? ` — ${params.reason}` : ""}`,
     metadata: {
       from: params.fromStatus,
       to: params.toStatus,
+      ...(params.reason && { reason: params.reason }),
+      ...(params.notes && { notes: params.notes }),
     },
     session: params.session,
   });
@@ -168,6 +172,8 @@ export function logOrderCancelledByCustomer(params: {
   customerId: Types.ObjectId | string;
   branchId: Types.ObjectId | string;
   referenceNumber?: string;
+  reason?: string;
+  notes?: string;
   session?: ClientSession;
 }) {
   return logActivity({
@@ -180,7 +186,11 @@ export function logOrderCancelledByCustomer(params: {
     },
     category: "order",
     action: "order.cancelled_by_customer",
-    summary: `Customer cancelled order ${params.referenceNumber ?? ""}`,
+    summary: `Customer cancelled order ${params.referenceNumber ?? ""}${params.reason ? ` — ${params.reason}` : ""}`,
+    metadata: {
+      ...(params.reason && { reason: params.reason }),
+      ...(params.notes && { notes: params.notes }),
+    },
     session: params.session,
   });
 }

@@ -164,6 +164,7 @@ export async function PATCH(
 
   const body = await request.json();
   let { status: newStatus } = body;
+  const { reason, notes } = body;
 
   if (!newStatus) {
     return getAPIError("Status is required", 400, {
@@ -205,12 +206,35 @@ export async function PATCH(
   const paymentMethod = order.paymentInfo?.paymentMethod as "cod" | "maya";
   const paymentStatus = order.paymentInfo?.paymentStatus as PaymentStatus;
 
-  if (currentStatus === ORDER_STATUSES.PENDING_PAYMENT) {
+  // Allow admin to expire or cancel stale pending_payment orders;
+  // all other transitions from pending_payment remain blocked.
+  if (
+    currentStatus === ORDER_STATUSES.PENDING_PAYMENT &&
+    newStatus !== ORDER_STATUSES.EXPIRED &&
+    newStatus !== ORDER_STATUSES.CANCELLED
+  ) {
     return getAPIError(
       "Maya orders awaiting payment cannot be updated by admin. Wait for payment confirmation or automatic expiry",
       400,
       { extra: { currentStatus, paymentMethod } },
     );
+  }
+
+  // Admin can only expire pending_payment orders that are at least 5 days old
+  if (
+    currentStatus === ORDER_STATUSES.PENDING_PAYMENT &&
+    newStatus === ORDER_STATUSES.EXPIRED
+  ) {
+    const fiveDaysMs = 5 * 24 * 60 * 60 * 1000;
+    const orderAge = Date.now() - new Date(order.createdAt).getTime();
+    if (orderAge < fiveDaysMs) {
+      const daysOld = Math.floor(orderAge / (24 * 60 * 60 * 1000));
+      return getAPIError(
+        `Order is only ${daysOld} day${daysOld === 1 ? "" : "s"} old. Orders must be at least 5 days in pending payment before they can be manually expired.`,
+        400,
+        { extra: { currentStatus, createdAt: order.createdAt, daysOld } },
+      );
+    }
   }
 
   // Dine-in reservations must be accepted (→ confirmed) before preparing.
@@ -330,6 +354,15 @@ export async function PATCH(
     );
   }
 
+  // Terminal status transitions (cancel, expire) require a reason
+  const TERMINAL_STATUSES: OrderStatus[] = [ORDER_STATUSES.CANCELLED, ORDER_STATUSES.EXPIRED];
+  if (TERMINAL_STATUSES.includes(newStatus as OrderStatus) && !reason) {
+    return getAPIError(
+      "A reason is required when cancelling or expiring an order",
+      400,
+    );
+  }
+
   if (
     (order.fulfillmentType === FULFILLMENT_TYPE.PICKUP ||
       order.fulfillmentType === FULFILLMENT_TYPE.DINE_IN) &&
@@ -363,6 +396,17 @@ export async function PATCH(
         updateData[`timeline.${timelineField}`] = new Date();
       }
 
+      // Save termination details for cancel/expire transitions
+      if (TERMINAL_STATUSES.includes(newStatus as OrderStatus)) {
+        updateData["terminationDetails"] = {
+          reason,
+          notes: notes || undefined,
+          changedBy: staff._id,
+          changedByRole: "admin",
+          changedAt: new Date(),
+        };
+      }
+
       // When admin accepts a dine-in reservation, record confirmedAt
       if (
         currentStatus === ORDER_STATUSES.PENDING &&
@@ -382,6 +426,8 @@ export async function PATCH(
         referenceNumber: order.paymentInfo?.referenceNumber,
         fromStatus: currentStatus,
         toStatus: newStatus,
+        reason,
+        notes,
         session,
       });
 
@@ -391,11 +437,17 @@ export async function PATCH(
       }
 
       if (newStatus === ORDER_STATUSES.CANCELLED) {
+        await completeInventory(order._id, order.branchId, session);
         await refundCustomerVoucher(
           order.customerId,
           order.total?.voucherDiscountAmount ?? 0,
           session,
         );
+      }
+
+      // Release reserved inventory when admin manually expires a stale order
+      if (newStatus === ORDER_STATUSES.EXPIRED) {
+        await completeInventory(order._id, order.branchId, session);
       }
     });
 

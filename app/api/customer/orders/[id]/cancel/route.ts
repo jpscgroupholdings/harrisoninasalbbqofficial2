@@ -12,6 +12,8 @@ import {
 } from "@/types/orderConstants";
 import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
+import { getValidObjectId } from "@/helper/getValidObjectIds";
+import { getAPIError } from "@/lib/getApiError";
 
 export async function PATCH(
   request: NextRequest,
@@ -23,13 +25,12 @@ export async function PATCH(
 
   try {
     const { id } = await context.params;
+    const body = await request.json().catch(() => ({}));
+    const { reason, notes } = body;
 
     // Validate MongoDB ObjectId format
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json(
-        { error: "Invalid order ID format" },
-        { status: 400 },
-      );
+    if (!getValidObjectId(id)) {
+      return getAPIError("Invalid order ID format", 400);
     }
 
     const customer = await requireBetterAuth(request);
@@ -37,7 +38,7 @@ export async function PATCH(
     const order = await Order.findById(id);
 
     if (!order) {
-      return NextResponse.json({ error: "Order not found" }, { status: 404 });
+      return getAPIError("Order not found", 404);
     }
 
     // Ownership check — guest orders have no customerId
@@ -45,7 +46,7 @@ export async function PATCH(
       order.customerId &&
       (!customer || order.customerId.toString() !== customer._id.toString())
     ) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return getAPIError("Forbidden", 403);
     }
 
     // ============================================
@@ -55,12 +56,14 @@ export async function PATCH(
     const currentStatus = order.status as OrderStatus;
     // Check if transition is valid
     if (!canTransitionTo(currentStatus, ORDER_STATUSES.CANCELLED, "customer")) {
-      return NextResponse.json(
+      return getAPIError(
+        `Cannot cancel order with status "${order.status}"`,
+        400,
         {
-          error: `Cannot cancel order with status "${order.status}"`,
-          currentStatus: order.status,
+          extra: {
+            currentStatus: order.status,
+          },
         },
-        { status: 400 },
       );
     }
 
@@ -76,6 +79,13 @@ export async function PATCH(
         $set: {
           status: ORDER_STATUSES.CANCELLED,
           ...(timelineField && { [`timeline.${timelineField}`]: new Date() }),
+          terminationDetails: {
+            reason: reason || undefined,
+            notes: notes || undefined,
+            changedBy: customer?._id,
+            changedByRole: "customer",
+            changedAt: new Date(),
+          },
         },
       },
       { session },
@@ -86,9 +96,9 @@ export async function PATCH(
       session.endSession();
       session = null;
 
-      return NextResponse.json(
-        { error: "Order status changed. Please refresh and try again." },
-        { status: 409 },
+      return getAPIError(
+        "Order status changed. Please refresh and try again",
+        409,
       );
     }
 
@@ -114,6 +124,8 @@ export async function PATCH(
         customerId: order.customerId,
         branchId: order.branchId,
         referenceNumber: order.paymentInfo?.referenceNumber,
+        reason,
+        notes,
         session,
       });
     }
@@ -133,21 +145,8 @@ export async function PATCH(
       session.endSession();
     }
 
-    if (error.name === "CastError") {
-      return NextResponse.json(
-        { error: "Invalid order ID format" },
-        { status: 400 },
-      );
-    }
-
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to cancel order.",
-      },
-      { status: 500 },
-    );
+    return getAPIError(error, 500, {
+      fallbackMessage: "Failed to cancel order.",
+    });
   }
 }
