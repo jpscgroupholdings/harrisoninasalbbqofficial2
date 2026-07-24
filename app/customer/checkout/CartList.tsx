@@ -501,6 +501,10 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
         const data = await createOrder({
           ...orderPayload,
           paymentMethod: "maya",
+          // ── Maya Payment Flow Toggle ──
+          // true  → QR PH only (direct QR code page). Uses MAYA_QR_PUBLIC_KEY + /payments/v1/qr/payments
+          // false → Full payment page (card, QR, bank, etc.). Uses MAYA_PUBLIC_KEY + /checkout/v1/checkouts
+          useQrPh: true,
         });
 
         if (!data.redirectUrl) {

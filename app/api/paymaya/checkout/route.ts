@@ -31,6 +31,8 @@ import {
 import {
   buildMayaPayload,
   createMayaCheckout,
+  buildMayaQrPayload,
+  createMayaQrPayment,
 } from "@/services/payments/mayaCheckout";
 import {
   dispatchOrderCreatedEvent,
@@ -39,6 +41,7 @@ import {
 } from "@/services/checkout/checkoutOrder.service";
 import { fetchBranch } from "@/services/branch/branch.service";
 import { logOrderCreated } from "@/services/activityLog.service";
+// import { notifyNewOrder } from "@/services/notification.service";
 import { getAPIError } from "@/lib/getApiError";
 import { FULFILLMENT_TYPE } from "@/types/orderConstants";
 
@@ -168,10 +171,24 @@ export async function POST(request: NextRequest) {
       session,
     );
 
-    // 7. Maya checkout
+    // 7. Maya checkout — QR PH (direct QR) or full checkout page
     const referenceNumber = `ORDER-${Date.now()}`;
-    const mayaPayload = buildMayaPayload(body, mayaItems, tax, referenceNumber);
-    const { checkoutId, redirectUrl } = await createMayaCheckout(mayaPayload);
+    let checkoutId: string;
+    let redirectUrl: string;
+
+    if (body.useQrPh) {
+      // QR PH: minimal payload, returns paymentId + redirectUrl to QR page
+      const qrPayload = buildMayaQrPayload(tax.totalAmount, referenceNumber);
+      const qrResult = await createMayaQrPayment(qrPayload);
+      checkoutId = qrResult.paymentId;
+      redirectUrl = qrResult.redirectUrl;
+    } else {
+      // Full checkout page: all payment methods shown
+      const mayaPayload = buildMayaPayload(body, mayaItems, tax, referenceNumber);
+      const checkoutResult = await createMayaCheckout(mayaPayload);
+      checkoutId = checkoutResult.checkoutId;
+      redirectUrl = checkoutResult.redirectUrl;
+    }
 
     // 8. Persist order
     const order = await persistOrder(
@@ -215,6 +232,15 @@ export async function POST(request: NextRequest) {
         paymentMethod,
       ),
       sendOrderConfirmationEmail(order),
+      // notifyNewOrder({
+      //   orderId: order._id.toString(),
+      //   branchId: body.branchId,
+      //   referenceNumber,
+      //   customerName: `${body.firstName} ${body.lastName}`,
+      //   totalAmount: tax.totalAmount,
+      //   fulfillmentType: fulfillment.fulfillmentType,
+      //   paymentMethod: "maya",
+      // }),
     ]);
 
     return NextResponse.json(

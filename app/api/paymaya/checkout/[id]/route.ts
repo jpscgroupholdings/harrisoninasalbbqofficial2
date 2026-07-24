@@ -1,5 +1,5 @@
-import { getAuthHeader } from "@/lib/getAuthHeader";
-import { getMayaCheckoutUrl } from "@/lib/mayaConfig";
+import { getAuthHeader, getMayaQrAuthHeader } from "@/lib/getAuthHeader";
+import { getMayaCheckoutUrl, getMayaQrUrl } from "@/lib/mayaConfig";
 import { requireBetterAuth } from "@/lib/getAuth";
 import { connectDB } from "@/lib/mongodb";
 import { Order } from "@/models/Orders";
@@ -61,6 +61,57 @@ export async function POST(
     const { line1, line2, city, province, zipCode } = shippingAddress ?? {};
 
     const referenceNumber = paymentInfo?.referenceNumber;
+
+    // QR PH: skip the full checkout payload — only needs totalAmount + redirects
+    const useQrPh = request.nextUrl.searchParams.get("useQrPh") === "true";
+
+    if (useQrPh) {
+      const qrPayload = {
+        totalAmount: {
+          value: order.total.totalAmount.toFixed(2),
+          currency: "PHP",
+        },
+        redirectUrl: {
+          success: `${process.env.NEXT_PUBLIC_URL}/payment/success?referenceNumber=${referenceNumber}`,
+          failure: `${process.env.NEXT_PUBLIC_URL}/payment/failed?referenceNumber=${referenceNumber}`,
+          cancel: `${process.env.NEXT_PUBLIC_URL}/payment/cancel?referenceNumber=${referenceNumber}`,
+        },
+        requestReferenceNumber: referenceNumber,
+      };
+
+      const response = await fetch(getMayaQrUrl(), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: getMayaQrAuthHeader(), // QR PH uses "Pay with Maya" app keys
+        },
+        body: JSON.stringify(qrPayload),
+      });
+
+      const data = await response.json();
+
+      console.log("[Maya QR PH] Status:", response.status);
+      console.log("[Maya QR PH] Response:", JSON.stringify(data, null, 2));
+
+      if (!response.ok || !data.redirectUrl) {
+        return NextResponse.json(
+          {
+            error: data.message ?? "Failed to create QR payment.",
+            mayaResponse: data,
+          },
+          { status: 502 },
+        );
+      }
+
+      order.paymentInfo.checkoutId = data.paymentId;
+      await order.save();
+
+      return NextResponse.json({
+        checkoutId: data.paymentId,
+        redirectUrl: data.redirectUrl,
+      });
+    }
 
     // Split each order item into parent product (base price) + modifier upgrade line items.
     // The stored item.price = base price + all upgrade prices, so we compute base by subtracting.

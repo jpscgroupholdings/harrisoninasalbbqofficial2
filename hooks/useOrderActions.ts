@@ -29,8 +29,11 @@ export function useOrderActions() {
   const handlePayOrder = async (id: string) => {
     try {
       setIsLoading(true);
+      // ── Maya Payment Flow Toggle (retry payment for pending orders) ──
+      // ?useQrPh=true  → QR PH only (direct QR code). Uses MAYA_QR_PUBLIC_KEY + /payments/v1/qr/payments
+      // remove param   → Full payment page (card, QR, bank, etc.). Uses MAYA_PUBLIC_KEY + /checkout/v1/checkouts
       const response = await apiClient.post<{ redirectUrl: string }>(
-        `/paymaya/checkout/${id}`,
+        `/paymaya/checkout/${id}?useQrPh=true`,
       );
       window.location.href = response.redirectUrl;
     } catch (error: any) {

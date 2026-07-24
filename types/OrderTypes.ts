@@ -212,6 +212,9 @@ export interface CreateOrderPayload {
   applyPromoCardDiscount?: boolean;
   voucherAmount?: number;
 
+  /** When true, uses Maya QR PH endpoint (direct QR code) instead of the full checkout page */
+  useQrPh?: boolean;
+
   /** Reservation details — required when fulfillmentType is "dine_in" */
   reservation?: {
     scheduledAt: string; // ISO date string
