@@ -7,7 +7,12 @@ import { getStoreStatus } from "@/lib/storeStatus";
 import { Branch } from "@/types/branch";
 import Link from "next/link";
 import { toast } from "sonner";
-import { CustomerSchema, OrderFormState, ShippingSchema,ReservationSchema } from "./FormSchema";
+import {
+  CustomerSchema,
+  OrderFormState,
+  ShippingSchema,
+  ReservationSchema,
+} from "./FormSchema";
 import useFormErrors from "./useFormErrors";
 import { usePathname, useRouter } from "next/navigation";
 import { CheckoutStep } from "@/contexts/CheckoutContext";
@@ -543,351 +548,337 @@ const CartList = ({ selectedBranch, orderDetails, onNext }: CartListProps) => {
     );
   }
   return (
-    <div className="flex flex-col 2xl:flex-row gap-4 min-w-auto 2xl:min-w-3xl relative">
-      <div className="space-y-3">
-        {/* High demand banner */}
-        {isAtCapacity && (
-          <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4 text-center">
-            <div className="flex items-center justify-center gap-2 mb-1">
-              <DynamicIcon name="Clock" size={16} className="text-amber-500" />
-              <p className="text-sm font-bold text-amber-700">
-                We&apos;re Experiencing High Demand
-              </p>
-            </div>
-            <p className="text-xs text-amber-600">
-              We&apos;re currently at capacity and can&apos;t accept new orders
-              at this moment. We&apos;ll be ready shortly — please check back
-              soon!
+    <div className="space-y-3">
+      {/* High demand banner */}
+      {isAtCapacity && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4 text-center">
+          <div className="flex items-center justify-center gap-2 mb-1">
+            <DynamicIcon name="Clock" size={16} className="text-amber-500" />
+            <p className="text-sm font-bold text-amber-700">
+              We&apos;re Experiencing High Demand
             </p>
           </div>
-        )}
-        {/* Cart Items */}
-        <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-          {/* Header */}
-          <div className="px-5 pt-5 pb-3 border-b border-slate-100">
-            <SummaryRow
-              title="Order summary"
-              subTitle={`${cartItems.length} item${cartItems.length !== 1 ? "s" : ""}`}
-              className={{ title: "text-base font-semibold text-black" }}
+          <p className="text-xs text-amber-600">
+            We&apos;re currently at capacity and can&apos;t accept new orders at
+            this moment. We&apos;ll be ready shortly — please check back soon!
+          </p>
+        </div>
+      )}
+      {/* Cart Items */}
+      <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+        {/* Header */}
+        <div className="px-5 pt-5 pb-3 border-b border-slate-100">
+          <SummaryRow
+            title="Order summary"
+            subTitle={`${cartItems.length} item${cartItems.length !== 1 ? "s" : ""}`}
+            className={{ title: "text-base font-semibold text-black" }}
+          />
+        </div>
+        {/* Cart items list */}
+        <div className="px-5 py-4 divide-y divide-slate-100 max-h-96 overflow-y-auto hide-scrollbar">
+          {cartItems.map((item) => (
+            <CartItemRow
+              key={getCartKey(item)}
+              item={item}
+              onRemove={removeFromCart}
+              onUpdate={updateQuantity}
             />
-          </div>
-          {/* Cart items list */}
-          <div className="px-5 py-4 divide-y divide-slate-100 max-h-96 overflow-y-auto hide-scrollbar">
-            {cartItems.map((item) => (
-              <CartItemRow
-                key={getCartKey(item)}
-                item={item}
-                onRemove={removeFromCart}
-                onUpdate={updateQuantity}
+          ))}
+        </div>
+        {/* Order Totals */}
+        <div className="px-5 py-4 bg-slate-50 border-t border-slate-100 space-y-2">
+          {isPromoCardEnabled && (
+            <div className="bg-white border border-brand-color-500/20 rounded-lg">
+              <Checkbox
+                label={`Apply ${promoCardConfig.name}`}
+                subLabel={
+                  canUsePromoCardDiscount
+                    ? `Enjoy ${(activeDiscountRate * 100).toFixed(0)}% off this order today.`
+                    : "Purchase a promo card to unlock this discount."
+                }
+                checked={applyPromoCardDiscount}
+                onChange={(event) =>
+                  setApplyPromoCardDiscount(event.target.checked)
+                }
+                disabled={!canUsePromoCardDiscount}
+                wrapperClassName="py-6"
               />
-            ))}
-          </div>
-          {/* Order Totals */}
-          <div className="px-5 py-4 bg-slate-50 border-t border-slate-100 space-y-2">
-            {isPromoCardEnabled && (
-              <div className="bg-white border border-brand-color-500/20 rounded-lg">
-                <Checkbox
-                  label={`Apply ${promoCardConfig.name}`}
-                  subLabel={
-                    canUsePromoCardDiscount
-                      ? `Enjoy ${(activeDiscountRate * 100).toFixed(0)}% off this order today.`
-                      : "Purchase a promo card to unlock this discount."
-                  }
-                  checked={applyPromoCardDiscount}
-                  onChange={(event) =>
-                    setApplyPromoCardDiscount(event.target.checked)
-                  }
-                  disabled={!canUsePromoCardDiscount}
-                  wrapperClassName="py-6"
-                />
-              </div>
-            )}
+            </div>
+          )}
+          <SummaryRow
+            title="Subtotal"
+            subTitle={formatCurrency(subtotalPrice)}
+          />
+          {productDiscountAmount > 0 && (
             <SummaryRow
-              title="Subtotal"
-              subTitle={formatCurrency(subtotalPrice)}
+              title="Product discounts"
+              subTitle={`- ${formatCurrency(productDiscountAmount)}`}
+              className={{ title: "text-green-600" }}
             />
-            {productDiscountAmount > 0 && (
-              <SummaryRow
-                title="Product discounts"
-                subTitle={`- ${formatCurrency(productDiscountAmount)}`}
-                className={{ title: "text-green-600" }}
-              />
-            )}
-            {promoCardDiscount > 0 && (
-              <SummaryRow
-                title="Promo card discount"
-                subTitle={`- ${formatCurrency(promoCardDiscount)}`}
-                className={{ title: "text-green-600" }}
-              />
-            )}
-            {orderDiscountAmount > 0 && (
-              <SummaryRow
-                title={orderDiscountPromotion?.name || "Order Discount"}
-                subTitle={`- ${formatCurrency(orderDiscountAmount)}`}
-                className={{ title: "text-green-600 min-w-0 truncate" }}
-              />
-            )}
-            {orderDiscountAmount === 0 && nextOrderDiscountHint && (
-              <p className="block font-extralight text-brand-color-500 text-sm">
-                Spend{" "}
-                <span className="font-bold">
-                  {formatCurrency(nextOrderDiscountHint.amountUntilEligible)}
-                </span>{" "}
-                more to use {nextOrderDiscountHint.name}.
-              </p>
-            )}
-            {availableVoucherBalance > 0 && (
-              <InputField
-                label="Use voucher balance"
-                subLabel={`Available ${formatCurrency(availableVoucherBalance)}`}
-                type="number"
-                min={0}
-                max={Math.min(availableVoucherBalance, discountAdjustedTotal)}
-                step={0.01}
-                value={voucherAmount}
-                onChange={(event) => setVoucherAmount(event.target.value)}
-                placeholder="Enter voucher amount"
-              />
-            )}
-            {parsedVoucherAmount > 0 && (
-              <SummaryRow
-                title="Voucher discount"
-                subTitle={`- ${formatCurrency(parsedVoucherAmount)}`}
-                className={{ title: "text-green-600" }}
-              />
-            )}
-            {isDelivery && (deliveryFeeAmount > 0 || isDeliveryFeeLoading) && (
-              <div className="flex justify-between gap-3 text-sm">
-                <span
-                  className={
-                    freeDeliveryEligible
-                      ? "text-green-600 font-semibold"
-                      : "text-green-500"
-                  }
-                >
-                  Delivery fee
-                  {deliveryFeeEstimate?.data.distanceKm != null && (
-                    <span className="ml-1 text-xs">
-                      ({deliveryFeeEstimate.data.distanceKm.toFixed(2)} km)
-                    </span>
-                  )}
-                </span>
-                {freeDeliveryEligible ? (
-                  <span className="flex items-center gap-1.5">
-                    <span className="line-through text-slate-400">
-                      {formatCurrency(deliveryFeeAmount)}
-                    </span>
-                    <span className="text-green-600 font-bold">FREE</span>
-                  </span>
-                ) : (
-                  <span className="text-slate-500">
-                    {isDeliveryFeeLoading
-                      ? "Calculating..."
-                      : formatCurrency(deliveryFeeAmount)}
+          )}
+          {promoCardDiscount > 0 && (
+            <SummaryRow
+              title="Promo card discount"
+              subTitle={`- ${formatCurrency(promoCardDiscount)}`}
+              className={{ title: "text-green-600" }}
+            />
+          )}
+          {orderDiscountAmount > 0 && (
+            <SummaryRow
+              title={orderDiscountPromotion?.name || "Order Discount"}
+              subTitle={`- ${formatCurrency(orderDiscountAmount)}`}
+              className={{ title: "text-green-600 min-w-0 truncate" }}
+            />
+          )}
+          {orderDiscountAmount === 0 && nextOrderDiscountHint && (
+            <p className="block font-extralight text-brand-color-500 text-sm">
+              Spend{" "}
+              <span className="font-bold">
+                {formatCurrency(nextOrderDiscountHint.amountUntilEligible)}
+              </span>{" "}
+              more to use {nextOrderDiscountHint.name}.
+            </p>
+          )}
+          {availableVoucherBalance > 0 && (
+            <InputField
+              label="Use voucher balance"
+              subLabel={`Available ${formatCurrency(availableVoucherBalance)}`}
+              type="number"
+              min={0}
+              max={Math.min(availableVoucherBalance, discountAdjustedTotal)}
+              step={0.01}
+              value={voucherAmount}
+              onChange={(event) => setVoucherAmount(event.target.value)}
+              placeholder="Enter voucher amount"
+            />
+          )}
+          {parsedVoucherAmount > 0 && (
+            <SummaryRow
+              title="Voucher discount"
+              subTitle={`- ${formatCurrency(parsedVoucherAmount)}`}
+              className={{ title: "text-green-600" }}
+            />
+          )}
+          {isDelivery && (deliveryFeeAmount > 0 || isDeliveryFeeLoading) && (
+            <div className="flex justify-between gap-3 text-sm">
+              <span
+                className={
+                  freeDeliveryEligible
+                    ? "text-green-600 font-semibold"
+                    : "text-green-500"
+                }
+              >
+                Delivery fee
+                {deliveryFeeEstimate?.data.distanceKm != null && (
+                  <span className="ml-1 text-xs">
+                    ({deliveryFeeEstimate.data.distanceKm.toFixed(2)} km)
                   </span>
                 )}
-              </div>
-            )}
-            {isDelivery &&
-              !freeDeliveryEligible &&
-              freeDeliveryReason &&
-              !isDeliveryFeeLoading && (
-                <p className="text-xs font-medium text-red-600">
-                  {freeDeliveryReason}
-                </p>
+              </span>
+              {freeDeliveryEligible ? (
+                <span className="flex items-center gap-1.5">
+                  <span className="line-through text-slate-400">
+                    {formatCurrency(deliveryFeeAmount)}
+                  </span>
+                  <span className="text-green-600 font-bold">FREE</span>
+                </span>
+              ) : (
+                <span className="text-slate-500">
+                  {isDeliveryFeeLoading
+                    ? "Calculating..."
+                    : formatCurrency(deliveryFeeAmount)}
+                </span>
               )}
-            {isDelivery && isDeliveryFeeError && (
-              <p className="rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-medium text-red-500">
-                Delivery fee could not be calculated. Please adjust your pin or
-                try again.
+            </div>
+          )}
+          {isDelivery &&
+            !freeDeliveryEligible &&
+            freeDeliveryReason &&
+            !isDeliveryFeeLoading && (
+              <p className="text-xs font-medium text-red-600">
+                {freeDeliveryReason}
               </p>
             )}
-            <SummaryRow
-              title="VATable Sales"
-              subTitle={formatCurrency(displayVatableSales)}
-            />
-            <SummaryRow
-              title="VAT (12%)"
-              subTitle={formatCurrency(displayVatAmount)}
-            />
-            <SummaryRow
-              title="Total (VAT Inc)"
-              subTitle={formatCurrency(displayTotalPrice)}
-              className={{
-                title: "font-bold text-slate-900",
-                subTitle: "text-lg font-bold text-brand-color-500",
-              }}
-            />
-          </div>
-        </div>
-        {/* Estimated time hint */}
-        <div className="flex items-center gap-2 px-1">
-          <DynamicIcon name="Clock" size={13} className=" text-slate-400" />
-          <p className="text-xs text-gray-400">
-            Estimated prep time: 30 - 45 minutes
-          </p>
-        </div>
-        {/* CTA */}
-        <>
-          <IconButton
-            onClick={isSubmitStep ? handlePlaceOrder : handleNext}
-            disabled={isActionPending || isNextDisabled}
-            text={
-              isActionPending
-                ? "Placing Order..."
-                : isSubmitStep && isDineIn
-                  ? "Confirm Reservation"
-                  : isSubmitStep && !isDelivery
-                    ? "Place Pickup Order"
-                    : isSubmitStep
-                      ? "Place Order"
-                      : `Next —${isDelivery ? "Shipping Details" : isDineIn ? "Reservaton Details" : "Pickup Details"}`
-            }
-            icon={{
-              name: isActionPending
-                ? "Loader2"
-                : isSubmitStep && isDineIn
-                  ? "CalendarCheck"
-                  : (isSubmitStep && !isDelivery) || isSubmitStep
-                    ? "ShoppingBag"
-                    : "ArrowRight",
-              className: isActionPending ? "animate-spin" : "",
-            }}
-            className="py-3.5 rounded-2xl w-full"
+          {isDelivery && isDeliveryFeeError && (
+            <p className="rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-medium text-red-500">
+              Delivery fee could not be calculated. Please adjust your pin or
+              try again.
+            </p>
+          )}
+          <SummaryRow
+            title="VATable Sales"
+            subTitle={formatCurrency(displayVatableSales)}
           />
-          {/* show which fields are still missing */}
-          {isNextDisabled && !selectedBranch && !isStoreClosed && (
-            <p className="text-xs text-center text-red-400">
-              Select a branch to continue
-            </p>
-          )}
-          {isNextDisabled && selectedBranch && isAtCapacity && (
-            <p className="text-xs text-center text-amber-500">
-              Currently at capacity — please check back shortly
-            </p>
-          )}
-          {isStoreClosed && storeClosedInfo && (
-            <div className="bg-red-50 border border-red-200/60 rounded-2xl px-4 py-3 text-center">
-              <div className="flex items-center justify-center gap-1.5 mb-1">
-                <DynamicIcon name="Store" size={14} className="text-red-500" />
-                <p className="text-xs font-bold text-red-700">
-                  {storeClosedInfo.title}
-                </p>
-              </div>
-              <p className="text-xs text-red-600">{storeClosedInfo.body}</p>
-              <p className="text-xs text-red-500 mt-1">
-                {storeClosedInfo.suggestion}
-              </p>
-            </div>
-          )}
-          {isNextDisabled &&
-            selectedBranch &&
-            !isAtCapacity &&
-            !isStoreClosed && (
-              <p className="text-xs text-center text-red-400">
-                Complete all required fields to continue
-              </p>
-            )}
-        </>
-        <Link
-          href="/"
-          className="block text-center text-xs text-gray-400 hover:text-gray-600 transition-colors underline underline-offset-2 pt-1"
-        >
-          Need to add more items?
-        </Link>
-        {!isStoreClosed && (
-          <p className="mt-1 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs leading-5 text-slate-500">
-            By placing an order, you agree to our{" "}
-            <span className="font-semibold text-slate-600">
-              Terms of Service
-            </span>
-            ,{" "}
-            <Link
-              href="/policies/privacy-policy"
-              className="font-semibold text-brand-color-600 hover:underline"
-            >
-              Privacy Policy
-            </Link>
-            , and delivery service guidelines, including use of your provided
-            contact details and delivery location to process the order.
+          <SummaryRow
+            title="VAT (12%)"
+            subTitle={formatCurrency(displayVatAmount)}
+          />
+          <SummaryRow
+            title="Total (VAT Inc)"
+            subTitle={formatCurrency(displayTotalPrice)}
+            className={{
+              title: "font-bold text-slate-900",
+              subTitle: "text-lg font-bold text-brand-color-500",
+            }}
+          />
+        </div>
+      </div>
+      {/* Estimated time hint */}
+      <div className="flex items-center gap-2 px-1">
+        <DynamicIcon name="Clock" size={13} className=" text-slate-400" />
+        <p className="text-xs text-gray-400">
+          Estimated prep time: 30 - 45 minutes
+        </p>
+      </div>
+      {/* CTA */}
+      <>
+        <IconButton
+          onClick={isSubmitStep ? handlePlaceOrder : handleNext}
+          disabled={isActionPending || isNextDisabled}
+          text={
+            isActionPending
+              ? "Placing Order..."
+              : isSubmitStep && isDineIn
+                ? "Confirm Reservation"
+                : isSubmitStep && !isDelivery
+                  ? "Place Pickup Order"
+                  : isSubmitStep
+                    ? "Place Order"
+                    : `Next —${isDelivery ? "Shipping Details" : isDineIn ? "Reservaton Details" : "Pickup Details"}`
+          }
+          icon={{
+            name: isActionPending
+              ? "Loader2"
+              : isSubmitStep && isDineIn
+                ? "CalendarCheck"
+                : (isSubmitStep && !isDelivery) || isSubmitStep
+                  ? "ShoppingBag"
+                  : "ArrowRight",
+            className: isActionPending ? "animate-spin" : "",
+          }}
+          className="py-3.5 rounded-2xl w-full"
+        />
+        {/* show which fields are still missing */}
+        {isNextDisabled && !selectedBranch && !isStoreClosed && (
+          <p className="text-xs text-center text-red-400">
+            Select a branch to continue
           </p>
         )}
-        {showPaymentOptions && (
-          <Modal
-            title="Choose Payment Method"
-            onClose={() => setShowPaymentOptions(false)}
-          >
-            <div className="flex flex-col gap-3">
-              <div className="flex gap-3">
-                {/* Maya */}
-                <PaymentButton
-                  id="maya"
-                  label="Maya"
-                  description="Pay via Maya e-wallet or card"
-                  badge="Instant"
-                  imageSrc="/images/maya-white.png"
-                  imageAlt="Maya"
-                  selectedPayment={selectedPayment}
-                  setSelectedPayment={setSelectedPayment}
-                />
-                <PaymentButton
-                  id="cod"
-                  label={
-                    isDelivery
-                      ? "Cash on Delivery"
-                      : isDineIn
-                        ? "Pay at Branch"
-                        : "Cash on Pickup"
-                  }
-                  description="Pay when your order arrives"
-                  badge="No fee"
-                  imageSrc="/images/cod-icon.png"
-                  imageAlt={
-                    isDelivery
-                      ? "Cash on Delivery"
-                      : isDineIn
-                        ? "Pay at Branch"
-                        : "Cash on Pickup"
-                  }
-                  selectedPayment={selectedPayment}
-                  setSelectedPayment={setSelectedPayment}
-                />
-              </div>
-              {/* Confirm */}
-              <IconButton
-                disabled={isStoreClosed || !selectedPayment}
-                onClick={() => {
-                  trackAddPaymentInfo({
-                    content_category:
-                      selectedPayment === "maya" ? "Maya" : "Cash on Delivery",
-                    currency: "PHP",
-                    value: totalPrice,
-                  });
-                  handlePlaceOrder();
-                  setShowPaymentOptions(false);
-                }}
-                text="Confirm Payment"
-                variant="primary"
-                className="bg-green-500 hover:bg-green-600 rounded-lg py-3"
-              />
-              {isStoreClosed && storeClosedInfo && (
-                <p className="text-xs text-center text-red-500 mt-2">
-                  {storeClosedInfo.body} — {storeClosedInfo.suggestion}
-                </p>
-              )}
-            </div>
-          </Modal>
+        {isNextDisabled && selectedBranch && isAtCapacity && (
+          <p className="text-xs text-center text-amber-500">
+            Currently at capacity — please check back shortly
+          </p>
         )}
-      </div>
-
-      <div className="sticky top-24 w-full">
-        <ProductRecommendations
-          branchId={selectedBranch?._id ?? null}
-          excludeIds={cartItems.map((item) => item._id)}
-          title="You may also like"
-          layout="column"
-        />
-      </div>
+        {isStoreClosed && storeClosedInfo && (
+          <div className="bg-red-50 border border-red-200/60 rounded-2xl px-4 py-3 text-center">
+            <div className="flex items-center justify-center gap-1.5 mb-1">
+              <DynamicIcon name="Store" size={14} className="text-red-500" />
+              <p className="text-xs font-bold text-red-700">
+                {storeClosedInfo.title}
+              </p>
+            </div>
+            <p className="text-xs text-red-600">{storeClosedInfo.body}</p>
+            <p className="text-xs text-red-500 mt-1">
+              {storeClosedInfo.suggestion}
+            </p>
+          </div>
+        )}
+        {isNextDisabled &&
+          selectedBranch &&
+          !isAtCapacity &&
+          !isStoreClosed && (
+            <p className="text-xs text-center text-red-400">
+              Complete all required fields to continue
+            </p>
+          )}
+      </>
+      <Link
+        href="/"
+        className="block text-center text-xs text-gray-400 hover:text-gray-600 transition-colors underline underline-offset-2 pt-1"
+      >
+        Need to add more items?
+      </Link>
+      {!isStoreClosed && (
+        <p className="mt-1 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs leading-5 text-slate-500">
+          By placing an order, you agree to our{" "}
+          <span className="font-semibold text-slate-600">Terms of Service</span>
+          ,{" "}
+          <Link
+            href="/policies/privacy-policy"
+            className="font-semibold text-brand-color-600 hover:underline"
+          >
+            Privacy Policy
+          </Link>
+          , and delivery service guidelines, including use of your provided
+          contact details and delivery location to process the order.
+        </p>
+      )}
+      {showPaymentOptions && (
+        <Modal
+          title="Choose Payment Method"
+          onClose={() => setShowPaymentOptions(false)}
+        >
+          <div className="flex flex-col gap-3">
+            <div className="flex gap-3">
+              {/* Maya */}
+              <PaymentButton
+                id="maya"
+                label="Maya"
+                description="Pay via Maya e-wallet or card"
+                badge="Instant"
+                imageSrc="/images/maya-white.png"
+                imageAlt="Maya"
+                selectedPayment={selectedPayment}
+                setSelectedPayment={setSelectedPayment}
+              />
+              <PaymentButton
+                id="cod"
+                label={
+                  isDelivery
+                    ? "Cash on Delivery"
+                    : isDineIn
+                      ? "Pay at Branch"
+                      : "Cash on Pickup"
+                }
+                description="Pay when your order arrives"
+                badge="No fee"
+                imageSrc="/images/cod-icon.png"
+                imageAlt={
+                  isDelivery
+                    ? "Cash on Delivery"
+                    : isDineIn
+                      ? "Pay at Branch"
+                      : "Cash on Pickup"
+                }
+                selectedPayment={selectedPayment}
+                setSelectedPayment={setSelectedPayment}
+              />
+            </div>
+            {/* Confirm */}
+            <IconButton
+              disabled={isStoreClosed || !selectedPayment}
+              onClick={() => {
+                trackAddPaymentInfo({
+                  content_category:
+                    selectedPayment === "maya" ? "Maya" : "Cash on Delivery",
+                  currency: "PHP",
+                  value: totalPrice,
+                });
+                handlePlaceOrder();
+                setShowPaymentOptions(false);
+              }}
+              text="Confirm Payment"
+              variant="primary"
+              className="bg-green-500 hover:bg-green-600 rounded-lg py-3"
+            />
+            {isStoreClosed && storeClosedInfo && (
+              <p className="text-xs text-center text-red-500 mt-2">
+                {storeClosedInfo.body} — {storeClosedInfo.suggestion}
+              </p>
+            )}
+          </div>
+        </Modal>
+      )}
     </div>
   );
 };

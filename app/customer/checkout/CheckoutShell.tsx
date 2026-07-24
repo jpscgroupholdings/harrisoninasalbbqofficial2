@@ -8,8 +8,13 @@ import BranchSelector from "./BranchSelector";
 import { CheckoutStep, useCheckout } from "@/contexts/CheckoutContext";
 import { FulfillmentSelector } from "./FulfillmentSelector";
 import { FULFILLMENT_TYPE } from "@/types/orderConstants";
+import ProductRecommendations from "../components/ProductRecommendations";
+import { useCart } from "@/contexts/CartContext";
 
 const CheckoutShell = ({ children }: { children: React.ReactNode }) => {
+
+  const { cartItems} = useCart();
+
   const {
     selectedBranch,
     orderDetails,
@@ -26,7 +31,7 @@ const CheckoutShell = ({ children }: { children: React.ReactNode }) => {
     <div className={`${syne.className} min-h-screen bg-slate-50`}>
       <CheckoutHeader step={pathname} />
 
-      <div className="max-w-5xl mx-auto px-4 py-6">
+      <div className="max-w-5xl mx-auto px-4 py-6 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-[1fr_380px] gap-6 items-start">
           <div className="bg-white rounded-2xl border border-slate-100 p-6">
             {/* Shared header */}
@@ -51,9 +56,7 @@ const CheckoutShell = ({ children }: { children: React.ReactNode }) => {
               </p>
             </div>
 
-            <BranchSelector
-              selectedBranch={selectedBranch}
-            />
+            <BranchSelector selectedBranch={selectedBranch} />
 
             <FulfillmentSelector
               value={orderDetails.fulfillmentType}
@@ -67,6 +70,15 @@ const CheckoutShell = ({ children }: { children: React.ReactNode }) => {
             selectedBranch={selectedBranch}
             orderDetails={orderDetails}
             onNext={handleNext}
+          />
+        </div>
+
+        <div className="bg-white p-4 rounded-lg">
+          <ProductRecommendations
+            branchId={selectedBranch?._id ?? null}
+            excludeIds={cartItems.map((item) => item._id)}
+            title="You may also like"
+            layout="grid"
           />
         </div>
       </div>
