@@ -1,6 +1,51 @@
 # Changelog
 
 
+## 1.15.0 - Maya QR PH Payments, Order Lifecycle Controls & Product Recommendations - 2026-07-24
+**Release Focus:** Maya QR PH direct payment flow, admin controls for cancelling/expiring/refunding orders with reason tracking, product recommendation engine based on branch sales data, and shared cart row component for reuse across the app.
+
+### Added
+- **Maya QR PH payment flow** — direct QR code payment using Maya's QR PH endpoint (`/payments/v1/qr/payments`), bypassing the full checkout page for a faster payment experience
+- Maya QR PH infrastructure: authentication, public key configuration, and service functions
+- QR PH payment wired across checkout and retry (re-payment) routes with `?useQrPh=true` toggle
+- **Admin manual expire** — admin can expire stale `pending_payment` orders that are 5+ days old, with a required reason (e.g. "Too long to pay", "Customer requested cancellation", "Suspected fraud")
+- **Admin manual cancel** — admin can cancel orders from `pending_payment`, `pending`, and `confirmed` statuses with a required reason (e.g. "Customer requested refund", "Out of stock", "Customer no-show", "Duplicate order")
+- **Order refund system** — admin can process refunds on `completed` or `cancelled` orders via a dedicated `PATCH /api/admin/orders/[id]/refund` endpoint, with reason selection (e.g. "Damaged goods", "Wrong items delivered"), optional notes, and configurable refund amount
+- `refund` subdocument on Order model — tracks refund lifecycle independently from order status (`none` → `requested` → `processed`), with amount, reason, notes, processedBy, and processedAt
+- **Termination details tracking** — `terminationDetails` subdocument on Order model captures why an order reached a terminal state (cancelled, expired): reason, notes, changedBy, changedByRole (`admin` | `customer` | `system`), changedAt
+- **Reason prompts for terminal actions** — `ConfirmationWithReasonModal` shared component with reason dropdown, optional notes textarea, and optional amount input (for refunds)
+- Reason constants: `EXPIRE_REASONS`, `ADMIN_CANCEL_REASONS`, `CUSTOMER_CANCEL_REASONS`, `REFUND_REASONS` in `orderConstants.ts`
+- **Customer cancel with reason** — updated `CancelOrderModal` with reason dropdown ("Changed my mind", "Ordered by mistake", "Found a better option", "Other") and optional notes textarea
+- **Activity log reasons** — `logOrderStatusChange` and `logOrderCancelledByCustomer` now accept optional `reason` and `notes` parameters, included in metadata and human-readable summary
+- **Termination & refund display in order details** — `OrderDetailsModal` shows termination reason in a red callout card and refund details in a blue callout card, visible to both admin and customer
+- Admin refund button in `OrderDetailsModal` — appears on completed/cancelled orders that haven't been refunded, opens the reason modal with amount input pre-filled with order total
+- `useAdminRefundOrder` React Query mutation hook for processing refunds
+- **Product recommendation engine** — `ProductRecommendations` component showing most-sold products on a branch, with configurable layout, excluded product IDs, and branch filtering
+- "You may like" section at the bottom of product detail views and checkout
+- 90-day sales window for recommendation ranking, with max results scaled by multiplier
+- **Shared cart row component** — reusable `CartRow` component shared between the cart drawer and cart list checkout, eliminating duplicated cart item rendering logic
+- **Refund exclusion from analytics** — all sales, revenue, and customer analytics pipelines now exclude refunded orders (`"refund.status": { $ne: "processed" }`)
+- `changedByRole: "system"` support — Inngest auto-expiry now saves `terminationDetails` with system role and the resolved expiration reason
+
+### Improved
+- **5-day server guard for admin expire** — API enforces that `pending_payment` orders must be at least 5 days old before admin can expire them, matching the UI gate
+- **Reason required server-side** — API rejects cancel and expire transitions without a reason, preventing direct API bypass
+- **Inventory release on admin cancel** — reserved inventory is now released when admin cancels an order (previously only on complete and auto-expire)
+- `UpdateOrderPayLoad` now accepts optional `reason` and `notes` fields for terminal status transitions
+- `useCancelOrder` hook now accepts and passes `reason` and `notes` to the cancel API
+- Success toast on admin order status changes shows reference number and new status (e.g. "Order #REF123 → Expired")
+
+### Fixed
+- **Overnight schedule handling** — operating hours that cross midnight are now correctly evaluated for reservation and pickup time validation
+- **Timezone mismatch** — fixed timezone drift in date comparisons affecting PH-local boundary calculations
+- `formatDate` — removed fallback argument values that were masking undefined date inputs; callers now explicitly handle missing dates
+- Promo card components updated to use the shared `InputField` component for consistent form styling
+
+### Changed
+- Admin can now cancel orders from `pending_payment`, `pending`, and `confirmed` (previously blocked entirely by `canTransitionTo`)
+- Customer cancel for `pending_payment` now includes both customer and admin roles in the action config (previously customer-only with Maya payment method restriction)
+
+
 ## 1.14.0 - Pickup Time, Reservation Acceptance Flow & Capacity Limits - 2026-07-22
 **Release Focus:** Customers with pickup orders must declare a pickup date and time during checkout. Dine-in reservations now require admin acceptance before confirmation. Per-branch reservation capacity limits (hourly/daily). Order expiry windows extended for both Maya and COD.
 
